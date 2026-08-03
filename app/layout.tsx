@@ -1,17 +1,17 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Cormorant_Garamond } from 'next/font/google'
+import { Manrope, Sora } from 'next/font/google'
 import './globals.css'
 
-const geistSans = Geist({
+const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-geist-sans',
+  variable: '--font-manrope',
   display: 'swap',
 })
 
-const cormorant = Cormorant_Garamond({
+const sora = Sora({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-cormorant',
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-sora',
   display: 'swap',
 })
 
@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`light bg-background ${geistSans.variable} ${cormorant.variable}`}
+      className={`light bg-background ${manrope.variable} ${sora.variable}`}
     >
       <body className="antialiased font-sans">{children}</body>
     </html>
