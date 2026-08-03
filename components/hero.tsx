@@ -27,7 +27,7 @@ export function Hero() {
           <p className="mt-4 max-w-lg text-pretty text-base leading-relaxed text-background/90 md:text-lg">
             Crooked House is a characterful one-bedroom apartment above
             Menaggio, with a private entrance, a garden framed by mountains, and
-            a kitchen that&apos;s all yours. Warmly hosted by Mara &amp; Beppe.
+            a kitchen that&apos;s all yours.
           </p>
         </div>
 

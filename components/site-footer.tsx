@@ -23,7 +23,7 @@ export function SiteFooter() {
             <p className="font-serif text-3xl font-semibold">Crooked House</p>
             <p className="mt-4 max-w-xs text-pretty text-sm leading-relaxed text-primary-foreground/70">
               A characterful one-bedroom apartment in Grandola ed Uniti, above
-              Menaggio on Lake Como. Warmly hosted by Mara &amp; Beppe.
+              Menaggio on Lake Como.
             </p>
             <div className="mt-6 flex gap-3">
               {SOCIALS.map((social) => (
