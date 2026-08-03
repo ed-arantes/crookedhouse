@@ -1,4 +1,5 @@
 name = "crookedhouse"
+main = ".open-next/worker.js"
 compatibility_date = "2026-08-03"
 
-pages_build_output_dir = ".open-next"
+assets = { directory = ".open-next/assets" }
