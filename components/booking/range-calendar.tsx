@@ -1,0 +1,158 @@
+'use client'
+
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  MONTHS,
+  WEEKDAYS,
+  addMonths,
+  buildMonthGrid,
+  isBefore,
+  isBetween,
+  isSameDay,
+  startOfDay,
+} from '@/lib/booking'
+
+type RangeCalendarProps = {
+  checkIn: Date | null
+  checkOut: Date | null
+  onChange: (checkIn: Date | null, checkOut: Date | null) => void
+  months?: number
+}
+
+function MonthView({
+  viewDate,
+  checkIn,
+  checkOut,
+  today,
+  onSelect,
+}: {
+  viewDate: Date
+  checkIn: Date | null
+  checkOut: Date | null
+  today: Date
+  onSelect: (day: Date) => void
+}) {
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const cells = buildMonthGrid(year, month)
+
+  return (
+    <div className="w-[17rem]">
+      <p className="mb-3 text-center font-serif text-lg font-medium text-foreground">
+        {MONTHS[month]} {year}
+      </p>
+      <div className="grid grid-cols-7 gap-y-1">
+        {WEEKDAYS.map((wd) => (
+          <div
+            key={wd}
+            className="pb-1 text-center text-xs font-medium text-muted-foreground"
+          >
+            {wd}
+          </div>
+        ))}
+        {cells.map((day, i) => {
+          if (!day) return <div key={`empty-${i}`} aria-hidden="true" />
+          const disabled = isBefore(day, today)
+          const isStart = isSameDay(day, checkIn)
+          const isEnd = isSameDay(day, checkOut)
+          const inRange = isBetween(day, checkIn, checkOut)
+          const isEdge = isStart || isEnd
+          return (
+            <div
+              key={day.toISOString()}
+              className={cn(
+                'relative flex items-center justify-center',
+                inRange && 'bg-primary/10',
+                isStart && checkOut && 'rounded-l-full bg-primary/10',
+                isEnd && 'rounded-r-full bg-primary/10',
+              )}
+            >
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(day)}
+                aria-label={day.toDateString()}
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors',
+                  !disabled &&
+                    !isEdge &&
+                    'text-foreground hover:bg-primary/15',
+                  disabled && 'cursor-not-allowed text-muted-foreground/40',
+                  isEdge &&
+                    'bg-primary font-medium text-primary-foreground hover:bg-primary',
+                )}
+              >
+                {day.getDate()}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export function RangeCalendar({
+  checkIn,
+  checkOut,
+  onChange,
+  months = 1,
+}: RangeCalendarProps) {
+  const today = startOfDay(new Date())
+  const [viewDate, setViewDate] = useState<Date>(checkIn ?? today)
+
+  function handleSelect(day: Date) {
+    // No start yet, or a full range exists -> start fresh.
+    if (!checkIn || (checkIn && checkOut)) {
+      onChange(day, null)
+      return
+    }
+    // Selecting before the start resets the start.
+    if (isBefore(day, checkIn) || isSameDay(day, checkIn)) {
+      onChange(day, null)
+      return
+    }
+    onChange(checkIn, day)
+  }
+
+  return (
+    <div className="p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setViewDate((d) => addMonths(d, -1))}
+          disabled={
+            viewDate.getFullYear() === today.getFullYear() &&
+            viewDate.getMonth() === today.getMonth()
+          }
+          aria-label="Previous month"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewDate((d) => addMonths(d, 1))}
+          aria-label="Next month"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="flex flex-col gap-6 sm:flex-row">
+        {Array.from({ length: months }).map((_, i) => (
+          <MonthView
+            key={i}
+            viewDate={addMonths(viewDate, i)}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            today={today}
+            onSelect={handleSelect}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
