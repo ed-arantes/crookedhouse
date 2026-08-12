@@ -11,12 +11,12 @@ export function About({ locale = 'en' }: { locale?: Locale }) {
 
   return (
     <section id="about" className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-      <h2 className="type-heading mt-4 text-center font-serif font-medium text-foreground">
-        {t(locale, 'about.headline')}
-      </h2>
-      <div className="mt-10 grid gap-12 md:grid-cols-2 md:gap-16">
+      <div className="grid gap-12 md:grid-cols-2 md:gap-16">
         <div className="flex flex-col justify-center">
-          <p className="type-body text-pretty text-muted-foreground">
+          <h2 className="type-heading mt-4 text-balance font-serif font-medium text-foreground">
+            {t(locale, 'about.headline')}
+          </h2>
+          <p className="type-body mt-6 text-pretty text-muted-foreground">
             {t(locale, 'about.p1')}
           </p>
           <p className="type-body mt-4 text-pretty text-muted-foreground">

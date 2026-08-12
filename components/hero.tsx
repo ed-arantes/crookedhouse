@@ -18,7 +18,7 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
    <div className="absolute inset-0 bg-gradient-to-b from-foreground/50 via-foreground/20 to-foreground/60" />
 
    <div className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-end px-5 pb-10 pt-32 md:px-8 md:pb-16">
-    <div className="max-w-2xl">
+    <div className="w-full text-center">
      <span className="inline-flex items-center gap-2 rounded-full bg-background/15 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-background backdrop-blur">
       <Star className="h-3.5 w-3.5 fill-background text-background" />
       {t(locale, 'hero.badge', {
@@ -26,10 +26,10 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
        count: REVIEWS.length,
       })}
      </span>
-     <h1 className="type-display mt-5 text-balance font-serif font-medium text-background">
+     <h1 className="type-display mt-5 font-serif font-medium text-background md:whitespace-nowrap">
       {t(locale, 'hero.title')}
      </h1>
-     <p className="type-body mt-4 max-w-lg text-pretty text-background/90">
+     <p className="type-body mx-auto mt-4 max-w-lg text-pretty text-background/90">
       {t(locale, 'hero.description')}
      </p>
     </div>
