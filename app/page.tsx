@@ -1,11 +1,5 @@
-import Link from 'next/link'
+import LocalePage from './[locale]/page'
 
 export default function Page() {
- return (
-  <main className="flex min-h-screen items-center justify-center bg-background px-5 text-center">
-   <Link className="text-sm text-foreground underline" href="/it">
-    Continue to Crooked House
-   </Link>
-  </main>
- )
+ return <LocalePage params={Promise.resolve({ locale: 'it' })} />
 }
