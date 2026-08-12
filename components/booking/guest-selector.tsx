@@ -2,10 +2,10 @@
 
 import { Minus, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { t, type Locale } from '@/lib/i18n'
+import type { Guests } from './booking-context'
 
-type Guests = { adults: number; children: number }
-
-const MAX_GUESTS = 6
+const MAX_GUESTS = 4
 
 function Stepper({
   label,
@@ -61,18 +61,20 @@ export function GuestSelector({
   guests,
   onChange,
   className,
+  locale = 'en',
 }: {
   guests: Guests
   onChange: (g: Guests) => void
   className?: string
+  locale?: Locale
 }) {
   const total = guests.adults + guests.children
 
   return (
     <div className={cn('w-72 divide-y divide-border p-4', className)}>
       <Stepper
-        label="Adults"
-        hint="Ages 13 or above"
+        label={t(locale, 'widgets.adults')}
+        hint={t(locale, 'widgets.adultsHint')}
         value={guests.adults}
         min={1}
         onChange={(adults) => onChange({ ...guests, adults })}
@@ -80,22 +82,33 @@ export function GuestSelector({
         disabledIncrement={total >= MAX_GUESTS}
       />
       <Stepper
-        label="Children"
-        hint="Ages 2–12"
+        label={t(locale, 'widgets.children')}
+        hint={t(locale, 'widgets.childrenHint')}
         value={guests.children}
         min={0}
         onChange={(children) => onChange({ ...guests, children })}
         disabledDecrement={guests.children <= 0}
         disabledIncrement={total >= MAX_GUESTS}
       />
+      <label className="flex items-center gap-3 py-3 text-sm text-foreground">
+        <input
+          type="checkbox"
+          checked={guests.pets}
+          onChange={(event) => onChange({ ...guests, pets: event.target.checked })}
+          className="h-4 w-4 rounded border-border accent-primary"
+        />
+        {t(locale, 'widgets.pets')}
+      </label>
       <p className="pt-3 text-xs text-muted-foreground">
-        This suite hosts up to {MAX_GUESTS} guests.
+        {t(locale, 'widgets.maxGuests').replace('{count}', String(MAX_GUESTS))}
       </p>
     </div>
   )
 }
 
-export function guestLabel(guests: Guests): string {
+export function guestLabel(guests: Guests, locale: Locale = 'en'): string {
   const total = guests.adults + guests.children
-  return `${total} guest${total === 1 ? '' : 's'}`
+  const key = total === 1 ? 'widgets.guestLabel' : 'widgets.guestLabels'
+  const label = t(locale, key, { count: total })
+  return guests.pets ? `${label} · ${t(locale, 'widgets.pets')}` : label
 }

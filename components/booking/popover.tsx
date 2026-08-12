@@ -55,7 +55,7 @@ export function Popover({
       {open && (
         <div
           className={cn(
-            'absolute z-50 rounded-xl border border-border bg-popover text-popover-foreground shadow-xl',
+            'absolute z-50 max-h-[calc(100vh-1rem)] max-w-[calc(100vw-1rem)] overflow-auto rounded-xl border border-border bg-popover text-popover-foreground',
             side === 'bottom' && 'top-full mt-2',
             side === 'top' && 'bottom-full mb-2',
             align === 'start' && 'left-0',

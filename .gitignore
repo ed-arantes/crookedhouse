@@ -25,7 +25,16 @@ Thumbs.db
 # OpenNext
 .open-next
 
-# wrangler files
+# Cloudflare Pages local output
 .wrangler
-.dev.vars*
+
+# Local secrets
+.dev.vars
+.dev.vars.*
 !.dev.vars.example
+
+# local tooling
+.idea/
+tsconfig.tsbuildinfo
+comandotraduzione.txt
+commands.txt

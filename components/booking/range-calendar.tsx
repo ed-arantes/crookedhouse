@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { t, type Locale } from '@/lib/i18n'
 import {
-  MONTHS,
-  WEEKDAYS,
   addMonths,
   buildMonthGrid,
   isBefore,
@@ -19,6 +18,7 @@ type RangeCalendarProps = {
   checkOut: Date | null
   onChange: (checkIn: Date | null, checkOut: Date | null) => void
   months?: number
+  locale?: Locale
 }
 
 function MonthView({
@@ -27,24 +27,30 @@ function MonthView({
   checkOut,
   today,
   onSelect,
+  locale,
 }: {
   viewDate: Date
   checkIn: Date | null
   checkOut: Date | null
   today: Date
   onSelect: (day: Date) => void
+  locale: Locale
 }) {
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
   const cells = buildMonthGrid(year, month)
+  const weekdays = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2024, 0, i + 8)),
+  )
+  const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(viewDate)
 
   return (
     <div className="w-[17rem]">
       <p className="mb-3 text-center font-serif text-lg font-medium text-foreground">
-        {MONTHS[month]} {year}
+        {monthLabel}
       </p>
       <div className="grid grid-cols-7 gap-y-1">
-        {WEEKDAYS.map((wd) => (
+        {weekdays.map((wd) => (
           <div
             key={wd}
             className="pb-1 text-center text-xs font-medium text-muted-foreground"
@@ -99,6 +105,7 @@ export function RangeCalendar({
   checkOut,
   onChange,
   months = 1,
+  locale = 'en',
 }: RangeCalendarProps) {
   const today = startOfDay(new Date())
   const [viewDate, setViewDate] = useState<Date>(checkIn ?? today)
@@ -127,7 +134,7 @@ export function RangeCalendar({
             viewDate.getFullYear() === today.getFullYear() &&
             viewDate.getMonth() === today.getMonth()
           }
-          aria-label="Previous month"
+          aria-label={t(locale, 'widgets.previousMonth')}
           className="flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -135,7 +142,7 @@ export function RangeCalendar({
         <button
           type="button"
           onClick={() => setViewDate((d) => addMonths(d, 1))}
-          aria-label="Next month"
+          aria-label={t(locale, 'widgets.nextMonth')}
           className="flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
         >
           <ChevronRight className="h-4 w-4" />
@@ -150,6 +157,7 @@ export function RangeCalendar({
             checkOut={checkOut}
             today={today}
             onSelect={handleSelect}
+            locale={locale}
           />
         ))}
       </div>

@@ -9,9 +9,10 @@ import {
 } from 'react'
 import { nightsBetween, priceBreakdown, type PriceBreakdown } from '@/lib/booking'
 
-type Guests = {
+export type Guests = {
   adults: number
   children: number
+  pets: boolean
 }
 
 type BookingState = {
@@ -31,10 +32,14 @@ const BookingContext = createContext<BookingState | null>(null)
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [checkIn, setCheckIn] = useState<Date | null>(null)
   const [checkOut, setCheckOut] = useState<Date | null>(null)
-  const [guests, setGuests] = useState<Guests>({ adults: 2, children: 0 })
+  const [guests, setGuests] = useState<Guests>({ adults: 2, children: 0, pets: false })
 
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut])
-  const price = useMemo(() => priceBreakdown(nights), [nights])
+  const guestCount = guests.adults + guests.children
+  const price = useMemo(
+    () => priceBreakdown(nights, guestCount),
+    [nights, guestCount],
+  )
 
   const value = useMemo<BookingState>(
     () => ({
