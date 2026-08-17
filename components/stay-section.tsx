@@ -41,7 +41,7 @@ export function StaySection({ locale = 'en' }: { locale?: Locale }) {
  }, [active, close, prev, next])
 
  return (
-  <section id="stay" className="scroll-mt-0 mx-auto max-w-7xl px-5 pb-20 pt-10 md:px-8 md:pb-28 md:pt-16">
+  <section id="stay" className="mx-auto max-w-7xl px-5 pb-20 pt-10 md:px-8 md:pb-28 md:pt-16">
    <div className="max-w-2xl">
     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
      {t(locale, 'stay.headline')}

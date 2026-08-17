@@ -43,7 +43,7 @@ export function Amenities({ locale = 'en' }: { locale?: Locale }) {
  const items = tArray(locale, 'amenities.list')
 
  return (
-  <section id="amenities" className="scroll-mt-0 bg-secondary/60 py-12 md:py-16">
+  <section id="amenities" className="bg-secondary/60 py-12 md:py-16">
    <div className="mx-auto max-w-7xl px-5 md:px-8">
     <div>
      <h2 className="type-heading text-balance font-serif font-medium text-foreground">

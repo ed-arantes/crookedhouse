@@ -48,7 +48,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  }
 
  return (
-  <section id="booking" className="scroll-mt-0 bg-secondary/60 py-20 md:py-28">
+   <section id="booking" className="bg-secondary/60 py-20 md:py-28">
    <div className="mx-auto max-w-5xl px-5 md:px-8">
     <div className="mx-auto max-w-2xl text-center">
      <h2 className="type-heading text-balance font-serif font-medium text-foreground">
