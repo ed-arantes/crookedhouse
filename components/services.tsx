@@ -7,7 +7,7 @@ export function Services({ locale = 'en' }: { locale?: Locale }) {
   <section className="bg-accent py-20 text-accent-foreground md:py-28">
    <div className="mx-auto max-w-7xl px-5 md:px-8">
     <div className="grid gap-8 md:grid-cols-2 md:gap-16">
-     <div className="grid auto-rows-[180px] grid-cols-1 gap-4 md:auto-rows-[220px]">
+     <div className="order-2 grid auto-rows-[180px] grid-cols-1 gap-4 md:order-1 md:auto-rows-[220px]">
       <div className="relative overflow-hidden rounded-2xl">
        <Image
         src="/images/picnic.png"
@@ -28,7 +28,7 @@ export function Services({ locale = 'en' }: { locale?: Locale }) {
       </div>
      </div>
 
-     <div className="flex flex-col">
+      <div className="order-1 flex flex-col md:order-2">
       <h2 className="type-heading text-balance font-serif font-medium">
        {t(locale, 'services.headline')}
       </h2>

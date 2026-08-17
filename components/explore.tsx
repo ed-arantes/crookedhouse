@@ -13,7 +13,7 @@ export function Explore({ locale = 'en' }: { locale?: Locale }) {
  return (
   <section className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
    <div className="grid gap-12 md:grid-cols-2 md:gap-16">
-    <div className="grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[220px] md:gap-4">
+    <div className="order-2 grid auto-rows-[180px] grid-cols-2 gap-3 md:order-1 md:auto-rows-[220px] md:gap-4">
      {PHOTOS.map((photo) => (
       <div key={photo.src} className="relative overflow-hidden rounded-2xl">
        <Image
@@ -27,7 +27,7 @@ export function Explore({ locale = 'en' }: { locale?: Locale }) {
      ))}
     </div>
 
-    <div className="flex flex-col">
+    <div className="order-1 flex flex-col md:order-2">
      <h2 className="type-heading mt-4 text-balance font-serif font-medium text-foreground">
       {t(locale, 'explore.headline')}
      </h2>

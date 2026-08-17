@@ -12,7 +12,7 @@ const PHOTOS = [
  { src: '/images/terrace-pool.png', alt: 'Private garden terrace with mountain views', span: '' },
  { src: '/images/bathroom.png', alt: 'Modern bathroom with glass walk-in shower', span: '' },
  { src: '/images/breakfast.png', alt: 'Fully equipped kitchen with welcome basket', span: '' },
- { src: '/images/lounge.png', alt: 'Living room with linen sofa and smart TV', span: '' },
+ { src: '/images/lounge.png', alt: 'Living room with linen sofa and smart TV', span: 'col-span-2 md:col-span-1' },
 ]
 
 export function Gallery({ locale = 'en' }: { locale?: Locale }) {
