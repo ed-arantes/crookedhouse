@@ -54,16 +54,16 @@ export function Amenities({ locale = 'en' }: { locale?: Locale }) {
       </p>
     </div>
 
-    <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-4 lg:grid-cols-4">
      {items.map((item, i) => {
       const Icon = ICONS[i] ?? IconCooker
-      return (
-       <div key={item}>
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-         <Icon size={20} stroke={1.5} />
-        </span>
-        <p className="type-body mt-2 text-muted-foreground">{item}</p>
-       </div>
+       return (
+        <div key={item} className="flex items-center gap-3">
+         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Icon size={18} stroke={1.5} />
+         </span>
+         <p className="type-body text-muted-foreground">{item}</p>
+        </div>
       )
      })}
     </div>
