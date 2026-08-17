@@ -48,19 +48,19 @@ export function StaySection({ locale = 'en' }: { locale?: Locale }) {
     </h2>
    </div>
 
-   <div className="mt-8 grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4 md:gap-4">
+   <div className="mt-8 flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:auto-rows-[220px] md:grid-cols-4 md:gap-4 md:overflow-visible md:pb-0">
     {PHOTOS.map((photo, i) => (
      <button
       key={photo.src}
       type="button"
       onClick={() => setActive(i)}
-      className="group relative overflow-hidden rounded-2xl"
+      className="group relative aspect-[3/4] w-[70vw] shrink-0 overflow-hidden rounded-2xl snap-center md:aspect-auto md:w-auto md:h-auto"
      >
       <Image
        src={photo.src}
        alt={photo.alt}
        fill
-       sizes="(max-width: 768px) 50vw, 25vw"
+       sizes="(max-width: 768px) 70vw, 25vw"
        className="object-cover"
       />
       <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
