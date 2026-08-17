@@ -1,84 +1,73 @@
 import {
-  Mountain,
-  Wifi,
-  Coffee,
-  Tv,
-  Trees,
-  Car,
-  UtensilsCrossed,
-  Dog,
-} from 'lucide-react'
-import { t, type Locale } from '@/lib/i18n'
+ IconCooker,
+ IconBowlSpoon,
+ IconMicrowave,
+ IconCoffee,
+ IconBread,
+ IconTeapot,
+ IconDeviceTv,
+ IconWifi,
+ IconHanger,
+ IconHorseToy,
+ IconBed,
+ IconWind,
+ IconIroning,
+ IconPicnicTable,
+ IconWashDry1,
+ IconCarGarage,
+ type TablerIcon,
+} from '@tabler/icons-react'
+import { t, tArray, type Locale } from '@/lib/i18n'
+import { Highlight } from '@/components/highlight'
 
-const AMENITIES = [
-  {
-    icon: UtensilsCrossed,
-    titleKey: 'amenities.kitchenTitle',
-    descKey: 'amenities.kitchenDesc',
-  },
-  {
-    icon: Trees,
-    titleKey: 'amenities.gardenTitle',
-    descKey: 'amenities.gardenDesc',
-  },
-  {
-    icon: Mountain,
-    titleKey: 'amenities.viewsTitle',
-    descKey: 'amenities.viewsDesc',
-  },
-  {
-    icon: Wifi,
-    titleKey: 'amenities.wifiTitle',
-    descKey: 'amenities.wifiDesc',
-  },
-  {
-    icon: Tv,
-    titleKey: 'amenities.tvTitle',
-    descKey: 'amenities.tvDesc',
-  },
-  {
-    icon: Coffee,
-    titleKey: 'amenities.welcomeTitle',
-    descKey: 'amenities.welcomeDesc',
-  },
-  {
-    icon: Dog,
-    titleKey: 'amenities.petTitle',
-    descKey: 'amenities.petDesc',
-  },
-  {
-    icon: Car,
-    titleKey: 'amenities.parkingTitle',
-    descKey: 'amenities.parkingDesc',
-  },
+const ICONS: TablerIcon[] = [
+ IconCooker,      // Forno
+ IconBowlSpoon,   // Lavastoviglie
+ IconMicrowave,   // Microonde
+ IconCoffee,      // Macchine da caffè
+ IconBread,       // Tostapane
+ IconTeapot,      // Bollitore
+ IconDeviceTv,    // TV a schermo piatto
+ IconWifi,        // Wi-Fi
+ IconHanger,      // Armadio e cassettiera
+ IconHorseToy,    // Culla
+ IconBed,         // Biancheria da letto e da bagno
+ IconWind,        // Asciugacapelli
+ IconIroning,     // Ferro da stiro
+ IconPicnicTable, // Giardino privato
+ IconWashDry1,    // Locale lavanderia
+ IconCarGarage,   // Garage
 ]
 
 export function Amenities({ locale = 'en' }: { locale?: Locale }) {
-  return (
-    <section id="amenities" className="scroll-mt-0 bg-secondary/60 py-20 md:py-28">
-      <div className="mx-auto max-w-7xl px-5 md:px-8">
-        <div className="max-w-2xl">
-          <h2 className="type-heading text-balance font-serif font-medium text-foreground">
-            {t(locale, 'amenities.headline')}
-          </h2>
-        </div>
+ const items = tArray(locale, 'amenities.list')
 
-        <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-          {AMENITIES.map((item) => (
-            <div key={item.titleKey}>
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <item.icon className="h-5 w-5" />
-              </span>
-              <h3 className="type-body mt-4 font-serif font-medium text-foreground">
-                {t(locale, item.titleKey)}
-              </h3>
-              <p className="type-body mt-2 text-muted-foreground">
-                {t(locale, item.descKey)}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
+ return (
+  <section id="amenities" className="scroll-mt-0 bg-secondary/60 py-12 md:py-16">
+   <div className="mx-auto max-w-7xl px-5 md:px-8">
+    <div>
+     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
+      {t(locale, 'amenities.headline')}
+     </h2>
+      <p className="type-body mt-3 text-muted-foreground">
+        <Highlight text={t(locale, 'amenities.body')} phrases={[{ phrase: 'Crooked House', className: 'font-serif text-accent' }]} />
+      </p>
+    </div>
+
+    <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+     {items.map((item, i) => {
+      const Icon = ICONS[i] ?? IconCooker
+      return (
+       <div key={item}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+         <Icon size={20} stroke={1.5} />
+        </span>
+        <p className="type-body mt-2 text-muted-foreground">{item}</p>
+       </div>
+      )
+     })}
+    </div>
+   </div>
+  </section>
+ )
 }

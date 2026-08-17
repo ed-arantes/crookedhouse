@@ -190,4 +190,30 @@
   font-size: 1rem;
   line-height: 1.7;
  }
+
+ .scrollbar-accent {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+ }
+
+ @media (min-width: 768px) {
+  .scrollbar-accent {
+   scrollbar-width: auto;
+   scrollbar-color: var(--accent) transparent;
+  }
+
+  .scrollbar-accent::-webkit-scrollbar {
+   height: 10px;
+   display: block;
+  }
+
+  .scrollbar-accent::-webkit-scrollbar-thumb {
+   background: var(--accent);
+   border-radius: 9999px;
+  }
+
+  .scrollbar-accent::-webkit-scrollbar-track {
+   background: transparent;
+  }
+ }
 }

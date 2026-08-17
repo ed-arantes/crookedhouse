@@ -7,7 +7,7 @@ import itLocale from '@/translations/it.json'
 export const defaultLocale = 'it' as const
 export const locales = ['it', 'en', 'fr', 'de', 'es'] as const
 export type Locale = (typeof locales)[number]
-export type TranslationDictionary = Record<string, string>
+export type TranslationDictionary = Record<string, string | string[]>
 export type TranslationKey = string
 
 const runtimeTranslations: Record<Locale, TranslationDictionary> = {
@@ -48,4 +48,17 @@ export function t(
     key
 
   return replacePlaceholders(translation, vars)
+}
+
+export function tArray(
+  locale: Locale | undefined,
+  key: TranslationKey,
+): string[] {
+  const activeLocale = locale && locales.includes(locale) ? locale : defaultLocale
+  const translation =
+    runtimeTranslations[activeLocale]?.[key] ??
+    runtimeTranslations[defaultLocale]?.[key] ??
+    runtimeTranslations.en?.[key] ??
+    []
+  return Array.isArray(translation) ? translation : []
 }

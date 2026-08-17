@@ -3,7 +3,9 @@ import { Hero } from '@/components/hero'
 import { About } from '@/components/about'
 import { Gallery } from '@/components/gallery'
 import { Amenities } from '@/components/amenities'
+import { Explore } from '@/components/explore'
 import { StaySection } from '@/components/stay-section'
+import { Services } from '@/components/services'
 import { Reviews } from '@/components/reviews'
 import { Location } from '@/components/location'
 import { BookingForm } from '@/components/booking-form'
@@ -28,10 +30,12 @@ export default async function LocalePage({
    <main>
     <Hero locale={safeLocale} />
     <About locale={safeLocale} />
-    <Gallery locale={safeLocale} />
-    <Amenities locale={safeLocale} />
-    <StaySection locale={safeLocale} />
-    <Reviews locale={safeLocale} />
+     <Gallery locale={safeLocale} />
+     <StaySection locale={safeLocale} />
+     <Services locale={safeLocale} />
+     <Amenities locale={safeLocale} />
+     <Explore locale={safeLocale} />
+     <Reviews locale={safeLocale} />
     <Location locale={safeLocale} />
     <BookingForm locale={safeLocale} />
    </main>

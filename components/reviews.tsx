@@ -34,7 +34,7 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
      </div>
     </div>
 
-    <div className="mt-12 -mx-5 overflow-x-auto px-5 sm:-mx-0 sm:px-0">
+    <div className="mt-12 -mx-5 overflow-x-auto px-5 sm:-mx-0 sm:px-0 scrollbar-accent">
      <div className="flex gap-5 min-w-max pb-3">
       {REVIEWS.map((review) => {
        const source = REVIEW_SOURCES[review.source]
