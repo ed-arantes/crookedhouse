@@ -47,6 +47,7 @@ export function t(
     runtimeTranslations.en?.[key] ??
     key
 
+  if (Array.isArray(translation)) return key
   return replacePlaceholders(translation, vars)
 }
 
