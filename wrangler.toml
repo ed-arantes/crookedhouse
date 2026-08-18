@@ -4,4 +4,4 @@ pages_build_output_dir = "out"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "replace_with_your_kv_namespace_id"
+id = "c03990d76fb4452d9d410847639c93e2"
