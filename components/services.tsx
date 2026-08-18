@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { t, type Locale } from '@/lib/i18n'
-import { Highlight } from '@/components/highlight'
+import { RichText } from '@/components/rich-text'
 
 export function Services({ locale = 'en' }: { locale?: Locale }) {
  return (
@@ -33,16 +33,7 @@ export function Services({ locale = 'en' }: { locale?: Locale }) {
        {t(locale, 'services.headline')}
       </h2>
       <p className="type-body mt-6 text-pretty">
-       <Highlight
-        text={t(locale, 'services.body')}
-        phrases={[
-         'parcheggio dedicato direttamente in struttura.',
-         'colazioni e pasti fatti con cura,',
-         'qualifica di Pasticcere presso l\'Accademia Italiana di Milano,',
-         'S.A.B.',
-         'H.A.C.C.P. della Regione Lombardia.',
-        ]}
-       />
+       <RichText text={t(locale, 'services.body')} />
       </p>
      </div>
     </div>

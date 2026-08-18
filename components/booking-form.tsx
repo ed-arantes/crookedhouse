@@ -10,7 +10,7 @@ import { formatLong, formatCurrency } from '@/lib/booking'
 import { t, type Locale } from '@/lib/i18n'
 
 export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
- const { checkIn, checkOut, guests, nights, price, setRange, setGuests } =
+ const { checkIn, checkOut, guests, nights, price, unavailableDates, setRange, setGuests } =
   useBooking()
  const [isLoadingPayment, setIsLoadingPayment] = useState(false)
 
@@ -134,6 +134,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
              checkOut={checkOut}
              onChange={setRange}
              locale={locale}
+             disabledDates={unavailableDates}
             />
            )}
           </Popover>

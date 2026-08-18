@@ -13,12 +13,20 @@ import {
   startOfDay,
 } from '@/lib/booking'
 
+function toISO(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 type RangeCalendarProps = {
   checkIn: Date | null
   checkOut: Date | null
   onChange: (checkIn: Date | null, checkOut: Date | null) => void
   months?: number
   locale?: Locale
+  disabledDates?: Set<string>
 }
 
 function MonthView({
@@ -28,6 +36,7 @@ function MonthView({
   today,
   onSelect,
   locale,
+  disabledDates,
 }: {
   viewDate: Date
   checkIn: Date | null
@@ -35,6 +44,7 @@ function MonthView({
   today: Date
   onSelect: (day: Date) => void
   locale: Locale
+  disabledDates?: Set<string>
 }) {
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
@@ -60,7 +70,7 @@ function MonthView({
         ))}
         {cells.map((day, i) => {
           if (!day) return <div key={`empty-${i}`} aria-hidden="true" />
-          const disabled = isBefore(day, today)
+          const disabled = isBefore(day, today) || (disabledDates?.has(toISO(day)) ?? false)
           const isStart = isSameDay(day, checkIn)
           const isEnd = isSameDay(day, checkOut)
           const inRange = isBetween(day, checkIn, checkOut)
@@ -106,6 +116,7 @@ export function RangeCalendar({
   onChange,
   months = 1,
   locale = 'en',
+  disabledDates,
 }: RangeCalendarProps) {
   const today = startOfDay(new Date())
   const [viewDate, setViewDate] = useState<Date>(checkIn ?? today)
@@ -158,6 +169,7 @@ export function RangeCalendar({
             today={today}
             onSelect={handleSelect}
             locale={locale}
+            disabledDates={disabledDates}
           />
         ))}
       </div>

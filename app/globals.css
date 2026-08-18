@@ -175,7 +175,7 @@
 
 @layer components {
  .type-display {
-  font-size: clamp(2.65rem, 5vw, 4.35rem);
+  font-size: clamp(2.4rem, 4vw, 3.7rem);
   line-height: 1.02;
   letter-spacing: -0.06em;
  }

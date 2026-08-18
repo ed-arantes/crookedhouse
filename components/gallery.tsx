@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { t, type Locale } from '@/lib/i18n'
-import { Highlight } from '@/components/highlight'
 
 const PHOTOS = [
- { src: '/images/suite-bedroom.png', alt: 'Bedroom with gold iron bed and wood-beamed ceiling', span: 'md:col-span-2 md:row-span-2' },
- { src: '/images/terrace-pool.png', alt: 'Private garden terrace with mountain views', span: '' },
- { src: '/images/bathroom.png', alt: 'Modern bathroom with glass walk-in shower', span: '' },
- { src: '/images/breakfast.png', alt: 'Fully equipped kitchen with welcome basket', span: '' },
- { src: '/images/lounge.png', alt: 'Living room with linen sofa and smart TV', span: 'col-span-2 md:col-span-1' },
+ { src: '/images/suite-bedroom.png', alt: 'Bedroom with gold iron bed and wood-beamed ceiling' },
+ { src: '/images/lounge.png', alt: 'Living room with linen sofa and smart TV' },
+ { src: '/images/bathroom.png', alt: 'Modern bathroom with glass walk-in shower' },
+ { src: '/images/breakfast.png', alt: 'Fully equipped kitchen with welcome basket' },
+ { src: '/images/terrace-pool.png', alt: 'Private garden terrace with mountain views' },
+ { src: '/images/garden.png', alt: 'Terraced garden with mountain views' },
+ { src: '/images/hero-villa.webp', alt: 'Crooked House nestled in the hills above Lake Como' },
+ { src: '/images/village.png', alt: 'The historic village of Naggio among the mountains' },
 ]
 
 export function Gallery({ locale = 'en' }: { locale?: Locale }) {
@@ -40,47 +41,31 @@ export function Gallery({ locale = 'en' }: { locale?: Locale }) {
  }, [active, close, prev, next])
 
  return (
-  <section id="gallery" className="bg-secondary/60 py-20 md:py-28">
-   <div className="mx-auto max-w-7xl px-5 md:px-8">
-    <div className="mb-8 flex flex-col gap-3 md:mb-10">
-    <div>
-     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
-      {t(locale, 'gallery.headline')}
-     </h2>
-    </div>
-    <p className="type-body text-pretty text-muted-foreground">
-     <Highlight
-      text={t(locale, 'gallery.body')}
-      phrases={[
-       { phrase: 'Crooked House', className: 'font-serif text-accent' },
-       'ingresso privato, soggiorno accogliente, cucina completamente attrezzata e un giardino privato',
-      ]}
-     />
-    </p>
+  <section id="stay" className="mx-auto max-w-7xl px-5 pb-20 pt-10 md:px-8 md:pb-28 md:pt-16">
+   <div className="max-w-2xl">
+    <h2 className="type-heading text-balance font-serif font-medium text-foreground">
+     {t(locale, 'stay.headline')}
+    </h2>
    </div>
 
-   <div className="grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4 md:gap-4">
+   <div className="mt-8 flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:auto-rows-[220px] md:grid-cols-4 md:gap-4 md:overflow-visible md:pb-0">
     {PHOTOS.map((photo, i) => (
      <button
       key={photo.src}
       type="button"
       onClick={() => setActive(i)}
-      className={cn(
-       'group relative overflow-hidden rounded-2xl',
-       photo.span,
-      )}
+      className="group relative aspect-[3/4] w-[70vw] shrink-0 overflow-hidden rounded-2xl snap-center md:aspect-auto md:w-auto md:h-auto"
      >
       <Image
-       src={photo.src || '/placeholder.svg'}
+       src={photo.src}
        alt={photo.alt}
        fill
-       sizes="(max-width: 768px) 50vw, 25vw"
+       sizes="(max-width: 768px) 70vw, 25vw"
        className="object-cover"
       />
       <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
      </button>
-     ))}
-    </div>
+    ))}
    </div>
 
    {active !== null && (
@@ -114,7 +99,7 @@ export function Gallery({ locale = 'en' }: { locale?: Locale }) {
       onClick={(e) => e.stopPropagation()}
      >
       <Image
-       src={PHOTOS[active].src || '/placeholder.svg'}
+       src={PHOTOS[active].src}
        alt={PHOTOS[active].alt}
        fill
        sizes="100vw"

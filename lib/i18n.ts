@@ -18,6 +18,16 @@ const runtimeTranslations: Record<Locale, TranslationDictionary> = {
   es: esLocale,
 }
 
+const contentOverrides: Record<string, TranslationDictionary> = {}
+
+export function setContentOverrides(locale: string, overrides: TranslationDictionary) {
+  contentOverrides[locale] = overrides
+}
+
+export function getContentOverrides(locale: string): TranslationDictionary {
+  return contentOverrides[locale] ?? {}
+}
+
 export function getLocaleFromPathname(pathname: string): Locale {
   const match = pathname.match(/^\/([a-z]{2})(?:\/|$)/)
   const locale = match?.[1] as Locale | undefined
@@ -41,7 +51,8 @@ export function t(
   vars?: Record<string, string | number>,
 ): string {
   const activeLocale = locale && locales.includes(locale) ? locale : defaultLocale
-  const translation =
+  const override = contentOverrides[activeLocale]?.[key]
+  const translation = (typeof override === 'string' ? override : undefined) ??
     runtimeTranslations[activeLocale]?.[key] ??
     runtimeTranslations[defaultLocale]?.[key] ??
     runtimeTranslations.en?.[key] ??
@@ -56,6 +67,9 @@ export function tArray(
   key: TranslationKey,
 ): string[] {
   const activeLocale = locale && locales.includes(locale) ? locale : defaultLocale
+  const override = contentOverrides[activeLocale]?.[key]
+  if (Array.isArray(override)) return override
+
   const translation =
     runtimeTranslations[activeLocale]?.[key] ??
     runtimeTranslations[defaultLocale]?.[key] ??

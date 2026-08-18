@@ -30,7 +30,6 @@ export type Review = {
  name: string
  location: string
  text: string
- initial: string
  rating?: number
  source: ReviewSource
 }

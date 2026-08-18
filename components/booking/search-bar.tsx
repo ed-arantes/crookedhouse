@@ -49,7 +49,7 @@ const Divider = () => (
 )
 
 export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
- const { checkIn, checkOut, guests, setRange, setGuests } = useBooking()
+ const { checkIn, checkOut, guests, unavailableDates, setRange, setGuests } = useBooking()
  const [showDateToast, setShowDateToast] = useState(false)
 
  useEffect(() => {
@@ -109,13 +109,14 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
     )}
    >
     {() => (
-     <RangeCalendar
-      checkIn={checkIn}
-      checkOut={checkOut}
-      onChange={setRange}
-      locale={locale}
-      months={typeof window !== 'undefined' && window.innerWidth >= 640 ? 2 : 1}
-     />
+      <RangeCalendar
+       checkIn={checkIn}
+       checkOut={checkOut}
+       onChange={setRange}
+       locale={locale}
+       disabledDates={unavailableDates}
+       months={typeof window !== 'undefined' && window.innerWidth >= 640 ? 2 : 1}
+      />
     )}
    </Popover>
 

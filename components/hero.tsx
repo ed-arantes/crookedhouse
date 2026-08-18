@@ -26,7 +26,7 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
        count: REVIEWS.length,
       })}
      </span>
-     <h1 className="type-display mt-5 whitespace-pre-line font-serif font-medium text-background">
+      <h1 className="type-display mt-5 whitespace-pre-line font-serif font-medium text-background">
       {t(locale, 'hero.title')}
      </h1>
      <p className="type-body mx-auto mt-4 max-w-none text-justify text-pretty text-background/90">

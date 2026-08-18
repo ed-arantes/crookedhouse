@@ -18,7 +18,7 @@ import {
  type TablerIcon,
 } from '@tabler/icons-react'
 import { t, tArray, type Locale } from '@/lib/i18n'
-import { Highlight } from '@/components/highlight'
+import { RichText } from '@/components/rich-text'
 
 const ICONS: TablerIcon[] = [
  IconCooker,      // Forno
@@ -50,7 +50,7 @@ export function Amenities({ locale = 'en' }: { locale?: Locale }) {
       {t(locale, 'amenities.headline')}
      </h2>
       <p className="type-body mt-3 text-muted-foreground">
-        <Highlight text={t(locale, 'amenities.body')} phrases={[{ phrase: 'Crooked House', className: 'font-serif text-accent' }]} />
+        <RichText text={t(locale, 'amenities.body')} />
       </p>
     </div>
 

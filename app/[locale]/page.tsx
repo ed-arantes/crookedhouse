@@ -1,15 +1,16 @@
 import { SiteHeader } from '@/components/site-header'
 import { Hero } from '@/components/hero'
-import { About } from '@/components/about'
-import { Gallery } from '@/components/gallery'
+import { Apartment } from '@/components/apartment'
+import { Layout } from '@/components/layout'
 import { Amenities } from '@/components/amenities'
 import { Explore } from '@/components/explore'
-import { StaySection } from '@/components/stay-section'
+import { Gallery } from '@/components/gallery'
 import { Services } from '@/components/services'
 import { Reviews } from '@/components/reviews'
 import { Location } from '@/components/location'
 import { BookingForm } from '@/components/booking-form'
 import { SiteFooter } from '@/components/site-footer'
+import { SiteDataProvider } from '@/components/site-data-provider'
 import { getLocaleFromPathname, locales, type Locale } from '@/lib/i18n'
 
 export function generateStaticParams() {
@@ -25,13 +26,13 @@ export default async function LocalePage({
  const safeLocale = getLocaleFromPathname(`/${locale}`) as Locale
 
  return (
-  <>
+  <SiteDataProvider locale={safeLocale}>
    <SiteHeader locale={safeLocale} />
    <main>
     <Hero locale={safeLocale} />
-    <About locale={safeLocale} />
+    <Apartment locale={safeLocale} />
+     <Layout locale={safeLocale} />
      <Gallery locale={safeLocale} />
-     <StaySection locale={safeLocale} />
      <Services locale={safeLocale} />
      <Amenities locale={safeLocale} />
      <Explore locale={safeLocale} />
@@ -40,6 +41,6 @@ export default async function LocalePage({
     <BookingForm locale={safeLocale} />
    </main>
    <SiteFooter locale={safeLocale} />
-  </>
+  </SiteDataProvider>
  )
 }

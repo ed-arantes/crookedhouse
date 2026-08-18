@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -26,6 +26,8 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
 
  const [scrolled, setScrolled] = useState(false)
  const [open, setOpen] = useState(false)
+ const [loginOpen, setLoginOpen] = useState(false)
+ const loginRef = useRef<HTMLDivElement>(null)
 
  useEffect(() => {
   function onScroll() {
@@ -35,6 +37,18 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   window.addEventListener('scroll', onScroll, { passive: true })
   return () => window.removeEventListener('scroll', onScroll)
  }, [])
+
+ useEffect(() => {
+  function handleClickOutside(e: MouseEvent) {
+   if (loginRef.current && !loginRef.current.contains(e.target as Node)) {
+    setLoginOpen(false)
+   }
+  }
+  if (loginOpen) {
+   document.addEventListener('mousedown', handleClickOutside)
+   return () => document.removeEventListener('mousedown', handleClickOutside)
+  }
+ }, [loginOpen])
 
  function handleNav() {
   setOpen(false)
@@ -96,13 +110,40 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
        ))}
       </select>
      </div>
-     <a
-      href="#booking"
-      onClick={handleNav}
-      className="hidden rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 md:block"
-     >
-      {t(locale, 'nav.book')}
-     </a>
+     <div className="relative hidden md:block" ref={loginRef}>
+      <button
+       type="button"
+       onClick={() => setLoginOpen((v) => !v)}
+       className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+      >
+       {t(locale, 'nav.book')}
+      </button>
+      {loginOpen && (
+       <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-border bg-card p-5 shadow-lg">
+        <h3 className="font-serif font-medium text-foreground">
+         {t(locale, 'nav.login')}
+        </h3>
+        <form className="mt-4 flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+         <input
+          type="text"
+          placeholder={t(locale, 'nav.surname')}
+          className="rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
+         />
+         <input
+          type="email"
+          placeholder={t(locale, 'nav.email')}
+          className="rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
+         />
+         <button
+          type="submit"
+          className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+         >
+          {t(locale, 'nav.loginButton')}
+         </button>
+        </form>
+       </div>
+      )}
+     </div>
      <button
       type="button"
       onClick={() => setOpen((v) => !v)}
@@ -149,13 +190,26 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
         ))}
        </select>
       </div>
-      <a
-       href="#booking"
-       onClick={handleNav}
-       className="my-3 rounded-full bg-accent px-5 py-3 text-center text-sm font-medium text-accent-foreground"
-      >
-       {t(locale, 'nav.book')}
-      </a>
+      <div className="my-3">
+       <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+        <input
+         type="text"
+         placeholder={t(locale, 'nav.surname')}
+         className="rounded-full border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary"
+        />
+        <input
+         type="email"
+         placeholder={t(locale, 'nav.email')}
+         className="rounded-full border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary"
+        />
+        <button
+         type="submit"
+         className="rounded-full bg-accent px-5 py-3 text-sm font-medium text-accent-foreground"
+        >
+         {t(locale, 'nav.loginButton')}
+        </button>
+       </form>
+      </div>
      </nav>
     </div>
    )}

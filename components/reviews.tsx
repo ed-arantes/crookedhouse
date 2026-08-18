@@ -1,47 +1,51 @@
+'use client'
+
 import { Star } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
-import { REVIEW_SOURCES, REVIEWS, getReviewAverage } from '@/lib/reviews'
+import { REVIEW_SOURCES, getReviewAverage } from '@/lib/reviews'
+import { useSiteData } from '@/components/site-data-provider'
 
 export function Reviews({ locale = 'en' }: { locale?: Locale }) {
- return (
-  <section id="reviews" className="bg-primary pb-20 pt-14 text-primary-foreground md:pb-28 md:pt-24">
-   <div className="mx-auto max-w-7xl px-5 md:px-8">
-    <div className="flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
-     <div className="max-w-xl">
-      <h2 className="type-heading text-balance font-serif font-medium">
-       {t(locale, 'reviews.headline')}
-      </h2>
-     </div>
-     <div className="flex items-center gap-3">
-      <div className="flex">
-       {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-         key={i}
-         className="h-5 w-5 fill-accent text-accent"
-        />
-       ))}
+  const { reviews } = useSiteData()
+  return (
+   <section id="reviews" className="bg-primary pb-20 pt-14 text-primary-foreground md:pb-28 md:pt-24">
+    <div className="mx-auto max-w-7xl px-5 md:px-8">
+     <div className="flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
+      <div className="max-w-xl">
+       <h2 className="type-heading text-balance font-serif font-medium">
+        {t(locale, 'reviews.headline')}
+       </h2>
       </div>
-      <span className="text-lg">
-       <strong className="type-heading font-serif">
-        {getReviewAverage(REVIEWS).toFixed(1)}
-       </strong>{' '}
-       <span className="text-primary-foreground/70">
-        {t(locale, 'reviews.count', {
-         count: REVIEWS.length,
-        })}
+      <div className="flex items-center gap-3">
+       <div className="flex">
+        {Array.from({ length: 5 }).map((_, i) => (
+         <Star
+          key={i}
+          className="h-5 w-5 fill-accent text-accent"
+         />
+        ))}
+       </div>
+       <span className="text-lg">
+        <strong className="type-heading font-serif">
+         {getReviewAverage(reviews).toFixed(1)}
+        </strong>{' '}
+        <span className="text-primary-foreground/70">
+         {t(locale, 'reviews.count', {
+          count: reviews.length,
+         })}
+        </span>
        </span>
-      </span>
+      </div>
      </div>
-    </div>
 
-    <div className="mt-12 -mx-5 overflow-x-auto px-5 sm:-mx-0 sm:px-0 scrollbar-accent">
-     <div className="flex gap-5 min-w-max pb-3">
-      {REVIEWS.map((review) => {
-       const source = REVIEW_SOURCES[review.source]
+     <div className="mt-12 -mx-5 overflow-x-auto px-5 sm:-mx-0 sm:px-0 scrollbar-accent">
+      <div className="flex gap-5 min-w-max pb-3">
+       {reviews.map((review, index) => {
+        const source = REVIEW_SOURCES[review.source]
 
-       return (
+        return (
         <figure
-         key={review.name}
+         key={`${review.name}-${index}`}
          className="min-w-[20rem] w-[22rem] flex-shrink-0 flex-col rounded-2xl bg-primary-foreground/10 p-6 backdrop-blur-sm"
         >
         <div className="mb-4 flex gap-0.5">
@@ -67,7 +71,7 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
         </div>
         <figcaption className="mt-5 flex items-center gap-3">
          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent font-serif text-base text-accent-foreground">
-          {review.initial}
+          {review.name.charAt(0).toUpperCase()}
          </span>
          <span>
           <span className="block text-sm font-medium">
@@ -78,12 +82,12 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
           </span>
          </span>
         </figcaption>
-       </figure>
-      )
-     })}
+        </figure>
+       )
+       })}
+      </div>
      </div>
     </div>
-   </div>
-  </section>
- )
+   </section>
+  )
 }

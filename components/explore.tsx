@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { t, type Locale } from '@/lib/i18n'
-import { Highlight } from '@/components/highlight'
+import { RichText } from '@/components/rich-text'
 
 const PHOTOS = [
  { src: '/images/menaggio.png', alt: 'The charming town of Menaggio on Lake Como' },
@@ -32,15 +32,7 @@ export function Explore({ locale = 'en' }: { locale?: Locale }) {
       {t(locale, 'explore.headline')}
      </h2>
        <p className="type-body mt-6 text-pretty text-muted-foreground">
-        <Highlight
-         text={t(locale, 'explore.body')}
-         phrases={[
-          { phrase: 'Crooked House', className: 'font-serif text-accent' },
-          'relax, natura, sport e cultura.',
-          'Menaggio, Tremezzina, Varenna e Bellagio,',
-          'Lugano,',
-         ]}
-        />
+        <RichText text={t(locale, 'explore.body')} />
        </p>
     </div>
    </div>

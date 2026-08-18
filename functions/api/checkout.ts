@@ -6,12 +6,18 @@ import {
  type StripeCheckoutSession,
  type StripeEnv,
 } from '../_lib/stripe'
+import { kvGet, type AdminEnv } from '../_lib/admin'
+import { parseICalDates } from '../../lib/ical-parser'
 
 const MAX_GUESTS = 4
+const BLOCKED_DATES_KEY = 'blocked_dates'
+const ICAL_URL_KEY = 'ical_url'
+
+type BlockedDate = { date: string; reason?: string }
 
 type PagesContext = {
  request: Request
- env: StripeEnv
+ env: StripeEnv & AdminEnv
 }
 
 function parseDate(value: unknown): Date | null {
@@ -38,7 +44,30 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
    return json({ error: 'Invalid booking details' }, 400)
   }
 
+  // Check availability: blocked dates + iCal
+  const blocked = await kvGet<BlockedDate[]>(env.KV, BLOCKED_DATES_KEY, [])
+  const blockedSet = new Set(blocked.map((d) => d.date))
+  const icalUrl = await kvGet<string>(env.KV, ICAL_URL_KEY, '')
+  if (icalUrl) {
+   try {
+    const res = await fetch(icalUrl, { signal: AbortSignal.timeout(8000) })
+    if (res.ok) {
+     for (const d of parseICalDates(await res.text())) blockedSet.add(d)
+    }
+   } catch { /* proceed with manual blocks only */ }
+  }
+
+  // Generate every night of the stay and check against unavailable dates
   const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
+  let cursor = new Date(start)
+  for (let i = 0; i < nights; i++) {
+   const iso = cursor.toISOString().slice(0, 10)
+   if (blockedSet.has(iso)) {
+    return json({ error: 'Selected dates are no longer available' }, 409)
+   }
+   cursor.setDate(cursor.getDate() + 1)
+  }
+
   const subtotal = nights * NIGHTLY_RATE
   const councilTax = nights * guestCount * COUNCIL_TAX_PER_PERSON_PER_NIGHT
   const total = subtotal + councilTax

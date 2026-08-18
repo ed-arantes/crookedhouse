@@ -1,8 +1,8 @@
 import Image from 'next/image'
 import { t, type Locale } from '@/lib/i18n'
-import { Highlight } from '@/components/highlight'
+import { RichText } from '@/components/rich-text'
 
-export function About({ locale = 'en' }: { locale?: Locale }) {
+export function Apartment({ locale = 'en' }: { locale?: Locale }) {
   return (
     <section id="about" className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
       <div className="grid gap-12 md:grid-cols-2 md:gap-16">
@@ -14,10 +14,7 @@ export function About({ locale = 'en' }: { locale?: Locale }) {
             {t(locale, 'about.p1')}
           </p>
           <p className="type-body mt-4 text-pretty text-muted-foreground">
-            <Highlight
-              text={t(locale, 'about.p2')}
-              phrases={['Naggio', 'Lago di Como e del Lago di Lugano']}
-            />
+            <RichText text={t(locale, 'about.p2')} />
           </p>
         </div>
 
