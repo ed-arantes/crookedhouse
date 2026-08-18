@@ -496,7 +496,7 @@ function BoldTextarea({
 }
 
 function ContentTab() {
-  const [content, setContent] = useState<Record<string, { overrides: Record<string, string | string[]>; base: Record<string, string | string[]> }>>({})
+  const [content, setContent] = useState<Record<string, Record<string, string | string[]>>>({})
   const [loading, setLoading] = useState(true)
   const [activeLocale, setActiveLocale] = useState('it')
   const [saving, setSaving] = useState(false)
@@ -507,15 +507,12 @@ function ContentTab() {
     fetchAllContent().then((c) => { setContent(c); setLoading(false) }).catch(() => setLoading(false))
   }, [])
 
-  const current = content[activeLocale]
-  const merged: Record<string, string | string[]> = { ...(current?.base ?? {}), ...(current?.overrides ?? {}) }
+  const current: Record<string, string | string[]> = content[activeLocale] ?? {}
 
   function updateOverride(key: string, value: string) {
     setContent((prev) => {
       const copy = { ...prev }
-      const localeData = copy[activeLocale] ? { ...copy[activeLocale] } : { overrides: {}, base: {} }
-      localeData.overrides = { ...localeData.overrides, [key]: value }
-      copy[activeLocale] = localeData
+      copy[activeLocale] = { ...copy[activeLocale], [key]: value }
       return copy
     })
     setDirty(true)
@@ -532,8 +529,7 @@ function ContentTab() {
 
   async function handleSave() {
     setSaving(true)
-    const overrides = content[activeLocale]?.overrides ?? {}
-    await saveContent(activeLocale, overrides)
+    await saveContent(activeLocale, current)
     setSaving(false)
     setDirty(false)
   }
@@ -567,7 +563,6 @@ function ContentTab() {
       <div className="space-y-2">
         {CONTENT_SECTIONS.map((section) => {
           const isOpen = openSections.has(section.label)
-          const overriddenCount = section.keys.filter((k) => k in (current?.overrides ?? {})).length
 
           return (
             <div key={section.label} className="rounded-xl border border-border bg-card overflow-hidden">
@@ -578,11 +573,6 @@ function ContentTab() {
               >
                 <span className="flex items-center gap-2">
                   {section.label}
-                  {overriddenCount > 0 && (
-                    <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] text-accent">
-                      {overriddenCount} personalizzato{overriddenCount > 1 ? 'i' : ''}
-                    </span>
-                  )}
                 </span>
                 <span className="text-muted-foreground text-xs">{isOpen ? '−' : '+'}</span>
               </button>
@@ -590,17 +580,15 @@ function ContentTab() {
               {isOpen && (
                 <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
                   {section.keys.map((key) => {
-                    const value = merged[key]
+                    const value = current[key]
                     if (value === undefined) return null
-                    const isOverridden = key in (current?.overrides ?? {})
                     const label = key.split('.').pop() ?? key
 
                     return (
-                      <div key={key} className={`rounded-lg border p-3 ${isOverridden ? 'border-accent/40 bg-accent/5' : 'border-border bg-background/50'}`}>
+                      <div key={key} className="rounded-lg border border-border bg-background/50 p-3">
                         <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
                           {label}
                           <span className="text-[10px] text-muted-foreground/50">{key}</span>
-                          {isOverridden && <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] text-accent">personalizzato</span>}
                         </label>
                         {Array.isArray(value) ? (
                           <BoldTextarea

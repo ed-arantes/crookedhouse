@@ -105,7 +105,7 @@ export function removeBlockedDate(date: string): Promise<{ ok: boolean }> {
 }
 
 export function fetchAllContent(): Promise<
-  Record<string, { overrides: Record<string, string | string[]>; base: Record<string, string | string[]> }>
+  Record<string, Record<string, string | string[]>>
 > {
   return adminFetch('/api/admin/content')
 }

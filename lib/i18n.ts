@@ -1,22 +1,8 @@
-import deLocale from '@/translations/de.json'
-import enLocale from '@/translations/en.json'
-import esLocale from '@/translations/es.json'
-import frLocale from '@/translations/fr.json'
-import itLocale from '@/translations/it.json'
-
 export const defaultLocale = 'it' as const
 export const locales = ['it', 'en', 'fr', 'de', 'es'] as const
 export type Locale = (typeof locales)[number]
 export type TranslationDictionary = Record<string, string | string[]>
 export type TranslationKey = string
-
-const runtimeTranslations: Record<Locale, TranslationDictionary> = {
-  it: itLocale,
-  en: enLocale,
-  fr: frLocale,
-  de: deLocale,
-  es: esLocale,
-}
 
 const contentOverrides: Record<string, TranslationDictionary> = {}
 let version = 0
@@ -66,11 +52,10 @@ export function t(
   vars?: Record<string, string | number>,
 ): string {
   const activeLocale = locale && locales.includes(locale) ? locale : defaultLocale
-  const override = contentOverrides[activeLocale]?.[key]
-  const translation = (typeof override === 'string' ? override : undefined) ??
-    runtimeTranslations[activeLocale]?.[key] ??
-    runtimeTranslations[defaultLocale]?.[key] ??
-    runtimeTranslations.en?.[key] ??
+  const translation =
+    contentOverrides[activeLocale]?.[key] ??
+    contentOverrides[defaultLocale]?.[key] ??
+    contentOverrides.en?.[key] ??
     key
 
   if (Array.isArray(translation)) return key
@@ -86,9 +71,8 @@ export function tArray(
   if (Array.isArray(override)) return override
 
   const translation =
-    runtimeTranslations[activeLocale]?.[key] ??
-    runtimeTranslations[defaultLocale]?.[key] ??
-    runtimeTranslations.en?.[key] ??
+    contentOverrides[defaultLocale]?.[key] ??
+    contentOverrides.en?.[key] ??
     []
   return Array.isArray(translation) ? translation : []
 }
