@@ -19,9 +19,24 @@ const runtimeTranslations: Record<Locale, TranslationDictionary> = {
 }
 
 const contentOverrides: Record<string, TranslationDictionary> = {}
+let version = 0
+let listeners: Array<() => void> = []
+
+export function subscribeToContentChanges(listener: () => void): () => void {
+  listeners.push(listener)
+  return () => {
+    listeners = listeners.filter((l) => l !== listener)
+  }
+}
+
+export function getContentVersion(): number {
+  return version
+}
 
 export function setContentOverrides(locale: string, overrides: TranslationDictionary) {
   contentOverrides[locale] = overrides
+  version++
+  for (const l of listeners) l()
 }
 
 export function getContentOverrides(locale: string): TranslationDictionary {

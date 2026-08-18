@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { setContentOverrides, type Locale } from '@/lib/i18n'
+import { useContentVersion } from '@/hooks/use-content-version'
 import type { Review } from '@/lib/reviews'
 import reviewsStatic from '@/lib/reviews.json'
 import type { ReviewSource } from '@/lib/reviews'
@@ -15,6 +16,11 @@ const SiteDataContext = createContext<SiteData>({ reviews: [], loaded: false })
 
 export function useSiteData() {
   return useContext(SiteDataContext)
+}
+
+function ContentSync({ children }: { children: ReactNode }) {
+  const v = useContentVersion()
+  return <div key={`content-v${v}`}>{children}</div>
 }
 
 export function SiteDataProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
@@ -57,7 +63,7 @@ export function SiteDataProvider({ locale, children }: { locale: Locale; childre
 
   return (
     <SiteDataContext.Provider value={{ reviews, loaded }}>
-      {loaded ? <div key={`content-${locale}`}>{children}</div> : <>{children}</>}
+      <ContentSync>{children}</ContentSync>
     </SiteDataContext.Provider>
   )
 }
