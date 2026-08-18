@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { setContentOverrides, type Locale } from '@/lib/i18n'
 import type { Review } from '@/lib/reviews'
 import reviewsStatic from '@/lib/reviews.json'
@@ -17,7 +17,7 @@ export function useSiteData() {
   return useContext(SiteDataContext)
 }
 
-export function SiteDataProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+export function SiteDataProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loaded, setLoaded] = useState(false)
 
@@ -57,7 +57,7 @@ export function SiteDataProvider({ locale, children }: { locale: Locale; childre
 
   return (
     <SiteDataContext.Provider value={{ reviews, loaded }}>
-      {children}
+      {loaded ? <div key={`content-${locale}`}>{children}</div> : <>{children}</>}
     </SiteDataContext.Provider>
   )
 }
