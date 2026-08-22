@@ -21,6 +21,8 @@ import {
   updateImage,
   deleteImage,
   reorderImages,
+  fetchR2BaseUrl,
+  saveR2BaseUrl,
   type Review,
   type BlockedDate,
   type AdminImage,
@@ -86,6 +88,58 @@ export default function AdminPage() {
             Accedi
           </button>
         </form>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-5xl px-5 py-8 md:px-8">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="type-heading font-serif text-2xl font-medium text-foreground">
+            Pannello Admin
+          </h1>
+          {usesRemoteApi && (
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+              Online / Produzione
+            </span>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-card"
+          >
+            <LogOut className="h-4 w-4" /> Esci
+          </button>
+        </div>
+
+        <div className="mb-6 flex gap-1 overflow-x-auto border-b border-border">
+          {([
+            ['blocked', <Calendar key="b" className="h-4 w-4" />, 'Calendario'],
+            ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
+            ['reviews', <MessageSquareQuote key="r" className="h-4 w-4" />, 'Recensioni'],
+            ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
+            ['images', <ImageIcon key="m" className="h-4 w-4" />, 'Immagini'],
+          ] as const).map(([key, icon, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                tab === key
+                  ? 'border-accent text-accent'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {icon} {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'reviews' && <ReviewsTab />}
+        {tab === 'blocked' && <BlockedDatesTab />}
+        {tab === 'content' && <ContentTab />}
+        {tab === 'ical' && <IcalTab />}
+        {tab === 'images' && <ImagesTab />}
+      </div>
     </div>
   )
 }
@@ -119,10 +173,17 @@ function ImagesTab() {
   const [pendingSpan, setPendingSpan] = useState('')
   const [editingAlt, setEditingAlt] = useState<string | null>(null)
   const [altValue, setAltValue] = useState('')
+  const [r2BaseUrl, setR2BaseUrl] = useState('')
+  const [r2Saving, setR2Saving] = useState(false)
+  const [r2Status, setR2Status] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setImages(await fetchAllImages()) } catch { /* */ }
+    try {
+      const [imgs, settings] = await Promise.all([fetchAllImages(), fetchR2BaseUrl()])
+      setImages(imgs)
+      setR2BaseUrl(settings.url)
+    } catch { /* */ }
     setLoading(false)
   }, [])
 
@@ -203,11 +264,47 @@ function ImagesTab() {
     load()
   }
 
+  async function handleSaveR2Url() {
+    setR2Saving(true)
+    setR2Status('')
+    try {
+      await saveR2BaseUrl(r2BaseUrl.replace(/\/+$/, ''))
+      setR2Status('URL salvato.')
+    } catch {
+      setR2Status('Errore nel salvataggio.')
+    }
+    setR2Saving(false)
+  }
+
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
 
   const g = grouped()
 
   return (
+    <>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h3 className="text-sm font-medium text-foreground mb-2">URL base immagini (R2)</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          Inserisci il tuo dominio custom R2 (es. <code>https://img.tuodominio.it</code>) oppure il URL R2.dev pubblico (es. <code>https://pub-xxxxx.r2.dev</code>).
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={r2BaseUrl}
+            onChange={(e) => setR2BaseUrl(e.target.value)}
+            placeholder="https://img.tuodominio.it"
+            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          <button
+            onClick={handleSaveR2Url}
+            disabled={r2Saving || !r2BaseUrl}
+            className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" /> {r2Saving ? '...' : 'Salva'}
+          </button>
+        </div>
+        {r2Status && <p className="text-xs text-muted-foreground mt-2">{r2Status}</p>}
+      </div>
     <div className="space-y-6">
       <input
         ref={fileInputRef}
@@ -335,58 +432,7 @@ function ImagesTab() {
         </div>
       ))}
     </div>
-  )
-}
-
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-5 py-8 md:px-8">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="type-heading font-serif text-2xl font-medium text-foreground">
-            Pannello Admin
-          </h1>
-          {usesRemoteApi && (
-            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-              Online / Produzione
-            </span>
-          )}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-card"
-          >
-            <LogOut className="h-4 w-4" /> Esci
-          </button>
-        </div>
-
-        <div className="mb-6 flex gap-1 overflow-x-auto border-b border-border">
-          {([
-            ['blocked', <Calendar key="b" className="h-4 w-4" />, 'Calendario'],
-            ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
-            ['reviews', <MessageSquareQuote key="r" className="h-4 w-4" />, 'Recensioni'],
-            ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
-            ['images', <ImageIcon key="m" className="h-4 w-4" />, 'Immagini'],
-          ] as const).map(([key, icon, label]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-                tab === key
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {icon} {label}
-            </button>
-          ))}
-        </div>
-
-        {tab === 'reviews' && <ReviewsTab />}
-        {tab === 'blocked' && <BlockedDatesTab />}
-        {tab === 'content' && <ContentTab />}
-        {tab === 'ical' && <IcalTab />}
-        {tab === 'images' && <ImagesTab />}
-      </div>
-    </div>
+    </>
   )
 }
 

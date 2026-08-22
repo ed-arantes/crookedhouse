@@ -180,4 +180,16 @@ export function reorderImages(section: string, orderedIds: string[]): Promise<Ad
   })
 }
 
+export function fetchR2BaseUrl(): Promise<{ url: string }> {
+  return adminFetch('/api/admin/images/settings')
+}
+
+export function saveR2BaseUrl(url: string): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/images/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+}
+
 import { apiUrl } from '@/lib/api-url'

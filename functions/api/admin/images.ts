@@ -7,6 +7,8 @@ import {
   d1UpdateImage,
   d1DeleteImage,
   d1ReorderImages,
+  d1GetSetting,
+  d1SetSetting,
   type AdminEnv,
 } from '../../_lib/admin'
 import { IMAGE_SECTIONS, type ImageSection } from '../../../lib/images'
@@ -72,12 +74,10 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     httpMetadata: { contentType: file.type },
   })
 
-  // Build public URL — use R2.dev public URL
-  // The bucket must have public access enabled via Cloudflare dashboard
-  // Public URL format: https://pub-<hash>.r2.dev/<key>
-  // Alternatively, set up a custom domain
-  const bucketName = 'crookedhouse-images'
-  const url = `https://${bucketName}.r2.dev/${key}`
+  // Build public URL from D1 setting (set in admin panel)
+  let baseUrl = await d1GetSetting(env.DB, 'r2_base_url', 'https://images.crookedhouse.it')
+  baseUrl = baseUrl.replace(/\/+$/, '')
+  const url = `${baseUrl}/${key}`
 
   // Get next sort order for this section
   const existing = await d1ListImagesBySection(env.DB, section)
