@@ -285,14 +285,14 @@ function ImagesTab() {
       <div className="rounded-xl border border-border bg-card p-4">
         <h3 className="text-sm font-medium text-foreground mb-2">URL base immagini (R2)</h3>
         <p className="text-xs text-muted-foreground mb-3">
-          Inserisci il tuo dominio custom R2 (es. <code>https://img.tuodominio.it</code>) oppure il URL R2.dev pubblico (es. <code>https://pub-xxxxx.r2.dev</code>).
+          Inserisci il tuo sottodominio R2 (es. <code>https://images.crookedhouse.it</code>).
         </p>
         <div className="flex gap-2">
           <input
             type="url"
             value={r2BaseUrl}
             onChange={(e) => setR2BaseUrl(e.target.value)}
-            placeholder="https://img.tuodominio.it"
+            placeholder="https://images.crookedhouse.it"
             className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
           />
           <button
@@ -933,7 +933,7 @@ function IcalTab() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Inserisci l&apos;URL del calendario iCal dalla tua piattaforma (Airbnb, Booking.com, etc.) per visualizzare le prenotazioni esistenti.
+        Inserisci l&apos;URL del calendario iCal dalla tua piattaforma per visualizzare le prenotazioni esistenti.
       </p>
       <div className="flex gap-2">
         <input

@@ -7,5 +7,5 @@ export type ImageItem = {
   sort_order: number
 }
 
-export const IMAGE_SECTIONS = ['hero', 'gallery', 'apartment', 'layout', 'services', 'location', 'explore'] as const
+export const IMAGE_SECTIONS = ['hero', 'apartment', 'layout', 'gallery', 'services', 'explore', 'location'] as const
 export type ImageSection = (typeof IMAGE_SECTIONS)[number]
