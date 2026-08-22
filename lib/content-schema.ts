@@ -1,7 +1,7 @@
 export const CONTENT_SECTIONS = [
   { label: 'Navigazione', keys: ['nav.apartment', 'nav.gallery', 'nav.amenities', 'nav.reviews', 'nav.location', 'nav.book', 'nav.login', 'nav.surname', 'nav.email', 'nav.loginButton'] },
   { label: 'Hero', keys: ['hero.badge', 'hero.title', 'hero.description'] },
-  { label: 'Appartamento', keys: ['about.headline', 'about.p1', 'about.p2'] },
+  { label: 'Appartamento', keys: ['about.headline', 'about.p1', 'about.p2', 'about.p3'] },
   { label: 'Layout', keys: ['gallery.headline', 'gallery.body'] },
   { label: 'Galleria', keys: ['stay.headline'] },
   { label: 'Servizi', keys: ['services.headline', 'services.body'] },

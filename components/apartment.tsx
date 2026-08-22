@@ -19,9 +19,12 @@ export function Apartment({ locale = 'en' }: { locale?: Locale }) {
       <p className="type-body mt-6 text-pretty text-muted-foreground">
        <RichText text={t(locale, 'about.p1')} />
       </p>
-     <p className="type-body mt-4 text-pretty text-muted-foreground">
-      <RichText text={t(locale, 'about.p2')} />
-     </p>
+      <p className="type-body mt-4 text-pretty text-muted-foreground">
+       <RichText text={t(locale, 'about.p2')} />
+      </p>
+      <p className="type-body mt-4 text-pretty text-muted-foreground">
+       <RichText text={t(locale, 'about.p3')} />
+      </p>
     </div>
 
     <div className="grid grid-cols-2 gap-4">
