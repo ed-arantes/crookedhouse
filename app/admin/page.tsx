@@ -29,14 +29,14 @@ import {
   type AdminImage,
   type AdminBooking,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3 } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
-import { BookingsTab, AnalyticsTab } from './admin-tabs'
+import { BookingsTab, AnalyticsTab, PricingTab } from './admin-tabs'
 
-type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'analytics'
+type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics'
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -118,12 +118,13 @@ export default function AdminPage() {
         <div className="mb-6 flex gap-1 overflow-x-auto border-b border-border">
           {([
             ['blocked', <Calendar key="b" className="h-4 w-4" />, 'Calendario'],
-            ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
             ['bookings', <CalendarCheck key="k" className="h-4 w-4" />, 'Prenotazioni'],
+            ['pricing', <DollarSign key="p" className="h-4 w-4" />, 'Prezzi'],
             ['reviews', <MessageSquareQuote key="r" className="h-4 w-4" />, 'Recensioni'],
             ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
             ['images', <ImageIcon key="m" className="h-4 w-4" />, 'Immagini'],
             ['analytics', <BarChart3 key="a" className="h-4 w-4" />, 'Analisi'],
+            ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
           ] as const).map(([key, icon, label]) => (
             <button
               key={key}
@@ -145,6 +146,7 @@ export default function AdminPage() {
         {tab === 'ical' && <IcalTab />}
         {tab === 'images' && <ImagesTab />}
         {tab === 'bookings' && <BookingsTab />}
+        {tab === 'pricing' && <PricingTab />}
         {tab === 'analytics' && <AnalyticsTab />}
       </div>
     </div>

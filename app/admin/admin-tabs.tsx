@@ -6,10 +6,15 @@ import {
   updateBookingStatus,
   deleteBooking,
   fetchAnalytics,
+  fetchPricingRules,
+  createPricingRule,
+  updatePricingRule,
+  deletePricingRule,
   type AdminBooking,
   type AnalyticsData,
+  type PricingRule,
 } from '@/lib/admin-api'
-import { Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Save } from 'lucide-react'
 
 export function BookingsTab() {
   const [bookings, setBookings] = useState<AdminBooking[]>([])
@@ -248,6 +253,216 @@ export function AnalyticsTab() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+export function PricingTab() {
+  const [rules, setRules] = useState<PricingRule[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState<PricingRule | null>(null)
+  const [isAdding, setIsAdding] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try { setRules(await fetchPricingRules()) } catch { /* */ }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  async function handleSave(rule: PricingRule) {
+    setSaving(true)
+    try {
+      if (rules.find((r) => r.id === rule.id)) {
+        await updatePricingRule(rule)
+      } else {
+        await createPricingRule(rule)
+      }
+      setEditing(null)
+      setIsAdding(false)
+      load()
+    } catch { /* */ }
+    setSaving(false)
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Eliminare questa regola?')) return
+    await deletePricingRule(id)
+    load()
+  }
+
+  function formatPrice(cents: number): string {
+    return `€${(cents / 100).toFixed(2)}`
+  }
+
+  if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{rules.length} {rules.length === 1 ? 'regola' : 'regole'} di prezzo</p>
+        <button
+          onClick={() => { setIsAdding(true); setEditing(null) }}
+          className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90"
+        >
+          <Plus className="h-4 w-4" /> Aggiungi
+        </button>
+      </div>
+
+      {(isAdding || editing) && (
+        <PricingRuleForm
+          rule={editing}
+          onSave={handleSave}
+          onCancel={() => { setEditing(null); setIsAdding(false) }}
+          saving={saving}
+        />
+      )}
+
+      {rules.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nessuna regola di prezzo. Aggiungine una per impostare prezzi personalizzati per periodi specifici.</p>
+      ) : (
+        <div className="space-y-3">
+          {rules.map((rule) => (
+            <div key={rule.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <span>{rule.name || 'Regola senza nome'}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+                    <span>Dal: <span className="text-foreground">{rule.start_date}</span></span>
+                    <span>Al: <span className="text-foreground">{rule.end_date}</span></span>
+                    <span>Prezzo: <span className="text-foreground">{formatPrice(rule.price_per_night)}/notte</span></span>
+                    <span>Min. notti: <span className="text-foreground">{rule.min_nights}</span></span>
+                  </div>
+                  {rule.priority > 0 && (
+                    <p className="mt-1 text-xs text-muted-foreground">Priorità: {rule.priority}</p>
+                  )}
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    onClick={() => { setEditing(rule); setIsAdding(false) }}
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-muted"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(rule.id)}
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PricingRuleForm({
+  rule,
+  onSave,
+  onCancel,
+  saving,
+}: {
+  rule: PricingRule | null
+  onSave: (r: PricingRule) => void
+  onCancel: () => void
+  saving: boolean
+}) {
+  const [form, setForm] = useState({
+    name: rule?.name ?? '',
+    start_date: rule?.start_date ?? new Date().toISOString().slice(0, 10),
+    end_date: rule?.end_date ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+    price_per_night: rule?.price_per_night ?? 9500,
+    min_nights: rule?.min_nights ?? 1,
+    priority: rule?.priority ?? 0,
+  })
+
+  function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  return (
+    <div className="rounded-xl border border-accent/30 bg-card p-5 space-y-4">
+      <h3 className="font-medium text-foreground">{rule ? 'Modifica regola' : 'Nuova regola'}</h3>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <input
+          placeholder="Nome (es. Alta stagione)"
+          value={form.name}
+          onChange={(e) => update('name', e.target.value)}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+        />
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="Prezzo (centesimi)"
+            value={form.price_per_night}
+            onChange={(e) => update('price_per_night', Number(e.target.value))}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          <span className="text-xs text-muted-foreground">€{(form.price_per_night / 100).toFixed(2)}/n</span>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Dal</label>
+          <input
+            type="date"
+            value={form.start_date}
+            onChange={(e) => update('start_date', e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Al</label>
+          <input
+            type="date"
+            value={form.end_date}
+            onChange={(e) => update('end_date', e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Notti minime</label>
+          <input
+            type="number"
+            min="1"
+            value={form.min_nights}
+            onChange={(e) => update('min_nights', Number(e.target.value))}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Priorità (più alto = vince in caso di sovrapposizione)</label>
+          <input
+            type="number"
+            min="0"
+            value={form.priority}
+            onChange={(e) => update('priority', Number(e.target.value))}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => onSave({ id: rule?.id ?? '', ...form })}
+          disabled={saving}
+          className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" /> {saving ? 'Salvataggio...' : 'Salva'}
+        </button>
+        <button onClick={onCancel} className="rounded-xl border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted">
+          Annulla
+        </button>
+      </div>
     </div>
   )
 }

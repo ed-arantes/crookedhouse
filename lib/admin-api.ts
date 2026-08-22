@@ -247,4 +247,42 @@ export function fetchAnalytics(range = '30'): Promise<AnalyticsData> {
   return adminFetch(`/api/admin/analytics?range=${range}`)
 }
 
+// ---------------------------------------------------------------------------
+// Pricing
+// ---------------------------------------------------------------------------
+
+export type PricingRule = {
+  id: string
+  name: string
+  start_date: string
+  end_date: string
+  price_per_night: number
+  min_nights: number
+  priority: number
+}
+
+export function fetchPricingRules(): Promise<PricingRule[]> {
+  return adminFetch('/api/admin/pricing')
+}
+
+export function createPricingRule(rule: Omit<PricingRule, 'id'>): Promise<PricingRule> {
+  return adminFetch('/api/admin/pricing', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rule),
+  })
+}
+
+export function updatePricingRule(rule: PricingRule): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/pricing', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rule),
+  })
+}
+
+export function deletePricingRule(id: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/api/admin/pricing?id=${id}`, { method: 'DELETE' })
+}
+
 import { apiUrl } from '@/lib/api-url'

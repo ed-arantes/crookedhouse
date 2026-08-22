@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { nightsBetween, priceBreakdown, type PriceBreakdown } from '@/lib/booking'
+import { nightsBetween, type PriceBreakdown } from '@/lib/booking'
 import { apiUrl } from '@/lib/api-url'
 
 export type Guests = {
@@ -57,10 +57,27 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut])
   const guestCount = guests.adults + guests.children
-  const price = useMemo(
-    () => priceBreakdown(nights, guestCount),
-    [nights, guestCount],
-  )
+
+  const [price, setPrice] = useState<PriceBreakdown>({ nights: 0, subtotal: 0, councilTax: 0, total: 0 })
+
+  useEffect(() => {
+    if (nights <= 0) {
+      setPrice({ nights: 0, subtotal: 0, councilTax: 0, total: 0 })
+      return
+    }
+    const ci = checkIn?.toISOString().slice(0, 10)
+    const co = checkOut?.toISOString().slice(0, 10)
+    if (!ci || !co) return
+
+    fetch(apiUrl(`/api/public/price?check_in=${ci}&check_out=${co}&guests=${guestCount}`))
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { nights: number; subtotal: number; councilTax: number; total: number } | null) => {
+        if (data) {
+          setPrice({ nights: data.nights, subtotal: data.subtotal, councilTax: data.councilTax, total: data.total })
+        }
+      })
+      .catch(() => {})
+  }, [checkIn, checkOut, nights, guestCount])
 
   const value = useMemo<BookingState>(
     () => ({

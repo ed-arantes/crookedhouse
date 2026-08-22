@@ -13,6 +13,44 @@ import { encrypt } from '../../lib/encryption'
 const MAX_GUESTS = 4
 const ICAL_URL_KEY = 'ical_url'
 
+type PricingRule = {
+  id: string
+  name: string
+  start_date: string
+  end_date: string
+  price_per_night: number
+  min_nights: number
+  priority: number
+}
+
+async function getPricingRules(db: Record<string, unknown>): Promise<PricingRule[]> {
+  try {
+    const { results } = await (db as any)
+      .prepare('SELECT * FROM pricing_rules ORDER BY priority DESC, start_date')
+      .all()
+    return (results ?? []).map((r: any) => ({
+      id: r.id,
+      name: r.name ?? '',
+      start_date: r.start_date,
+      end_date: r.end_date,
+      price_per_night: r.price_per_night,
+      min_nights: r.min_nights ?? 1,
+      priority: r.priority ?? 0,
+    }))
+  } catch {
+    return []
+  }
+}
+
+function calculateNightlyPrice(rules: PricingRule[], dateStr: string): number {
+  for (const rule of rules) {
+    if (dateStr >= rule.start_date && dateStr <= rule.end_date) {
+      return rule.price_per_night
+    }
+  }
+  return NIGHTLY_RATE * 100 // fallback: convert to cents
+}
+
 type PagesContext = {
   request: Request
   env: StripeEnv & AdminEnv
@@ -80,16 +118,18 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
 
     // Generate every night of the stay and check against unavailable dates
     const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
+    const pricingRules = await getPricingRules(env.DB)
+    let subtotalCents = 0
     let cursor = new Date(start)
     for (let i = 0; i < nights; i++) {
       const iso = cursor.toISOString().slice(0, 10)
       if (blockedSet.has(iso)) {
         return json({ error: 'Selected dates are no longer available' }, 409)
       }
+      subtotalCents += calculateNightlyPrice(pricingRules, iso)
       cursor.setDate(cursor.getDate() + 1)
     }
-
-    const subtotal = nights * NIGHTLY_RATE
+    const subtotal = subtotalCents / 100
     const councilTax = nights * guestCount * COUNCIL_TAX_PER_PERSON_PER_NIGHT
     const total = subtotal + councilTax
     const origin = new URL(request.url).origin
