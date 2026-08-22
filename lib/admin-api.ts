@@ -129,4 +129,55 @@ export function saveIcalUrl(url: string): Promise<{ ok: boolean }> {
     body: JSON.stringify({ url }),
   })
 }
+
+// ---------------------------------------------------------------------------
+// Images
+// ---------------------------------------------------------------------------
+
+export type AdminImage = {
+  id: string
+  section: string
+  url: string
+  alt: string
+  span: string
+  sort_order: number
+}
+
+export function fetchAllImages(): Promise<AdminImage[]> {
+  return adminFetch('/api/admin/images')
+}
+
+export function uploadImage(file: File, section: string, alt: string, span?: string): Promise<AdminImage> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('section', section)
+  formData.append('alt', alt)
+  if (span) formData.append('span', span)
+
+  return adminFetch('/api/admin/images', {
+    method: 'POST',
+    body: formData,
+  })
+}
+
+export function updateImage(id: string, fields: { alt?: string; span?: string; section?: string }): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/images', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...fields }),
+  })
+}
+
+export function deleteImage(id: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/api/admin/images?id=${id}`, { method: 'DELETE' })
+}
+
+export function reorderImages(section: string, orderedIds: string[]): Promise<AdminImage[]> {
+  return adminFetch('/api/admin/images', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ section, orderedIds }),
+  })
+}
+
 import { apiUrl } from '@/lib/api-url'

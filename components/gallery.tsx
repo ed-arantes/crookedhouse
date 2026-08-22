@@ -4,29 +4,21 @@ import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
-
-const PHOTOS = [
- { src: '/images/suite-bedroom.png', alt: 'Bedroom with gold iron bed and wood-beamed ceiling' },
- { src: '/images/lounge.png', alt: 'Living room with linen sofa and smart TV' },
- { src: '/images/bathroom.png', alt: 'Modern bathroom with glass walk-in shower' },
- { src: '/images/breakfast.png', alt: 'Fully equipped kitchen with welcome basket' },
- { src: '/images/terrace-pool.png', alt: 'Private garden terrace with mountain views' },
- { src: '/images/garden.png', alt: 'Terraced garden with mountain views' },
- { src: '/images/hero-villa.webp', alt: 'Crooked House nestled in the hills above Lake Como' },
- { src: '/images/village.png', alt: 'The historic village of Naggio among the mountains' },
-]
+import { useSiteData } from '@/components/site-data-provider'
 
 export function Gallery({ locale = 'en' }: { locale?: Locale }) {
+ const { images } = useSiteData()
+ const photos = images.gallery
  const [active, setActive] = useState<number | null>(null)
 
  const close = useCallback(() => setActive(null), [])
  const prev = useCallback(
-  () => setActive((i) => (i === null ? i : (i + PHOTOS.length - 1) % PHOTOS.length)),
-  [],
+  () => setActive((i) => (i === null ? i : (i + photos.length - 1) % photos.length)),
+  [photos.length],
  )
  const next = useCallback(
-  () => setActive((i) => (i === null ? i : (i + 1) % PHOTOS.length)),
-  [],
+  () => setActive((i) => (i === null ? i : (i + 1) % photos.length)),
+  [photos.length],
  )
 
  useEffect(() => {
@@ -40,6 +32,8 @@ export function Gallery({ locale = 'en' }: { locale?: Locale }) {
   return () => document.removeEventListener('keydown', onKey)
  }, [active, close, prev, next])
 
+ if (photos.length === 0) return null
+
  return (
   <section id="stay" className="mx-auto max-w-7xl px-5 pb-20 pt-10 md:px-8 md:pb-28 md:pt-16">
    <div className="max-w-2xl">
@@ -49,15 +43,15 @@ export function Gallery({ locale = 'en' }: { locale?: Locale }) {
    </div>
 
    <div className="mt-8 flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:auto-rows-[220px] md:grid-cols-4 md:gap-4 md:overflow-visible md:pb-0">
-    {PHOTOS.map((photo, i) => (
+    {photos.map((photo, i) => (
      <button
-      key={photo.src}
+      key={photo.id}
       type="button"
       onClick={() => setActive(i)}
       className="group relative aspect-[3/4] w-[70vw] shrink-0 overflow-hidden rounded-2xl snap-center md:aspect-auto md:w-auto md:h-auto"
      >
       <Image
-       src={photo.src}
+       src={photo.url}
        alt={photo.alt}
        fill
        sizes="(max-width: 768px) 70vw, 25vw"
@@ -99,8 +93,8 @@ export function Gallery({ locale = 'en' }: { locale?: Locale }) {
       onClick={(e) => e.stopPropagation()}
      >
       <Image
-       src={PHOTOS[active].src}
-       alt={PHOTOS[active].alt}
+       src={photos[active].url}
+       alt={photos[active].alt}
        fill
        sizes="100vw"
        className="rounded-2xl object-contain"

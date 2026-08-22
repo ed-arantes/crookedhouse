@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS images (
+  id TEXT PRIMARY KEY,
+  section TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  url TEXT NOT NULL,
+  alt TEXT NOT NULL DEFAULT '',
+  span TEXT DEFAULT ''
+);

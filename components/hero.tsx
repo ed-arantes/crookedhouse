@@ -6,17 +6,30 @@ import { t, type Locale } from '@/lib/i18n'
 import { SearchBar } from './booking/search-bar'
 
 export function Hero({ locale = 'en' }: { locale?: Locale }) {
- const { reviews } = useSiteData()
+ const { reviews, images } = useSiteData()
+ const heroImg = images.hero?.[0]
+
  return (
   <section id="top" className="relative min-h-[92vh] w-full overflow-hidden">
-   <Image
-    src="/images/hero-villa.webp"
-    alt="Crooked House village apartment near Lake Como at golden hour with mountain backdrop"
-    fill
-    priority
-    sizes="100vw"
-    className="object-cover"
-   />
+   {heroImg ? (
+    <Image
+     src={heroImg.url}
+     alt={heroImg.alt || 'Crooked House village apartment near Lake Como'}
+     fill
+     priority
+     sizes="100vw"
+     className="object-cover"
+    />
+   ) : (
+    <Image
+     src="/image.webp"
+     alt="Crooked House"
+     fill
+     priority
+     sizes="100vw"
+     className="object-cover"
+    />
+   )}
    <div className="absolute inset-0 bg-gradient-to-b from-foreground/50 via-foreground/20 to-foreground/60" />
 
    <div className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-center px-5 md:px-8">

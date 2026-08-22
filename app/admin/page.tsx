@@ -16,15 +16,22 @@ import {
   saveContent,
   fetchIcalUrl,
   saveIcalUrl,
+  fetchAllImages,
+  uploadImage,
+  updateImage,
+  deleteImage,
+  reorderImages,
   type Review,
   type BlockedDate,
+  type AdminImage,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
+import { IMAGE_SECTIONS } from '@/lib/images'
 
-type Tab = 'reviews' | 'blocked' | 'content' | 'ical'
+type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images'
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -79,9 +86,257 @@ export default function AdminPage() {
             Accedi
           </button>
         </form>
-      </div>
-    )
+    </div>
+  )
+}
+
+const SECTION_LABELS: Record<string, string> = {
+  hero: 'Hero',
+  gallery: 'Galleria',
+  apartment: 'Appartamento',
+  layout: 'Layout',
+  services: 'Servizi',
+  location: 'Posizione',
+  explore: 'Esplora',
+}
+
+const SPAN_OPTIONS = [
+  { value: '', label: 'Normale' },
+  { value: 'md:col-span-2 md:row-span-2', label: '2 colonne x 2 righe' },
+  { value: 'md:col-span-2', label: '2 colonne' },
+  { value: 'col-span-2 md:col-span-1', label: '2 colonne (mobile)' },
+]
+
+function ImagesTab() {
+  const [images, setImages] = useState<AdminImage[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [dragIdx, setDragIdx] = useState<{ section: string; index: number } | null>(null)
+  const [overIdx, setOverIdx] = useState<{ section: string; index: number } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [pendingSection, setPendingSection] = useState('gallery')
+  const [pendingAlt, setPendingAlt] = useState('')
+  const [pendingSpan, setPendingSpan] = useState('')
+  const [editingAlt, setEditingAlt] = useState<string | null>(null)
+  const [altValue, setAltValue] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try { setImages(await fetchAllImages()) } catch { /* */ }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  function grouped(): Record<string, AdminImage[]> {
+    const g: Record<string, AdminImage[]> = {}
+    for (const s of IMAGE_SECTIONS) g[s] = []
+    for (const img of images) {
+      if (g[img.section]) g[img.section].push(img)
+    }
+    for (const s of Object.keys(g)) {
+      g[s].sort((a, b) => a.sort_order - b.sort_order)
+    }
+    return g
   }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      await uploadImage(file, pendingSection, pendingAlt || file.name.replace(/\.[^.]+$/, ''), pendingSpan)
+      setPendingAlt('')
+      setPendingSpan('')
+      load()
+    } catch (err) {
+      alert(`Upload fallito: ${err instanceof Error ? err.message : 'errore sconosciuto'}`)
+    }
+    setUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Eliminare questa immagine?')) return
+    await deleteImage(id)
+    load()
+  }
+
+  function handleDragStart(e: React.DragEvent, section: string, index: number) {
+    setDragIdx({ section, index })
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  function handleDragOver(e: React.DragEvent, section: string, index: number) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setOverIdx({ section, index })
+  }
+
+  async function handleDrop(e: React.DragEvent, section: string) {
+    e.preventDefault()
+    if (!dragIdx || !overIdx || dragIdx.section !== section) {
+      setDragIdx(null)
+      setOverIdx(null)
+      return
+    }
+    const g = grouped()
+    const list = [...g[section]]
+    const [moved] = list.splice(dragIdx.index, 1)
+    list.splice(overIdx.index, 0, moved)
+    setDragIdx(null)
+    setOverIdx(null)
+    await reorderImages(section, list.map((r) => r.id))
+    load()
+  }
+
+  async function handleSaveAlt(img: AdminImage) {
+    if (altValue !== img.alt) {
+      await updateImage(img.id, { alt: altValue })
+    }
+    setEditingAlt(null)
+    load()
+  }
+
+  async function handleSpanChange(img: AdminImage, span: string) {
+    await updateImage(img.id, { span })
+    load()
+  }
+
+  if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
+
+  const g = grouped()
+
+  return (
+    <div className="space-y-6">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleUpload}
+      />
+
+      {IMAGE_SECTIONS.map((section) => (
+        <div key={section} className="rounded-xl border border-border bg-card p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-foreground">{SECTION_LABELS[section] || section}</h3>
+            <div className="flex items-center gap-2">
+              <select
+                value={pendingSection === section ? pendingSection : section}
+                onChange={(e) => setPendingSection(e.target.value)}
+                className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-muted-foreground"
+              >
+                {IMAGE_SECTIONS.map((s) => (
+                  <option key={s} value={s}>{SECTION_LABELS[s] || s}</option>
+                ))}
+              </select>
+              {section === 'layout' && (
+                <select
+                  value={pendingSpan}
+                  onChange={(e) => setPendingSpan(e.target.value)}
+                  className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-muted-foreground"
+                >
+                  {SPAN_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              )}
+              <input
+                type="text"
+                value={pendingSection === section ? pendingAlt : ''}
+                onChange={(e) => { setPendingSection(section); setPendingAlt(e.target.value) }}
+                onFocus={() => setPendingSection(section)}
+                placeholder="Alt text"
+                className="w-32 rounded-lg border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary"
+              />
+              <button
+                onClick={() => { setPendingSection(section); fileInputRef.current?.click() }}
+                disabled={uploading}
+                className="flex items-center gap-1 rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+              >
+                <Upload className="h-3 w-3" /> {uploading ? '...' : 'Carica'}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {g[section].map((img, idx) => (
+              <div
+                key={img.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, section, idx)}
+                onDragOver={(e) => handleDragOver(e, section, idx)}
+                onDrop={(e) => handleDrop(e, section)}
+                className={`group relative overflow-hidden rounded-xl border bg-background transition-colors ${
+                  overIdx?.section === section && overIdx?.index === idx && dragIdx?.section === section
+                    ? 'border-accent border-dashed'
+                    : 'border-border'
+                }`}
+              >
+                <div className="aspect-square">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.url} alt={img.alt} className="h-full w-full object-cover" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors group-hover:bg-foreground/40">
+                  <button
+                    type="button"
+                    className="cursor-grab rounded-full bg-background/80 p-1.5 text-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 bg-background/80 px-2 py-1 backdrop-blur-sm">
+                  {editingAlt === img.id ? (
+                    <div className="flex gap-1">
+                      <input
+                        autoFocus
+                        value={altValue}
+                        onChange={(e) => setAltValue(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveAlt(img); if (e.key === 'Escape') setEditingAlt(null) }}
+                        className="min-w-0 flex-1 rounded border border-border bg-background px-1 py-0.5 text-[10px] outline-none"
+                      />
+                      <button onClick={() => handleSaveAlt(img)} className="text-[10px] text-accent">OK</button>
+                    </div>
+                  ) : (
+                    <p
+                      className="truncate text-[10px] text-muted-foreground cursor-pointer hover:text-foreground"
+                      onClick={() => { setEditingAlt(img.id); setAltValue(img.alt) }}
+                      title="Click to edit alt text"
+                    >
+                      {img.alt || '(no alt)'}
+                    </p>
+                  )}
+                </div>
+                {section === 'layout' && (
+                  <select
+                    value={img.span}
+                    onChange={(e) => handleSpanChange(img, e.target.value)}
+                    className="absolute top-1 right-1 rounded border border-border bg-background/80 px-1 py-0.5 text-[9px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-sm"
+                  >
+                    {SPAN_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  onClick={() => handleDelete(img.id)}
+                  className="absolute top-1 left-1 rounded-full bg-background/80 p-1 text-red-500 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 backdrop-blur-sm"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {g[section].length === 0 && (
+            <p className="text-xs text-muted-foreground/60">Nessuna immagine. Carica la prima.</p>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,6 +364,7 @@ export default function AdminPage() {
             ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
             ['reviews', <MessageSquareQuote key="r" className="h-4 w-4" />, 'Recensioni'],
             ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
+            ['images', <ImageIcon key="m" className="h-4 w-4" />, 'Immagini'],
           ] as const).map(([key, icon, label]) => (
             <button
               key={key}
@@ -128,6 +384,7 @@ export default function AdminPage() {
         {tab === 'blocked' && <BlockedDatesTab />}
         {tab === 'content' && <ContentTab />}
         {tab === 'ical' && <IcalTab />}
+        {tab === 'images' && <ImagesTab />}
       </div>
     </div>
   )

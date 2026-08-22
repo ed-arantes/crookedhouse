@@ -1,5 +1,6 @@
 export type AdminEnv = {
   DB: Record<string, unknown>
+  IMAGES: Record<string, unknown>
   ADMIN_PASSWORD?: string
 }
 
@@ -195,4 +196,95 @@ export async function d1SetSetting(db: Record<string, unknown>, key: string, val
     .prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
     .bind(key, value)
     .run()
+}
+
+// ---------------------------------------------------------------------------
+// Images (D1 + R2)
+// ---------------------------------------------------------------------------
+
+export type D1Image = {
+  id: string
+  section: string
+  url: string
+  alt: string
+  span: string
+  sort_order: number
+}
+
+export async function d1ListImages(db: Record<string, unknown>): Promise<D1Image[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results } = await (db as any)
+    .prepare('SELECT id, section, url, alt, span, sort_order FROM images ORDER BY section, sort_order ASC')
+    .all()
+  return (results ?? []) as D1Image[]
+}
+
+export async function d1ListImagesBySection(db: Record<string, unknown>, section: string): Promise<D1Image[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results } = await (db as any)
+    .prepare('SELECT id, section, url, alt, span, sort_order FROM images WHERE section = ? ORDER BY sort_order ASC')
+    .bind(section)
+    .all()
+  return (results ?? []) as D1Image[]
+}
+
+export async function d1InsertImage(
+  db: Record<string, unknown>,
+  image: { id: string; section: string; url: string; alt: string; span: string; sort_order: number },
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)
+    .prepare(
+      'INSERT INTO images (id, section, url, alt, span, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .bind(image.id, image.section, image.url, image.alt, image.span, image.sort_order)
+    .run()
+}
+
+export async function d1UpdateImage(
+  db: Record<string, unknown>,
+  id: string,
+  fields: { alt?: string; span?: string; section?: string },
+): Promise<void> {
+  const sets: string[] = []
+  const vals: unknown[] = []
+  if (fields.alt !== undefined) { sets.push('alt = ?'); vals.push(fields.alt) }
+  if (fields.span !== undefined) { sets.push('span = ?'); vals.push(fields.span) }
+  if (fields.section !== undefined) { sets.push('section = ?'); vals.push(fields.section) }
+  if (sets.length === 0) return
+  vals.push(id)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)
+    .prepare(`UPDATE images SET ${sets.join(', ')} WHERE id = ?`)
+    .bind(...vals)
+    .run()
+}
+
+export async function d1DeleteImage(db: Record<string, unknown>, id: string): Promise<D1Image | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results } = await (db as any)
+    .prepare('SELECT id, section, url FROM images WHERE id = ?')
+    .bind(id)
+    .all()
+  const row = results?.[0] as D1Image | undefined
+  if (!row) return null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)
+    .prepare('DELETE FROM images WHERE id = ?')
+    .bind(id)
+    .run()
+  return row
+}
+
+export async function d1ReorderImages(db: Record<string, unknown>, section: string, orderedIds: string[]): Promise<void> {
+  const stmts = orderedIds.map((id, i) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any)
+      .prepare('UPDATE images SET sort_order = ? WHERE id = ?')
+      .bind(i, id),
+  )
+  if (stmts.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).batch(stmts)
+  }
 }

@@ -6,26 +6,21 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
-
-const PHOTOS = [
- { src: '/images/suite-bedroom.png', alt: 'Bedroom with gold iron bed and wood-beamed ceiling', span: 'md:col-span-2 md:row-span-2' },
- { src: '/images/terrace-pool.png', alt: 'Private garden terrace with mountain views', span: '' },
- { src: '/images/bathroom.png', alt: 'Modern bathroom with glass walk-in shower', span: '' },
- { src: '/images/breakfast.png', alt: 'Fully equipped kitchen with welcome basket', span: '' },
- { src: '/images/lounge.png', alt: 'Living room with linen sofa and smart TV', span: 'col-span-2 md:col-span-1' },
-]
+import { useSiteData } from '@/components/site-data-provider'
 
 export function Layout({ locale = 'en' }: { locale?: Locale }) {
+ const { images } = useSiteData()
+ const photos = images.layout
  const [active, setActive] = useState<number | null>(null)
 
  const close = useCallback(() => setActive(null), [])
  const prev = useCallback(
-  () => setActive((i) => (i === null ? i : (i + PHOTOS.length - 1) % PHOTOS.length)),
-  [],
+  () => setActive((i) => (i === null ? i : (i + photos.length - 1) % photos.length)),
+  [photos.length],
  )
  const next = useCallback(
-  () => setActive((i) => (i === null ? i : (i + 1) % PHOTOS.length)),
-  [],
+  () => setActive((i) => (i === null ? i : (i + 1) % photos.length)),
+  [photos.length],
  )
 
  useEffect(() => {
@@ -43,38 +38,51 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
   <section id="gallery" className="bg-secondary/60 py-20 md:py-28">
    <div className="mx-auto max-w-7xl px-5 md:px-8">
     <div className="mb-8 flex flex-col gap-3 md:mb-10">
-    <div>
-     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
-      {t(locale, 'gallery.headline')}
-     </h2>
+     <div>
+      <h2 className="type-heading text-balance font-serif font-medium text-foreground">
+       {t(locale, 'gallery.headline')}
+      </h2>
+     </div>
+     <p className="type-body text-pretty text-muted-foreground">
+      <RichText text={t(locale, 'gallery.body')} />
+     </p>
     </div>
-    <p className="type-body text-pretty text-muted-foreground">
-     <RichText text={t(locale, 'gallery.body')} />
-    </p>
-   </div>
 
-   <div className="grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4 md:gap-4">
-    {PHOTOS.map((photo, i) => (
-     <button
-      key={photo.src}
-      type="button"
-      onClick={() => setActive(i)}
-      className={cn(
-       'group relative overflow-hidden rounded-2xl',
-       photo.span,
-      )}
-     >
-      <Image
-       src={photo.src || '/placeholder.svg'}
-       alt={photo.alt}
-       fill
-       sizes="(max-width: 768px) 50vw, 25vw"
-       className="object-cover"
-      />
-      <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
-     </button>
-     ))}
-    </div>
+    {photos.length > 0 ? (
+     <div className="grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4 md:gap-4">
+      {photos.map((photo, i) => (
+       <button
+        key={photo.id}
+        type="button"
+        onClick={() => setActive(i)}
+        className={cn(
+         'group relative overflow-hidden rounded-2xl',
+         photo.span,
+        )}
+       >
+        <Image
+         src={photo.url}
+         alt={photo.alt}
+         fill
+         sizes="(max-width: 768px) 50vw, 25vw"
+         className="object-cover"
+        />
+        <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
+       </button>
+      ))}
+     </div>
+    ) : (
+     <div className="grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4 md:gap-4">
+      <div className="relative overflow-hidden rounded-2xl md:col-span-2 md:row-span-2">
+       <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+      </div>
+      {[0, 1, 2, 3].map((i) => (
+       <div key={i} className="relative overflow-hidden rounded-2xl">
+        <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+       </div>
+      ))}
+     </div>
+    )}
    </div>
 
    {active !== null && (
@@ -108,8 +116,8 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
       onClick={(e) => e.stopPropagation()}
      >
       <Image
-       src={PHOTOS[active].src || '/placeholder.svg'}
-       alt={PHOTOS[active].alt}
+       src={photos[active].url}
+       alt={photos[active].alt}
        fill
        sizes="100vw"
        className="rounded-2xl object-contain"
