@@ -28,11 +28,11 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
 
   if (section && IMAGE_SECTIONS.includes(section as ImageSection)) {
     const images = await d1ListImagesBySection(env.DB, section)
-    return json(images)
+    return json(images.map((img) => ({ ...img, url: img.url.startsWith('http') ? img.url : 'https://' + img.url })))
   }
 
   const all = await d1ListImages(env.DB)
-  return json(all)
+  return json(all.map((img) => ({ ...img, url: img.url.startsWith('http') ? img.url : 'https://' + img.url })))
 }
 
 // POST — upload image to R2 + insert into D1
@@ -77,6 +77,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
   // Build public URL from D1 setting (set in admin panel)
   let baseUrl = await d1GetSetting(env.DB, 'r2_base_url', 'https://images.crookedhouse.it')
   baseUrl = baseUrl.replace(/\/+$/, '')
+  if (!/^https?:\/\//i.test(baseUrl)) baseUrl = 'https://' + baseUrl
   const url = `${baseUrl}/${key}`
 
   // Get next sort order for this section

@@ -30,6 +30,8 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     return json({ error: 'Missing url' }, 400)
   }
 
-  await d1SetSetting(env.DB, 'r2_base_url', body.url.replace(/\/+$/, ''))
+  let url = body.url.replace(/\/+$/, '')
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+  await d1SetSetting(env.DB, 'r2_base_url', url)
   return json({ ok: true })
 }

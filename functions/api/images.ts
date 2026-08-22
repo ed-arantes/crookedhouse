@@ -11,6 +11,10 @@ export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => 
     grouped[section] = all
       .filter((img) => img.section === section)
       .sort((a, b) => a.sort_order - b.sort_order)
+      .map((img) => ({
+        ...img,
+        url: img.url.startsWith('http') ? img.url : 'https://' + img.url,
+      }))
   }
 
   return json(grouped)
