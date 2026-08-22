@@ -14,6 +14,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  const { checkIn, checkOut, guests, nights, price, unavailableDates, setRange, setGuests } =
   useBooking()
  const [isLoadingPayment, setIsLoadingPayment] = useState(false)
+ const [checkoutError, setCheckoutError] = useState('')
 
  useEffect(() => {
   function resetPaymentState() {
@@ -28,6 +29,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
   e.preventDefault()
   if (nights <= 0) return
   setIsLoadingPayment(true)
+  setCheckoutError('')
 
   const form = e.currentTarget
   const formData = new FormData(form)
@@ -55,6 +57,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
    window.location.href = data.url
   } catch (error) {
    console.error('Booking checkout failed', error)
+   setCheckoutError(error instanceof Error ? error.message : 'Errore sconosciuto')
    setIsLoadingPayment(false)
   }
  }
@@ -219,6 +222,12 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
            <dd className="text-foreground">{guestLabel(guests, locale)}</dd>
           </div>
          </dl>
+
+         {checkoutError && (
+          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+           {checkoutError}
+          </div>
+         )}
 
          {nights > 0 && (
           <dl className="mt-5 space-y-2.5 border-t border-border pt-5 text-sm">
