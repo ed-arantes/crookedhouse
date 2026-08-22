@@ -100,13 +100,15 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
 
     // Save booking to D1 with encrypted PII
     const encKey = env.BOOKING_ENCRYPTION_KEY
-    if (encKey) {
-      const bookingId = crypto.randomUUID()
-      const firstName = typeof body.firstName === 'string' ? body.firstName : ''
-      const lastName = typeof body.lastName === 'string' ? body.lastName : ''
-      const email = typeof body.email === 'string' ? body.email : ''
-      const message = typeof body.message === 'string' ? body.message : ''
+    console.log('BOOKING_ENCRYPTION_KEY present:', !!encKey, 'length:', encKey?.length)
 
+    const bookingId = crypto.randomUUID()
+    const firstName = typeof body.firstName === 'string' ? body.firstName : ''
+    const lastName = typeof body.lastName === 'string' ? body.lastName : ''
+    const email = typeof body.email === 'string' ? body.email : ''
+    const message = typeof body.message === 'string' ? body.message : ''
+
+    if (encKey) {
       const [encFirst, encLast, encEmail, encMsg] = await Promise.all([
         encrypt(firstName, encKey),
         encrypt(lastName, encKey),
@@ -130,6 +132,28 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
         children,
         pets,
         encMsg,
+        total,
+        'pending',
+      ).run()
+    } else {
+      // Fallback: save without encryption
+      console.warn('BOOKING_ENCRYPTION_KEY not set — saving without encryption')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (env.DB as any).prepare(
+        'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(
+        bookingId,
+        result.id || '',
+        firstName,
+        lastName,
+        email,
+        String(body.checkIn),
+        String(body.checkOut),
+        nights,
+        adults,
+        children,
+        pets,
+        message,
         total,
         'pending',
       ).run()

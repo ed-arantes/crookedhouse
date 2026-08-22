@@ -32,23 +32,36 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const { results } = await db.prepare(query).bind(...params).all()
   const enc = encKey || ''
 
-  const bookings = await Promise.all(results.map(async (row: any) => ({
-    id: row.id,
-    session_id: row.session_id,
-    first_name: enc ? await decrypt(String(row.first_name_encrypted), enc) : '(encrypted)',
-    last_name: enc ? await decrypt(String(row.last_name_encrypted), enc) : '(encrypted)',
-    email: enc ? await decrypt(String(row.email_encrypted), enc) : '(encrypted)',
-    check_in: row.check_in,
-    check_out: row.check_out,
-    nights: row.nights,
-    adults: row.adults,
-    children: row.children,
-    pets: row.pets,
-    message: enc && row.message_encrypted ? await decrypt(String(row.message_encrypted), enc) : '',
-    total_price: row.total_price,
-    status: row.status,
-    created_at: row.created_at,
-  })))
+  const bookings = await Promise.all(results.map(async (row: any) => {
+    // Try to decrypt, fall back to raw value if decryption fails (unencrypted data)
+    async function safeDecrypt(val: string, key: string): Promise<string> {
+      if (!val) return ''
+      if (!key) return val
+      try {
+        return await decrypt(val, key)
+      } catch {
+        return val
+      }
+    }
+
+    return {
+      id: row.id,
+      session_id: row.session_id,
+      first_name: await safeDecrypt(String(row.first_name_encrypted), enc),
+      last_name: await safeDecrypt(String(row.last_name_encrypted), enc),
+      email: await safeDecrypt(String(row.email_encrypted), enc),
+      check_in: row.check_in,
+      check_out: row.check_out,
+      nights: row.nights,
+      adults: row.adults,
+      children: row.children,
+      pets: row.pets,
+      message: row.message_encrypted ? await safeDecrypt(String(row.message_encrypted), enc) : '',
+      total_price: row.total_price,
+      status: row.status,
+      created_at: row.created_at,
+    }
+  }))
 
   return json(bookings)
 }
