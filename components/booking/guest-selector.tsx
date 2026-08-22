@@ -103,7 +103,7 @@ export function GuestSelector({
       <p className="pt-3 text-xs text-muted-foreground">
         {t(locale, 'widgets.maxGuests', {
           count: MAX_GUESTS,
-          guestsLabel: plural(locale, MAX_GUESTS, 'widgets.guestLabel', 'widgets.guestLabels').replace('{count} ', ''),
+          guestsLabel: plural(locale, MAX_GUESTS, 'widgets.guestLabel', 'widgets.guestLabels').replace(/^\d+\s+/, ''),
         })}
       </p>
     </div>
