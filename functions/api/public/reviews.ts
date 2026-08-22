@@ -1,5 +1,4 @@
-import { json, kvGet, type AdminEnv } from '../../_lib/admin'
-import reviewsData from '../../../lib/reviews.json'
+import { json, d1ListReviews, type AdminEnv } from '../../_lib/admin'
 import type { ReviewSource } from '../../../lib/reviews'
 
 type Review = {
@@ -11,18 +10,17 @@ type Review = {
   source: ReviewSource
 }
 
-const REVIEWS_KEY = 'reviews'
-
 type PagesContext = { request: Request; env: AdminEnv }
 
 export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => {
-  let reviews = await kvGet<Review[]>(env.KV, REVIEWS_KEY, [])
-  if (reviews.length === 0) {
-    reviews = reviewsData.map((r, i) => ({
-      ...r,
-      id: String(i),
-      source: r.source as ReviewSource,
-    }))
-  }
+  const rows = await d1ListReviews(env.DB)
+  const reviews: Review[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    location: r.location,
+    text: r.text,
+    rating: r.rating ?? undefined,
+    source: r.source as ReviewSource,
+  }))
   return json(reviews)
 }

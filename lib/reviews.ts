@@ -1,6 +1,5 @@
 import { BadgeCheck, Globe2, Hotel } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
-import reviewsData from './reviews.json'
 
 export type ReviewSource = 'booking' | 'agoda' | 'airbnb'
 
@@ -27,17 +26,13 @@ export const REVIEW_SOURCES: Record<ReviewSource, {
 }
 
 export type Review = {
+ id?: string
  name: string
  location: string
  text: string
  rating?: number
  source: ReviewSource
 }
-
-export const REVIEWS: Review[] = reviewsData.map((review) => ({
- ...review,
- source: review.source as ReviewSource,
-}))
 
 export function getReviewAverage(reviews: Review[]) {
  const scoredReviews = reviews.filter((review) => review.source !== 'airbnb' && typeof review.rating === 'number')

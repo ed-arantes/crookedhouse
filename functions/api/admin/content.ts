@@ -1,6 +1,6 @@
 import { json, requireAdmin, d1GetTranslations, d1UpsertTranslations, type AdminEnv } from '../../_lib/admin'
 
-const LOCALES = ['it', 'en', 'fr', 'de', 'es']
+const LOCALES = ['it']
 
 type PagesContext = { request: Request; env: AdminEnv }
 
@@ -12,6 +12,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const locale = url.searchParams.get('locale')
 
   if (locale) {
+    if (!LOCALES.includes(locale)) return json({ error: 'Locale not available' }, 404)
     const translations = await d1GetTranslations(env.DB, locale)
     return json({ locale, translations })
   }
@@ -37,6 +38,12 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
   }
 
   const { locale, overrides } = body
+  if (!LOCALES.includes(locale)) return json({ error: 'Locale not available' }, 400)
+  if (Object.values(overrides).some((value) =>
+    typeof value !== 'string' && !(Array.isArray(value) && value.every((item) => typeof item === 'string'))
+  )) {
+    return json({ error: 'Invalid translation value' }, 400)
+  }
   await d1UpsertTranslations(env.DB, locale, overrides)
   return json({ locale, ok: true })
 }

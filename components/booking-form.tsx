@@ -8,6 +8,7 @@ import { RangeCalendar } from './booking/range-calendar'
 import { GuestSelector, guestLabel } from './booking/guest-selector'
 import { formatLong, formatCurrency } from '@/lib/booking'
 import { t, type Locale } from '@/lib/i18n'
+import { apiUrl } from '@/lib/api-url'
 
 export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  const { checkIn, checkOut, guests, nights, price, unavailableDates, setRange, setGuests } =
@@ -29,7 +30,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
   setIsLoadingPayment(true)
 
   try {
-   const response = await fetch('/api/checkout', {
+   const response = await fetch(apiUrl('/api/checkout'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

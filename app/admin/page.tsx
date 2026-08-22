@@ -21,10 +21,10 @@ import {
 } from '@/lib/admin-api'
 import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
+import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
+import { usesRemoteApi } from '@/lib/api-url'
 
 type Tab = 'reviews' | 'blocked' | 'content' | 'ical'
-const LOCALES = ['it', 'en', 'fr', 'de', 'es'] as const
-const LOCALE_LABELS: Record<string, string> = { it: 'Italiano', en: 'English', fr: 'Français', de: 'Deutsch', es: 'Español' }
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -90,6 +90,11 @@ export default function AdminPage() {
           <h1 className="type-heading font-serif text-2xl font-medium text-foreground">
             Pannello Admin
           </h1>
+          {usesRemoteApi && (
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+              Online / Produzione
+            </span>
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-card"
@@ -428,20 +433,6 @@ function BlockedDatesTab() {
   )
 }
 
-const CONTENT_SECTIONS = [
-  { label: 'Hero', keys: ['hero.title', 'hero.description'] },
-  { label: 'Appartamento', keys: ['about.headline', 'about.p1', 'about.p2'] },
-  { label: 'Layout', keys: ['gallery.headline', 'gallery.body'] },
-  { label: 'Galleria', keys: ['stay.headline'] },
-  { label: 'Servizi', keys: ['services.headline', 'services.body'] },
-  { label: 'Comodità', keys: ['amenities.headline', 'amenities.body', 'amenities.list'] },
-  { label: 'Esplora il territorio', keys: ['explore.headline', 'explore.body'] },
-  { label: 'Recensioni', keys: ['reviews.headline'] },
-  { label: 'Posizione', keys: ['location.headline', 'location.address', 'location.gettingAround', 'location.nearby.lakefront', 'location.nearby.lakefrontDetail', 'location.nearby.villa', 'location.nearby.villaDetail', 'location.nearby.airport', 'location.nearby.airportDetail'] },
-  { label: 'Prenotazione', keys: ['booking.headline', 'booking.firstName', 'booking.lastName', 'booking.email', 'booking.dates', 'booking.guests', 'booking.message', 'booking.messagePlaceholder', 'booking.proceedToPayment', 'booking.processingPayment', 'booking.checkIn', 'booking.checkOut', 'booking.selectDates', 'booking.detailsTitle', 'booking.location'] },
-  { label: 'Footer', keys: ['footer.explore', 'footer.contact', 'footer.privacy', 'footer.terms', 'footer.allRights', 'footer.description'] },
-]
-
 function BoldTextarea({
   value,
   onChange,
@@ -498,9 +489,10 @@ function BoldTextarea({
 function ContentTab() {
   const [content, setContent] = useState<Record<string, Record<string, string | string[]>>>({})
   const [loading, setLoading] = useState(true)
-  const [activeLocale, setActiveLocale] = useState('it')
+  const activeLocale = 'it'
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [status, setStatus] = useState('')
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['Hero']))
 
   useEffect(() => {
@@ -512,10 +504,14 @@ function ContentTab() {
   function updateOverride(key: string, value: string) {
     setContent((prev) => {
       const copy = { ...prev }
-      copy[activeLocale] = { ...copy[activeLocale], [key]: value }
+      copy[activeLocale] = {
+        ...copy[activeLocale],
+        [key]: ARRAY_CONTENT_KEYS.has(key) ? value.split('\n').filter(Boolean) : value,
+      }
       return copy
     })
     setDirty(true)
+    setStatus('')
   }
 
   function toggleSection(label: string) {
@@ -529,9 +525,17 @@ function ContentTab() {
 
   async function handleSave() {
     setSaving(true)
-    await saveContent(activeLocale, current)
-    setSaving(false)
-    setDirty(false)
+    setStatus('')
+    try {
+      await saveContent(activeLocale, current)
+      setContent(await fetchAllContent())
+      setDirty(false)
+      setStatus('Contenuti salvati in D1.')
+    } catch {
+      setStatus('Salvataggio non riuscito. Riprova.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
@@ -539,17 +543,7 @@ function ContentTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        {LOCALES.map((loc) => (
-          <button
-            key={loc}
-            onClick={() => { setActiveLocale(loc); setDirty(false) }}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              activeLocale === loc ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'
-            }`}
-          >
-            {LOCALE_LABELS[loc]}
-          </button>
-        ))}
+        <span className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground">Italiano</span>
         <div className="flex-1" />
         <button
           onClick={handleSave}
@@ -559,6 +553,7 @@ function ContentTab() {
           <Save className="h-4 w-4" /> {saving ? 'Salvataggio...' : 'Salva'}
         </button>
       </div>
+      {status && <p className="text-sm text-muted-foreground" role="status">{status}</p>}
 
       <div className="space-y-2">
         {CONTENT_SECTIONS.map((section) => {
@@ -580,8 +575,7 @@ function ContentTab() {
               {isOpen && (
                 <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
                   {section.keys.map((key) => {
-                    const value = current[key]
-                    if (value === undefined) return null
+                    const value = current[key] ?? (ARRAY_CONTENT_KEYS.has(key) ? [] : '')
                     const label = key.split('.').pop() ?? key
 
                     return (

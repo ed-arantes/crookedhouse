@@ -1,5 +1,4 @@
 export type AdminEnv = {
-  KV: Record<string, unknown>
   DB: Record<string, unknown>
   ADMIN_PASSWORD?: string
 }
@@ -31,21 +30,9 @@ export function requireAdmin(env: AdminEnv, request: Request): Response | null {
   return null
 }
 
-export async function kvGet<T>(kv: Record<string, unknown>, key: string, fallback: T): Promise<T> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = await (kv as any).get(key)
-  if (!raw) return fallback
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
-}
-
-export async function kvSet(kv: Record<string, unknown>, key: string, value: unknown): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (kv as any).put(key, JSON.stringify(value))
-}
+// ---------------------------------------------------------------------------
+// D1 helpers
+// ---------------------------------------------------------------------------
 
 type TranslationValue = string | string[]
 
@@ -90,4 +77,122 @@ export async function d1UpsertTranslations(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (db as any).batch(stmts)
   }
+}
+
+// ---------------------------------------------------------------------------
+// Reviews (D1)
+// ---------------------------------------------------------------------------
+
+export type D1Review = {
+  id: string
+  name: string
+  location: string
+  text: string
+  rating: number | null
+  source: string
+  sort_order: number
+}
+
+export async function d1ListReviews(db: Record<string, unknown>): Promise<D1Review[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results } = await (db as any)
+    .prepare('SELECT id, name, location, text, rating, source, sort_order FROM reviews ORDER BY sort_order ASC, rowid ASC')
+    .all()
+  return (results ?? []) as D1Review[]
+}
+
+export async function d1UpsertReview(
+  db: Record<string, unknown>,
+  review: { id: string; name: string; location: string; text: string; rating?: number; source: string; sort_order: number },
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)
+    .prepare(
+      'INSERT INTO reviews (id, name, location, text, rating, source, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?) ' +
+        'ON CONFLICT(id) DO UPDATE SET name=excluded.name, location=excluded.location, text=excluded.text, rating=excluded.rating, source=excluded.source, sort_order=excluded.sort_order',
+    )
+    .bind(review.id, review.name, review.location, review.text, review.rating ?? null, review.source, review.sort_order)
+    .run()
+}
+
+export async function d1DeleteReview(db: Record<string, unknown>, id: string): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { meta } = await (db as any)
+    .prepare('DELETE FROM reviews WHERE id = ?')
+    .bind(id)
+    .run()
+  return meta.changes > 0
+}
+
+export async function d1ReorderReviews(db: Record<string, unknown>, orderedIds: string[]): Promise<void> {
+  const stmts = orderedIds.map((id, i) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any)
+      .prepare('UPDATE reviews SET sort_order = ? WHERE id = ?')
+      .bind(i, id),
+  )
+  if (stmts.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).batch(stmts)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Blocked dates (D1)
+// ---------------------------------------------------------------------------
+
+export type D1BlockedDate = { date: string; reason?: string }
+
+export async function d1ListBlockedDates(db: Record<string, unknown>): Promise<D1BlockedDate[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results } = await (db as any)
+    .prepare('SELECT date, reason FROM blocked_dates ORDER BY date ASC')
+    .all()
+  return (results ?? []) as D1BlockedDate[]
+}
+
+export async function d1AddBlockedDates(
+  db: Record<string, unknown>,
+  dates: { date: string; reason?: string }[],
+): Promise<void> {
+  const stmts = dates.map((d) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any)
+      .prepare('INSERT OR IGNORE INTO blocked_dates (date, reason) VALUES (?, ?)')
+      .bind(d.date, d.reason ?? null),
+  )
+  if (stmts.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).batch(stmts)
+  }
+}
+
+export async function d1DeleteBlockedDate(db: Record<string, unknown>, date: string): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { meta } = await (db as any)
+    .prepare('DELETE FROM blocked_dates WHERE date = ?')
+    .bind(date)
+    .run()
+  return meta.changes > 0
+}
+
+// ---------------------------------------------------------------------------
+// Settings (D1)
+// ---------------------------------------------------------------------------
+
+export async function d1GetSetting(db: Record<string, unknown>, key: string, fallback: string): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results } = await (db as any)
+    .prepare('SELECT value FROM settings WHERE key = ?')
+    .bind(key)
+    .all()
+  return results?.[0]?.value ?? fallback
+}
+
+export async function d1SetSetting(db: Record<string, unknown>, key: string, value: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)
+    .prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+    .bind(key, value)
+    .run()
 }

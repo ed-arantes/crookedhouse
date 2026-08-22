@@ -1,19 +1,16 @@
-import { json, kvGet, type AdminEnv } from '../../_lib/admin'
+import { json, d1ListBlockedDates, d1GetSetting, type AdminEnv } from '../../_lib/admin'
 import { parseICalDates } from '../../../lib/ical-parser'
 
-type BlockedDate = { date: string; reason?: string }
-
-const BLOCKED_DATES_KEY = 'blocked_dates'
 const ICAL_URL_KEY = 'ical_url'
 
 type PagesContext = { request: Request; env: AdminEnv }
 
 export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => {
-  const blocked = await kvGet<BlockedDate[]>(env.KV, BLOCKED_DATES_KEY, [])
+  const blocked = await d1ListBlockedDates(env.DB)
   const blockedSet = new Set(blocked.map((d) => d.date))
 
   // Fetch iCal feed if a URL is configured
-  const icalUrl = await kvGet<string>(env.KV, ICAL_URL_KEY, '')
+  const icalUrl = await d1GetSetting(env.DB, ICAL_URL_KEY, '')
   let icalDates: string[] = []
   if (icalUrl) {
     try {

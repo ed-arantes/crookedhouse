@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { locales, t, type Locale } from '@/lib/i18n'
+import { defaultLocale, t, type Locale } from '@/lib/i18n'
 
 const LANGUAGE_LABELS: Record<Locale, string> = {
  en: 'English',
@@ -103,7 +103,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
        }}
        className="cursor-pointer rounded-full bg-card/95 px-5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted/80 focus:outline-none focus:ring-0"
       >
-       {locales.map((item) => (
+       {[defaultLocale].map((item) => (
         <option key={item} value={item}>
          {LANGUAGE_LABELS[item]}
         </option>
@@ -183,7 +183,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
         }}
         className="w-full cursor-pointer rounded-full bg-card/95 px-5 py-3 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted/80 focus:outline-none focus:ring-0"
        >
-        {locales.map((item) => (
+        {[defaultLocale].map((item) => (
          <option key={item} value={item}>
           {LANGUAGE_LABELS[item]}
          </option>

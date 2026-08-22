@@ -1,12 +1,8 @@
-import { json, kvGet, type AdminEnv } from '../../_lib/admin'
-
-type BlockedDate = { date: string; reason?: string }
-
-const BLOCKED_DATES_KEY = 'blocked_dates'
+import { json, d1ListBlockedDates, type AdminEnv } from '../../_lib/admin'
 
 type PagesContext = { request: Request; env: AdminEnv }
 
 export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => {
-  const dates = await kvGet<BlockedDate[]>(env.KV, BLOCKED_DATES_KEY, [])
+  const dates = await d1ListBlockedDates(env.DB)
   return json(dates)
 }

@@ -1,5 +1,12 @@
-import { json, kvGet, kvSet, requireAdmin, type AdminEnv } from '../../_lib/admin'
-import reviewsData from '../../../lib/reviews.json'
+import {
+  json,
+  requireAdmin,
+  d1ListReviews,
+  d1UpsertReview,
+  d1DeleteReview,
+  d1ReorderReviews,
+  type AdminEnv,
+} from '../../_lib/admin'
 import type { ReviewSource } from '../../../lib/reviews'
 
 type Review = {
@@ -9,23 +16,6 @@ type Review = {
   text: string
   rating?: number
   source: ReviewSource
-}
-
-const REVIEWS_KEY = 'reviews'
-
-function reviewsWithId(reviews: Review[]): Review[] {
-  return reviews.map((r) => ({
-    ...r,
-    id: r.id || crypto.randomUUID(),
-  }))
-}
-
-function seedReviews(): Review[] {
-  return reviewsWithId(reviewsData.map((r) => ({
-    ...r,
-    id: crypto.randomUUID(),
-    source: r.source as ReviewSource,
-  })))
 }
 
 type PagesContext = {
@@ -38,12 +28,15 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const unauthed = requireAdmin(env, request)
   if (unauthed) return unauthed
 
-  let reviews = await kvGet<Review[]>(env.KV, REVIEWS_KEY, [])
-  if (reviews.length === 0) {
-    reviews = seedReviews()
-    await kvSet(env.KV, REVIEWS_KEY, reviews)
-  }
-
+  const rows = await d1ListReviews(env.DB)
+  const reviews: Review[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    location: r.location,
+    text: r.text,
+    rating: r.rating ?? undefined,
+    source: r.source as ReviewSource,
+  }))
   return json(reviews)
 }
 
@@ -56,15 +49,26 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     return json({ error: 'Missing required fields' }, 400)
   }
 
-  const reviews = await kvGet<Review[]>(env.KV, REVIEWS_KEY, [])
-  const newReview: Review = {
-    ...body,
+  const existing = await d1ListReviews(env.DB)
+  const newReview = {
     id: crypto.randomUUID(),
+    name: body.name,
+    location: body.location ?? '',
+    text: body.text,
+    rating: body.rating,
+    source: body.source,
+    sort_order: existing.length,
   }
-  reviews.push(newReview)
-  await kvSet(env.KV, REVIEWS_KEY, reviews)
+  await d1UpsertReview(env.DB, newReview)
 
-  return json(newReview, 201)
+  return json({
+    id: newReview.id,
+    name: newReview.name,
+    location: newReview.location,
+    text: newReview.text,
+    rating: newReview.rating,
+    source: newReview.source,
+  }, 201)
 }
 
 export const onRequestPut = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -76,14 +80,21 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
     return json({ error: 'Missing required fields' }, 400)
   }
 
-  const reviews = await kvGet<Review[]>(env.KV, REVIEWS_KEY, [])
-  const idx = reviews.findIndex((r) => r.id === body.id)
-  if (idx === -1) return json({ error: 'Review not found' }, 404)
+  const existing = await d1ListReviews(env.DB)
+  const row = existing.find((r) => r.id === body.id)
+  const sort_order = row?.sort_order ?? 0
 
-  reviews[idx] = { ...body }
-  await kvSet(env.KV, REVIEWS_KEY, reviews)
+  await d1UpsertReview(env.DB, {
+    id: body.id,
+    name: body.name,
+    location: body.location ?? '',
+    text: body.text,
+    rating: body.rating,
+    source: body.source,
+    sort_order,
+  })
 
-  return json(reviews[idx])
+  return json(body)
 }
 
 export const onRequestDelete = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -94,11 +105,9 @@ export const onRequestDelete = async ({ request, env }: PagesContext): Promise<R
   const id = url.searchParams.get('id')
   if (!id) return json({ error: 'Missing id' }, 400)
 
-  const reviews = await kvGet<Review[]>(env.KV, REVIEWS_KEY, [])
-  const filtered = reviews.filter((r) => r.id !== id)
-  if (filtered.length === reviews.length) return json({ error: 'Review not found' }, 404)
+  const deleted = await d1DeleteReview(env.DB, id)
+  if (!deleted) return json({ error: 'Review not found' }, 404)
 
-  await kvSet(env.KV, REVIEWS_KEY, filtered)
   return json({ ok: true })
 }
 
@@ -109,10 +118,14 @@ export const onRequestPatch = async ({ request, env }: PagesContext): Promise<Re
   const body = await request.json().catch(() => null) as { ids: string[] } | null
   if (!body?.ids?.length) return json({ error: 'Missing ids' }, 400)
 
-  const reviews = await kvGet<Review[]>(env.KV, REVIEWS_KEY, [])
-  const map = new Map(reviews.map((r) => [r.id, r]))
-  const reordered = body.ids.map((id) => map.get(id)).filter(Boolean) as Review[]
-
-  await kvSet(env.KV, REVIEWS_KEY, reordered)
-  return json(reordered)
+  await d1ReorderReviews(env.DB, body.ids)
+  const reordered = await d1ListReviews(env.DB)
+  return json(reordered.map((r) => ({
+    id: r.id,
+    name: r.name,
+    location: r.location,
+    text: r.text,
+    rating: r.rating ?? undefined,
+    source: r.source,
+  })))
 }
