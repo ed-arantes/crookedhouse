@@ -47,7 +47,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       return json({ error: 'Invalid booking details' }, 400)
     }
 
-    // Check availability: blocked dates + iCal
+    // Check availability: blocked dates + iCal + confirmed bookings
     const blocked = await d1ListBlockedDates(env.DB)
     const blockedSet = new Set(blocked.map((d) => d.date))
     const icalUrl = await d1GetSetting(env.DB, ICAL_URL_KEY, '')
@@ -59,6 +59,24 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
         }
       } catch { /* proceed with manual blocks only */ }
     }
+
+    // Also block dates from confirmed bookings
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { results: bookingRows } = await (env.DB as any).prepare(
+        "SELECT check_in, check_out FROM bookings WHERE status = 'paid'"
+      ).all()
+      for (const row of bookingRows as { check_in: string; check_out: string }[]) {
+        const bStart = new Date(`${row.check_in}T00:00:00.000Z`)
+        const bEnd = new Date(`${row.check_out}T00:00:00.000Z`)
+        const bNights = Math.round((bEnd.getTime() - bStart.getTime()) / 86400000)
+        for (let i = 0; i < bNights; i++) {
+          const d = new Date(bStart)
+          d.setDate(d.getDate() + i)
+          blockedSet.add(d.toISOString().slice(0, 10))
+        }
+      }
+    } catch { /* bookings table may not exist yet */ }
 
     // Generate every night of the stay and check against unavailable dates
     const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
