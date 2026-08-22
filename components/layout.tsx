@@ -57,6 +57,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
         onClick={() => setActive(i)}
         className={cn(
          'group relative overflow-hidden rounded-2xl',
+         i === 0 ? 'md:col-span-2 md:row-span-2' : '',
          photo.span,
         )}
        >
@@ -64,7 +65,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
          src={photo.url}
          alt={photo.alt}
          fill
-         sizes="(max-width: 768px) 50vw, 25vw"
+         sizes={i === 0 ? '(max-width: 768px) 100vw, 50vw' : '(max-width: 768px) 50vw, 25vw'}
          className="object-cover"
         />
         <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
@@ -74,7 +75,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
     ) : (
      <div className="grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4 md:gap-4">
       <div className="relative overflow-hidden rounded-2xl md:col-span-2 md:row-span-2">
-       <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+       <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
       </div>
       {[0, 1, 2, 3].map((i) => (
        <div key={i} className="relative overflow-hidden rounded-2xl">
