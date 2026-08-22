@@ -4,8 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { setContentOverrides, type Locale } from '@/lib/i18n'
 import { useContentVersion } from '@/hooks/use-content-version'
 import type { Review } from '@/lib/reviews'
-import reviewsStatic from '@/lib/reviews.json'
-import type { ReviewSource } from '@/lib/reviews'
+import { apiUrl } from '@/lib/api-url'
 
 type SiteData = {
   reviews: Review[]
@@ -26,40 +25,47 @@ function ContentSync({ children }: { children: ReactNode }) {
 export function SiteDataProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [contentError, setContentError] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   const load = useCallback(async () => {
-    const fallback: Review[] = reviewsStatic.map((r, i) => ({
-      ...r,
-      id: String(i),
-      source: r.source as ReviewSource,
-    }))
+    setLoaded(false)
+    setContentError(false)
 
     try {
       const [reviewsRes, contentRes] = await Promise.all([
-        fetch('/api/public/reviews').then((r) => r.ok ? r.json() : null),
-        fetch(`/api/public/content?locale=${locale}`).then((r) => r.ok ? r.json() : null),
+        fetch(apiUrl('/api/public/reviews')).then((r) => r.ok ? r.json() : null).catch(() => null),
+        fetch(apiUrl(`/api/public/content?locale=${locale}`)).then((r) => {
+          if (!r.ok) throw new Error('Content unavailable')
+          return r.json()
+        }),
       ])
 
-      if (reviewsRes?.length) {
-        setReviews(reviewsRes.map((r: Review & { id?: string }, i: number) => ({
-          ...r,
-          id: r.id || String(i),
-        })))
-      } else {
-        setReviews(fallback)
-      }
-
-      if (contentRes) {
-        setContentOverrides(locale, contentRes)
-      }
+      setReviews(reviewsRes ?? [])
+      setContentOverrides(locale, contentRes)
+      setLoaded(true)
     } catch {
-      setReviews(fallback)
+      setReviews([])
+      setContentError(true)
     }
-
-    setLoaded(true)
-  }, [locale])
+  }, [locale, attempt])
 
   useEffect(() => { load() }, [load])
+
+  if (!loaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-6 text-center">
+        {contentError ? (
+          <div className="space-y-4">
+            <p className="text-foreground">I contenuti non sono disponibili al momento.</p>
+            <button className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground" onClick={() => setAttempt((value) => value + 1)}>
+              Riprova
+            </button>
+          </div>
+        ) : <p className="text-sm text-muted-foreground">Caricamento...</p>}
+      </div>
+    )
+  }
 
   return (
     <SiteDataContext.Provider value={{ reviews, loaded }}>

@@ -1,0 +1,2 @@
+all the section need to be able to handle boldd
+if database not available show error, and show loading until all the website is populated dont open with placeholders.

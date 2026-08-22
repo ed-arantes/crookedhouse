@@ -7,11 +7,11 @@ node_modules/
 out/
 dist/
 build/
+tsconfig.tsbuildinfo
 
 # env files
 .env
 .env.*
-!.env.example
 
 # logs
 *.log
@@ -22,8 +22,6 @@ yarn-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
-# OpenNext
-.open-next
 
 # Cloudflare Pages local output
 .wrangler
@@ -35,6 +33,17 @@ Thumbs.db
 
 # local tooling
 .idea/
-tsconfig.tsbuildinfo
 comandotraduzione.txt
 commands.txt
+
+# knowledge graph artifacts
+graphify-out/
+
+# AI tooling
+.qodo/
+
+# tests (not needed for deployment)
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx

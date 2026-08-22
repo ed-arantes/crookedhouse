@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { SuccessRedirect } from '@/components/success-redirect'
+import { apiUrl } from '@/lib/api-url'
 
 type State = 'loading' | 'missing' | 'invalid' | 'failed' | 'unpaid' | 'paid'
 
@@ -15,7 +16,7 @@ export default function SuccessPage() {
    return
   }
 
-  fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
+  fetch(apiUrl(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`), {
    cache: 'no-store',
   })
    .then(async (response) => {

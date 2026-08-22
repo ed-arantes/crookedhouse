@@ -30,7 +30,7 @@ function authHeaders(): Record<string, string> {
 }
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     ...init,
     headers: { ...authHeaders(), ...init?.headers },
   })
@@ -43,7 +43,7 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function adminLogin(password: string): Promise<boolean> {
   try {
-    const res = await fetch('/api/admin/auth', {
+    const res = await fetch(apiUrl('/api/admin/auth'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
@@ -129,3 +129,4 @@ export function saveIcalUrl(url: string): Promise<{ ok: boolean }> {
     body: JSON.stringify({ url }),
   })
 }
+import { apiUrl } from '@/lib/api-url'

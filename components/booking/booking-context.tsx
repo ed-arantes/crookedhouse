@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { nightsBetween, priceBreakdown, type PriceBreakdown } from '@/lib/booking'
+import { apiUrl } from '@/lib/api-url'
 
 export type Guests = {
   adults: number
@@ -44,7 +45,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    fetch('/api/public/availability')
+    fetch(apiUrl('/api/public/availability'))
       .then((r) => r.ok ? r.json() : null)
       .then((data: { dates: AvailabilityDate[] } | null) => {
         if (data?.dates) {
