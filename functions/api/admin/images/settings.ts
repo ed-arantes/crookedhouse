@@ -4,7 +4,7 @@ import {
   d1GetSetting,
   d1SetSetting,
   type AdminEnv,
-} from '../../_lib/admin'
+} from '../../../_lib/admin'
 
 type PagesContext = {
   request: Request
