@@ -1,5 +1,6 @@
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
+import { RichText } from '@/components/rich-text'
 
 const SOCIALS = [
  { label: 'Instagram', href: '#' },
@@ -23,8 +24,8 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
      <div>
       <p className="type-heading font-serif font-semibold">Crooked House</p>
       <p className="type-body mt-4 max-w-xs text-pretty text-primary-foreground/70">
-       {t(locale, 'footer.description')}
-      </p>
+        <RichText text={t(locale, 'footer.description')} />
+       </p>
       <div className="mt-6 flex gap-3">
        {SOCIALS.map((social) => (
         <a

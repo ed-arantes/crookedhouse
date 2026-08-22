@@ -4,6 +4,7 @@ import { Star } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { REVIEW_SOURCES, getReviewAverage } from '@/lib/reviews'
 import { useSiteData } from '@/components/site-data-provider'
+import { RichText } from '@/components/rich-text'
 
 export function Reviews({ locale = 'en' }: { locale?: Locale }) {
   const { reviews } = useSiteData()
@@ -13,7 +14,7 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
      <div className="flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
       <div className="max-w-xl">
        <h2 className="type-heading text-balance font-serif font-medium">
-        {t(locale, 'reviews.headline')}
+        <RichText text={t(locale, 'reviews.headline')} />
        </h2>
       </div>
       <div className="flex items-center gap-3">

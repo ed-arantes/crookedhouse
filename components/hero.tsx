@@ -4,6 +4,7 @@ import { getReviewAverage } from '@/lib/reviews'
 import { useSiteData } from '@/components/site-data-provider'
 import { t, type Locale } from '@/lib/i18n'
 import { SearchBar } from './booking/search-bar'
+import { RichText } from '@/components/rich-text'
 
 export function Hero({ locale = 'en' }: { locale?: Locale }) {
  const { reviews, images } = useSiteData()
@@ -43,12 +44,12 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
        })}
       </span>
      )}
-     <h1 className="type-display mt-5 whitespace-pre-line font-serif font-medium text-background">
-      {t(locale, 'hero.title')}
-     </h1>
-     <p className="type-body mx-auto mt-4 max-w-none text-justify text-pretty text-background/90">
-      {t(locale, 'hero.description')}
-     </p>
+      <h1 className="type-display mt-5 whitespace-pre-line font-serif font-medium text-background">
+       <RichText text={t(locale, 'hero.title')} />
+      </h1>
+      <p className="type-body mx-auto mt-4 max-w-none text-justify text-pretty text-background/90">
+       <RichText text={t(locale, 'hero.description')} />
+      </p>
     </div>
 
     <div className="mt-8 flex justify-center md:mt-10">

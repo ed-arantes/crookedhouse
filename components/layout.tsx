@@ -40,8 +40,8 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
     <div className="mb-8 flex flex-col gap-3 md:mb-10">
      <div>
       <h2 className="type-heading text-balance font-serif font-medium text-foreground">
-       {t(locale, 'gallery.headline')}
-      </h2>
+        <RichText text={t(locale, 'gallery.headline')} />
+       </h2>
      </div>
      <p className="type-body text-pretty text-muted-foreground">
       <RichText text={t(locale, 'gallery.body')} />

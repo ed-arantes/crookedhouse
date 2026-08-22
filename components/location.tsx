@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { MapPin, Plane, Wine, Landmark } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { useSiteData } from '@/components/site-data-provider'
+import { RichText } from '@/components/rich-text'
 
 const NEARBY = [
  {
@@ -31,11 +32,11 @@ export function Location({ locale = 'en' }: { locale?: Locale }) {
   <section id="location" className="mx-auto max-w-7xl px-5 pb-20 pt-14 md:px-8 md:pb-28 md:pt-24">
    <div className="max-w-2xl">
     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
-     {t(locale, 'location.headline')}
+     <RichText text={t(locale, 'location.headline')} />
     </h2>
     <p className="type-body mt-4 flex items-center gap-2 text-muted-foreground">
      <MapPin className="h-4 w-4 text-primary" />
-     {t(locale, 'location.address')}
+     <RichText text={t(locale, 'location.address')} />
     </p>
    </div>
 
@@ -72,7 +73,7 @@ export function Location({ locale = 'en' }: { locale?: Locale }) {
      </div>
      <div className="rounded-2xl border border-border bg-card p-6">
       <h3 className="type-body font-serif font-medium text-foreground">
-       {t(locale, 'location.gettingAround')}
+       <RichText text={t(locale, 'location.gettingAround')} />
       </h3>
       <ul className="mt-4 space-y-4">
        {NEARBY.map((item) => (

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { useSiteData } from '@/components/site-data-provider'
+import { RichText } from '@/components/rich-text'
 
 export function Gallery({ locale = 'en' }: { locale?: Locale }) {
  const { images } = useSiteData()
@@ -38,7 +39,7 @@ export function Gallery({ locale = 'en' }: { locale?: Locale }) {
   <section id="stay" className="mx-auto max-w-7xl px-5 pb-20 pt-10 md:px-8 md:pb-28 md:pt-16">
    <div className="max-w-2xl">
     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
-     {t(locale, 'stay.headline')}
+     <RichText text={t(locale, 'stay.headline')} />
     </h2>
    </div>
 

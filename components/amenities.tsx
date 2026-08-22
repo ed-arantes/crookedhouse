@@ -46,9 +46,9 @@ export function Amenities({ locale = 'en' }: { locale?: Locale }) {
   <section id="amenities" className="bg-secondary/60 py-12 md:py-16">
    <div className="mx-auto max-w-7xl px-5 md:px-8">
     <div>
-     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
-      {t(locale, 'amenities.headline')}
-     </h2>
+      <h2 className="type-heading text-balance font-serif font-medium text-foreground">
+       <RichText text={t(locale, 'amenities.headline')} />
+      </h2>
       <p className="type-body mt-3 text-muted-foreground">
         <RichText text={t(locale, 'amenities.body')} />
       </p>
