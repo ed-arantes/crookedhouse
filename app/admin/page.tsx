@@ -23,9 +23,11 @@ import {
   reorderImages,
   fetchR2BaseUrl,
   saveR2BaseUrl,
+  fetchBookings,
   type Review,
   type BlockedDate,
   type AdminImage,
+  type AdminBooking,
 } from '@/lib/admin-api'
 import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3 } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
@@ -628,6 +630,7 @@ function ReviewForm({ review, onSave, onCancel }: { review: Review | null; onSav
 
 function BlockedDatesTab() {
   const [blocked, setBlocked] = useState<BlockedDate[]>([])
+  const [bookings, setBookings] = useState<AdminBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [reason, setReason] = useState('')
   const today = new Date()
@@ -636,13 +639,34 @@ function BlockedDatesTab() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setBlocked(await fetchBlockedDates()) } catch { /* */ }
+    try {
+      const [b, bk] = await Promise.all([fetchBlockedDates(), fetchBookings()])
+      setBlocked(b)
+      setBookings(bk)
+    } catch { /* */ }
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
   const blockedSet = new Set(blocked.map((d) => d.date))
+
+  // Build a map of date -> booking status for confirmed bookings
+  const bookingDateMap = new Map<string, string>()
+  for (const b of bookings) {
+    if (b.status !== 'paid' && b.status !== 'pending') continue
+    const start = new Date(`${b.check_in}T00:00:00.000Z`)
+    const end = new Date(`${b.check_out}T00:00:00.000Z`)
+    const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
+    for (let i = 0; i < nights; i++) {
+      const d = new Date(start)
+      d.setDate(d.getDate() + i)
+      const iso = d.toISOString().slice(0, 10)
+      if (!bookingDateMap.has(iso)) {
+        bookingDateMap.set(iso, b.status)
+      }
+    }
+  }
 
   function formatDate(y: number, m: number, d: number) {
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -702,25 +726,36 @@ function BlockedDatesTab() {
             if (day === null) return <div key={`e${i}`} />
             const dateStr = formatDate(viewYear, viewMonth, day)
             const isBlocked = blockedSet.has(dateStr)
+            const bookingStatus = bookingDateMap.get(dateStr)
             const isPast = new Date(dateStr) < new Date(today.toISOString().slice(0, 10))
+            const cellClass = isPast
+              ? 'text-muted-foreground/30 cursor-not-allowed'
+              : isBlocked
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : bookingStatus === 'paid'
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : bookingStatus === 'pending'
+                    ? 'bg-amber-400 text-white hover:bg-amber-500'
+                    : 'hover:bg-muted text-foreground'
             return (
               <button
                 key={dateStr}
-                onClick={() => !isPast && toggleDate(dateStr)}
-                disabled={isPast}
-                className={`aspect-square rounded-lg text-sm transition-colors ${
-                  isPast
-                    ? 'text-muted-foreground/30 cursor-not-allowed'
-                    : isBlocked
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'hover:bg-muted text-foreground'
-                }`}
+                onClick={() => !isPast && !bookingStatus && toggleDate(dateStr)}
+                disabled={isPast || !!bookingStatus}
+                title={bookingStatus === 'paid' ? 'Prenotata e pagata' : bookingStatus === 'pending' ? 'In attesa di pagamento' : isBlocked ? (blocked.find((b) => b.date === dateStr)?.reason || 'Bloccata') : ''}
+                className={`aspect-square rounded-lg text-sm transition-colors ${cellClass}`}
               >
                 {day}
               </button>
             )
           })}
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-red-500" /> Bloccata (admin)</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-amber-400" /> In attesa di pagamento</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-green-500" /> Pagata / Prenotata</span>
       </div>
 
       {blocked.length > 0 && (
@@ -733,6 +768,24 @@ function BlockedDatesTab() {
                 {d.reason && <span className="text-red-400">· {d.reason}</span>}
                 <button onClick={() => removeBlockedDate(d.date).then(load)} className="ml-0.5 hover:text-red-800">&times;</button>
               </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {bookings.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">Prenotazioni ({bookings.length})</p>
+          <div className="space-y-2">
+            {bookings.sort((a, b) => a.check_in.localeCompare(b.check_in)).map((b) => (
+              <div key={b.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
+                b.status === 'paid'
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-800'
+              }`}>
+                <span>{b.first_name} {b.last_name} · {b.check_in} → {b.check_out} ({b.nights} notti)</span>
+                <span className="font-semibold">{b.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
+              </div>
             ))}
           </div>
         </div>
