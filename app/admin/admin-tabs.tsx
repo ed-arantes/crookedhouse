@@ -62,7 +62,7 @@ export function BookingsTab() {
           <option value="paid">Pagate</option>
           <option value="cancelled">Annullate</option>
         </select>
-        <span className="text-sm text-muted-foreground">{bookings.length} prenotazioni</span>
+        <span className="text-sm text-muted-foreground">{bookings.length} {bookings.length === 1 ? 'prenotazione' : 'prenotazioni'}</span>
       </div>
 
       {bookings.length === 0 ? (
@@ -83,7 +83,7 @@ export function BookingsTab() {
                   <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
                     <span>Check-in: <span className="text-foreground">{b.check_in}</span></span>
                     <span>Check-out: <span className="text-foreground">{b.check_out}</span></span>
-                    <span>Ospiti: <span className="text-foreground">{b.adults + b.children}{b.pets ? ` + ${b.pets} animali` : ''}</span></span>
+                    <span>Ospiti: <span className="text-foreground">{b.adults + b.children}{b.pets ? ` + ${b.pets} ${b.pets === 1 ? 'animale' : 'animali'}` : ''}</span></span>
                     <span>Totale: <span className="text-foreground">&euro;{b.total_price}</span></span>
                   </div>
                   {b.message && (
