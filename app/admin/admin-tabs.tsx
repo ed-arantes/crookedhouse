@@ -314,7 +314,7 @@ export function PricingTab() {
   }
 
   function formatPrice(cents: number): string {
-    return `€${(cents / 100).toFixed(2)}`
+    return `€${(cents / 100).toFixed(0)}`
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
@@ -324,7 +324,7 @@ export function PricingTab() {
       <div className="rounded-xl border border-border bg-card p-4">
         <h3 className="mb-3 text-sm font-medium text-foreground">Tassa di soggiorno</h3>
         <p className="mb-3 text-xs text-muted-foreground">
-          Tassa per persona per notte (in euro). applicata a tutti gli ospiti.
+          Tassa per persona, bambini esclusi.
         </p>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -332,12 +332,11 @@ export function PricingTab() {
             <input
               type="number"
               min="0"
-              step="0.50"
+              step="1"
               value={councilTax}
               onChange={(e) => setCouncilTax(Number(e.target.value))}
               className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
-            <span className="text-sm text-muted-foreground">/persona/notte</span>
           </div>
           <button
             onClick={handleSaveTax}
@@ -379,13 +378,23 @@ export function PricingTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <span>{rule.name || 'Regola senza nome'}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      {rule.type === 'nights_discount' ? 'Sconto' : 'Prezzo'}
+                    </span>
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-                    <span>Dal: <span className="text-foreground">{rule.start_date}</span></span>
-                    <span>Al: <span className="text-foreground">{rule.end_date}</span></span>
-                    <span>Prezzo: <span className="text-foreground">{formatPrice(rule.price_per_night)}/notte</span></span>
-                    <span>Min. notti: <span className="text-foreground">{rule.min_nights}</span></span>
-                  </div>
+                  {rule.type === 'date_range' ? (
+                    <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+                      <span>Dal: <span className="text-foreground">{rule.start_date}</span></span>
+                      <span>Al: <span className="text-foreground">{rule.end_date}</span></span>
+                      <span>Prezzo: <span className="text-foreground">{formatPrice(rule.price_per_night)}/notte</span></span>
+                      <span>Min. notti: <span className="text-foreground">{rule.min_nights}</span></span>
+                    </div>
+                  ) : (
+                    <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                      <span>Min. notti: <span className="text-foreground">{rule.min_nights}</span></span>
+                      <span>Sconto: <span className="text-foreground">{rule.discount_percent}%</span></span>
+                    </div>
+                  )}
                   {rule.priority > 0 && (
                     <p className="mt-1 text-xs text-muted-foreground">Priorità: {rule.priority}</p>
                   )}
@@ -426,15 +435,25 @@ function PricingRuleForm({
 }) {
   const [form, setForm] = useState({
     name: rule?.name ?? '',
+    type: rule?.type ?? 'date_range' as 'date_range' | 'nights_discount',
     start_date: rule?.start_date ?? new Date().toISOString().slice(0, 10),
     end_date: rule?.end_date ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-    price_per_night: rule?.price_per_night ?? 9500,
+    price_per_night: rule?.price_per_night ? rule.price_per_night / 100 : 95,
     min_nights: rule?.min_nights ?? 1,
+    discount_percent: rule?.discount_percent ?? 10,
     priority: rule?.priority ?? 0,
   })
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  function handleSave() {
+    onSave({
+      id: rule?.id ?? '',
+      ...form,
+      price_per_night: form.price_per_night * 100,
+    })
   }
 
   return (
@@ -447,62 +466,91 @@ function PricingRuleForm({
           onChange={(e) => update('name', e.target.value)}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
         />
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            placeholder="Prezzo (centesimi)"
-            value={form.price_per_night}
-            onChange={(e) => update('price_per_night', Number(e.target.value))}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          />
-          <span className="text-xs text-muted-foreground">€{(form.price_per_night / 100).toFixed(2)}/n</span>
-        </div>
+        <select
+          value={form.type}
+          onChange={(e) => update('type', e.target.value as 'date_range' | 'nights_discount')}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+        >
+          <option value="date_range">Prezzo per date</option>
+          <option value="nights_discount">Sconto per notti</option>
+        </select>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-xs text-muted-foreground">Dal</label>
-          <input
-            type="date"
-            value={form.start_date}
-            onChange={(e) => update('start_date', e.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+
+      {form.type === 'date_range' ? (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Dal</label>
+              <input
+                type="date"
+                value={form.start_date}
+                onChange={(e) => update('start_date', e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Al</label>
+              <input
+                type="date"
+                value={form.end_date}
+                onChange={(e) => update('end_date', e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Prezzo a notte (€)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.price_per_night}
+                onChange={(e) => update('price_per_night', Number(e.target.value))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Notti minime</label>
+              <input
+                type="number"
+                min="1"
+                value={form.min_nights}
+                onChange={(e) => update('min_nights', Number(e.target.value))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Notti minime</label>
+            <input
+              type="number"
+              min="1"
+              value={form.min_nights}
+              onChange={(e) => update('min_nights', Number(e.target.value))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Sconto (%)</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={form.discount_percent}
+              onChange={(e) => update('discount_percent', Number(e.target.value))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block text-xs text-muted-foreground">Al</label>
-          <input
-            type="date"
-            value={form.end_date}
-            onChange={(e) => update('end_date', e.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          />
-        </div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-xs text-muted-foreground">Notti minime</label>
-          <input
-            type="number"
-            min="1"
-            value={form.min_nights}
-            onChange={(e) => update('min_nights', Number(e.target.value))}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-muted-foreground">Priorità (più alto = vince in caso di sovrapposizione)</label>
-          <input
-            type="number"
-            min="0"
-            value={form.priority}
-            onChange={(e) => update('priority', Number(e.target.value))}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          />
-        </div>
-      </div>
+      )}
+
       <div className="flex gap-2">
         <button
-          onClick={() => onSave({ id: rule?.id ?? '', ...form })}
+          onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
         >

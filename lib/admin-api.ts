@@ -254,10 +254,12 @@ export function fetchAnalytics(range = '30'): Promise<AnalyticsData> {
 export type PricingRule = {
   id: string
   name: string
+  type: 'date_range' | 'nights_discount'
   start_date: string
   end_date: string
   price_per_night: number
   min_nights: number
+  discount_percent: number
   priority: number
 }
 

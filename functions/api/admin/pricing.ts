@@ -6,10 +6,12 @@ const COUNCIL_TAX_DEFAULT = '2'
 type PricingRule = {
   id: string
   name: string
+  type: 'date_range' | 'nights_discount'
   start_date: string
   end_date: string
   price_per_night: number
   min_nights: number
+  discount_percent: number
   priority: number
 }
 
@@ -29,10 +31,12 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const rules: PricingRule[] = (results ?? []).map((r: any) => ({
     id: r.id,
     name: r.name ?? '',
-    start_date: r.start_date,
-    end_date: r.end_date,
-    price_per_night: r.price_per_night,
+    type: r.type ?? 'date_range',
+    start_date: r.start_date ?? '',
+    end_date: r.end_date ?? '',
+    price_per_night: r.price_per_night ?? 0,
     min_nights: r.min_nights ?? 1,
+    discount_percent: r.discount_percent ?? 0,
     priority: r.priority ?? 0,
   }))
 
@@ -52,18 +56,20 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
 
   const id = crypto.randomUUID()
   await (env.DB as any).prepare(
-    'INSERT INTO pricing_rules (id, name, start_date, end_date, price_per_night, min_nights, priority) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO pricing_rules (id, name, type, start_date, end_date, price_per_night, min_nights, discount_percent, priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id,
     body.name || '',
-    body.start_date,
-    body.end_date,
-    body.price_per_night,
+    body.type || 'date_range',
+    body.start_date || '',
+    body.end_date || '',
+    body.price_per_night || 0,
     body.min_nights || 1,
+    body.discount_percent || 0,
     body.priority || 0,
   ).run()
 
-  return json({ id, ...body, min_nights: body.min_nights || 1, priority: body.priority || 0 })
+  return json({ id, ...body, type: body.type || 'date_range', min_nights: body.min_nights || 1, discount_percent: body.discount_percent || 0, priority: body.priority || 0 })
 }
 
 export const onRequestPut = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -83,13 +89,15 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
 
   const rule = body as PricingRule
   await (env.DB as any).prepare(
-    'UPDATE pricing_rules SET name = ?, start_date = ?, end_date = ?, price_per_night = ?, min_nights = ?, priority = ? WHERE id = ?'
+    'UPDATE pricing_rules SET name = ?, type = ?, start_date = ?, end_date = ?, price_per_night = ?, min_nights = ?, discount_percent = ?, priority = ? WHERE id = ?'
   ).bind(
     rule.name || '',
-    rule.start_date,
-    rule.end_date,
-    rule.price_per_night,
+    rule.type || 'date_range',
+    rule.start_date || '',
+    rule.end_date || '',
+    rule.price_per_night || 0,
     rule.min_nights || 1,
+    rule.discount_percent || 0,
     rule.priority || 0,
     rule.id,
   ).run()

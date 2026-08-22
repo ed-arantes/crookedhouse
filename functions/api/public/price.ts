@@ -6,10 +6,12 @@ const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
 type PricingRule = {
   id: string
   name: string
+  type: 'date_range' | 'nights_discount'
   start_date: string
   end_date: string
   price_per_night: number
   min_nights: number
+  discount_percent: number
   priority: number
 }
 
@@ -20,11 +22,23 @@ type PagesContext = {
 
 function calculateNightlyPrice(rules: PricingRule[], dateStr: string): number {
   for (const rule of rules) {
-    if (dateStr >= rule.start_date && dateStr <= rule.end_date) {
+    if (rule.type === 'date_range' && dateStr >= rule.start_date && dateStr <= rule.end_date) {
       return rule.price_per_night
     }
   }
   return NIGHTLY_RATE * 100
+}
+
+function getNightDiscount(rules: PricingRule[], nights: number): number {
+  let bestDiscount = 0
+  for (const rule of rules) {
+    if (rule.type === 'nights_discount' && nights >= rule.min_nights) {
+      if (rule.discount_percent > bestDiscount) {
+        bestDiscount = rule.discount_percent
+      }
+    }
+  }
+  return bestDiscount
 }
 
 export const onRequestGet = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -70,13 +84,19 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     cursor.setDate(cursor.getDate() + 1)
   }
 
-  const subtotal = subtotalCents / 100
+  const subtotalBeforeDiscount = subtotalCents / 100
+  const discountPercent = getNightDiscount(rules, nights)
+  const discountAmount = subtotalBeforeDiscount * (discountPercent / 100)
+  const subtotal = subtotalBeforeDiscount - discountAmount
   const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
   const councilTax = nights * guests * councilTaxRate
 
   return json({
     nights,
     subtotal,
+    subtotalBeforeDiscount,
+    discountPercent,
+    discountAmount,
     councilTax,
     total: subtotal + councilTax,
     nightlyPrices,
