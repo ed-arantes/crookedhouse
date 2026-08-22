@@ -3,6 +3,7 @@ import { Star } from 'lucide-react'
 import { getReviewAverage } from '@/lib/reviews'
 import { useSiteData } from '@/components/site-data-provider'
 import { t, type Locale } from '@/lib/i18n'
+import { plural } from '@/lib/plural'
 import { SearchBar } from './booking/search-bar'
 import { RichText } from '@/components/rich-text'
 
@@ -41,6 +42,7 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
        {t(locale, 'hero.badge', {
         score: getReviewAverage(reviews).toFixed(1),
         count: reviews.length,
+        countLabel: plural(locale, reviews.length, 'widgets.review', 'widgets.reviews'),
        })}
       </span>
      )}

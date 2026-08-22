@@ -3,6 +3,7 @@
 import { Minus, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { t, type Locale } from '@/lib/i18n'
+import { plural } from '@/lib/plural'
 import type { Guests } from './booking-context'
 
 const MAX_GUESTS = 4
@@ -100,7 +101,10 @@ export function GuestSelector({
         {t(locale, 'widgets.pets')}
       </label>
       <p className="pt-3 text-xs text-muted-foreground">
-        {t(locale, 'widgets.maxGuests').replace('{count}', String(MAX_GUESTS))}
+        {t(locale, 'widgets.maxGuests', {
+          count: MAX_GUESTS,
+          guestsLabel: plural(locale, MAX_GUESTS, 'widgets.guestLabel', 'widgets.guestLabels').replace('{count} ', ''),
+        })}
       </p>
     </div>
   )

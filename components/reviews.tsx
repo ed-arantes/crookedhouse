@@ -2,6 +2,7 @@
 
 import { Star } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
+import { plural } from '@/lib/plural'
 import { REVIEW_SOURCES, getReviewAverage } from '@/lib/reviews'
 import { useSiteData } from '@/components/site-data-provider'
 import { RichText } from '@/components/rich-text'
@@ -31,9 +32,10 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
          {getReviewAverage(reviews).toFixed(1)}
         </strong>{' '}
         <span className="text-primary-foreground/70">
-         {t(locale, 'reviews.count', {
-          count: reviews.length,
-         })}
+          {t(locale, 'reviews.count', {
+           count: reviews.length,
+           countLabel: plural(locale, reviews.length, 'widgets.review', 'widgets.reviews'),
+          })}
         </span>
        </span>
       </div>
