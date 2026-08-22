@@ -192,4 +192,59 @@ export function saveR2BaseUrl(url: string): Promise<{ ok: boolean }> {
   })
 }
 
+// ---------------------------------------------------------------------------
+// Bookings
+// ---------------------------------------------------------------------------
+
+export type AdminBooking = {
+  id: string
+  session_id: string
+  first_name: string
+  last_name: string
+  email: string
+  check_in: string
+  check_out: string
+  nights: number
+  adults: number
+  children: number
+  pets: number
+  message: string
+  total_price: number
+  status: string
+  created_at: string
+}
+
+export function fetchBookings(status?: string): Promise<AdminBooking[]> {
+  const qs = status ? `?status=${status}` : ''
+  return adminFetch(`/api/admin/bookings${qs}`)
+}
+
+export function updateBookingStatus(id: string, status: string): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/bookings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, status }),
+  })
+}
+
+export function deleteBooking(id: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/api/admin/bookings?id=${id}`, { method: 'DELETE' })
+}
+
+// ---------------------------------------------------------------------------
+// Analytics
+// ---------------------------------------------------------------------------
+
+export type AnalyticsData = {
+  byDay: { day: string; count: number }[]
+  topPages: { path: string; count: number }[]
+  topReferrers: { referrer: string; count: number }[]
+  topCountries: { country: string; count: number }[]
+  total: { total: number; unique_visitors: number }
+}
+
+export function fetchAnalytics(range = '30'): Promise<AnalyticsData> {
+  return adminFetch(`/api/admin/analytics?range=${range}`)
+}
+
 import { apiUrl } from '@/lib/api-url'

@@ -29,6 +29,13 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
   if (nights <= 0) return
   setIsLoadingPayment(true)
 
+  const form = e.currentTarget
+  const formData = new FormData(form)
+  const firstName = String(formData.get('firstName') || '')
+  const lastName = String(formData.get('lastName') || '')
+  const email = String(formData.get('email') || '')
+  const message = String(formData.get('message') || '')
+
   try {
    const response = await fetch(apiUrl('/api/checkout'), {
     method: 'POST',
@@ -37,6 +44,10 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
      checkIn: checkIn?.toISOString().slice(0, 10),
      checkOut: checkOut?.toISOString().slice(0, 10),
      guests,
+     firstName,
+     lastName,
+     email,
+     message,
     }),
    })
    const data = await response.json()

@@ -27,13 +27,14 @@ import {
   type BlockedDate,
   type AdminImage,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3 } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
+import { BookingsTab, AnalyticsTab } from './admin-tabs'
 
-type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images'
+type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'analytics'
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -116,9 +117,11 @@ export default function AdminPage() {
           {([
             ['blocked', <Calendar key="b" className="h-4 w-4" />, 'Calendario'],
             ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
+            ['bookings', <CalendarCheck key="k" className="h-4 w-4" />, 'Prenotazioni'],
             ['reviews', <MessageSquareQuote key="r" className="h-4 w-4" />, 'Recensioni'],
             ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
             ['images', <ImageIcon key="m" className="h-4 w-4" />, 'Immagini'],
+            ['analytics', <BarChart3 key="a" className="h-4 w-4" />, 'Analisi'],
           ] as const).map(([key, icon, label]) => (
             <button
               key={key}
@@ -139,6 +142,8 @@ export default function AdminPage() {
         {tab === 'content' && <ContentTab />}
         {tab === 'ical' && <IcalTab />}
         {tab === 'images' && <ImagesTab />}
+        {tab === 'bookings' && <BookingsTab />}
+        {tab === 'analytics' && <AnalyticsTab />}
       </div>
     </div>
   )

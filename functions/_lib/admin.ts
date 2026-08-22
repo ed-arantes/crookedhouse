@@ -2,7 +2,10 @@ export type AdminEnv = {
   DB: Record<string, unknown>
   IMAGES: Record<string, unknown>
   ADMIN_PASSWORD?: string
+  BOOKING_ENCRYPTION_KEY?: string
 }
+
+export { encrypt, decrypt } from '../../lib/encryption'
 
 export type AdminContext = {
   request: Request

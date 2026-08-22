@@ -5,10 +5,11 @@ import {
  type StripeCheckoutSession,
  type StripeEnv,
 } from '../_lib/stripe'
+import { type AdminEnv } from '../_lib/admin'
 
 type PagesContext = {
  request: Request
- env: StripeEnv
+ env: StripeEnv & AdminEnv
 }
 
 export const onRequestGet = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -22,6 +23,17 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
    env,
    `/checkout/sessions/${encodeURIComponent(sessionId)}`,
   )
+
+  // Mark booking as paid if payment succeeded
+  if (session.payment_status === 'paid' && env.DB) {
+   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     await (env.DB as any).prepare(
+      "UPDATE bookings SET status = 'paid' WHERE session_id = ?"
+    ).bind(sessionId).run()
+   } catch { /* booking may not exist if encryption key was not set */ }
+  }
+
   return json({
    payment_status: session.payment_status,
    status: session.status,

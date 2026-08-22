@@ -13,6 +13,7 @@ import { Location } from '@/components/location'
 import { BookingForm } from '@/components/booking-form'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteDataProvider } from '@/components/site-data-provider'
+import { AnalyticsBeacon } from '@/components/analytics-beacon'
 import type { Locale } from '@/lib/i18n'
 
 function SiteContent({ locale }: { locale: Locale }) {
@@ -40,6 +41,7 @@ export function SiteShell({ locale }: { locale: Locale }) {
   return (
     <SiteDataProvider locale={locale}>
       <SiteContent locale={locale} />
+      <AnalyticsBeacon />
     </SiteDataProvider>
   )
 }
