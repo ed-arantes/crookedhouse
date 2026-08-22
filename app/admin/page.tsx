@@ -513,7 +513,7 @@ function ReviewsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{reviews.length} recensioni</p>
+        <p className="text-sm text-muted-foreground">{reviews.length} {reviews.length === 1 ? 'recensione' : 'recensioni'}</p>
         <button
           onClick={() => { setIsAdding(true); setEditing(null) }}
           className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90"
@@ -775,7 +775,7 @@ function BlockedDatesTab() {
 
       {bookings.length > 0 && (
         <div>
-          <p className="mb-2 text-sm font-medium text-foreground">Prenotazioni ({bookings.length})</p>
+          <p className="mb-2 text-sm font-medium text-foreground">Prenotazioni ({bookings.length}) — {bookings.length === 1 ? 'Prenotazione' : 'Prenotazioni'}</p>
           <div className="space-y-2">
             {bookings.sort((a, b) => a.check_in.localeCompare(b.check_in)).map((b) => (
               <div key={b.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
@@ -783,7 +783,7 @@ function BlockedDatesTab() {
                   ? 'border-green-200 bg-green-50 text-green-800'
                   : 'border-amber-200 bg-amber-50 text-amber-800'
               }`}>
-                <span>{b.first_name} {b.last_name} · {b.check_in} → {b.check_out} ({b.nights} notti)</span>
+                <span>{b.first_name} {b.last_name} · {b.check_in} → {b.check_out} ({b.nights} {b.nights === 1 ? 'notte' : 'notti'})</span>
                 <span className="font-semibold">{b.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
               </div>
             ))}
