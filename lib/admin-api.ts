@@ -261,7 +261,12 @@ export type PricingRule = {
   priority: number
 }
 
-export function fetchPricingRules(): Promise<PricingRule[]> {
+export type PricingData = {
+  rules: PricingRule[]
+  council_tax_per_person_per_night: number
+}
+
+export function fetchPricingData(): Promise<PricingData> {
   return adminFetch('/api/admin/pricing')
 }
 
@@ -278,6 +283,14 @@ export function updatePricingRule(rule: PricingRule): Promise<{ ok: boolean }> {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(rule),
+  })
+}
+
+export function updateCouncilTax(councilTax: number): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/pricing', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ council_tax: councilTax }),
   })
 }
 

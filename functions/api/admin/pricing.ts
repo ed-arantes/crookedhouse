@@ -1,4 +1,7 @@
-import { json, requireAdmin, type AdminEnv } from '../../_lib/admin'
+import { json, requireAdmin, d1GetSetting, d1SetSetting, type AdminEnv } from '../../_lib/admin'
+
+const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
+const COUNCIL_TAX_DEFAULT = '2'
 
 type PricingRule = {
   id: string
@@ -33,7 +36,9 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     priority: r.priority ?? 0,
   }))
 
-  return json(rules)
+  const councilTax = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, COUNCIL_TAX_DEFAULT), 10) || 2
+
+  return json({ rules, council_tax_per_person_per_night: councilTax })
 }
 
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -65,21 +70,28 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
   const unauthed = requireAdmin(env, request)
   if (unauthed) return unauthed
 
-  const body = await request.json().catch(() => null) as PricingRule | null
+  const body = await request.json().catch(() => null) as { id?: string; council_tax?: number } | null
+
+  if (body?.council_tax !== undefined) {
+    await d1SetSetting(env.DB, COUNCIL_TAX_KEY, String(body.council_tax))
+    return json({ ok: true })
+  }
+
   if (!body?.id) {
     return json({ error: 'Missing id' }, 400)
   }
 
+  const rule = body as PricingRule
   await (env.DB as any).prepare(
     'UPDATE pricing_rules SET name = ?, start_date = ?, end_date = ?, price_per_night = ?, min_nights = ?, priority = ? WHERE id = ?'
   ).bind(
-    body.name || '',
-    body.start_date,
-    body.end_date,
-    body.price_per_night,
-    body.min_nights || 1,
-    body.priority || 0,
-    body.id,
+    rule.name || '',
+    rule.start_date,
+    rule.end_date,
+    rule.price_per_night,
+    rule.min_nights || 1,
+    rule.priority || 0,
+    rule.id,
   ).run()
 
   return json({ ok: true })

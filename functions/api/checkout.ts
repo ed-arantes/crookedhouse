@@ -51,6 +51,8 @@ function calculateNightlyPrice(rules: PricingRule[], dateStr: string): number {
   return NIGHTLY_RATE * 100 // fallback: convert to cents
 }
 
+const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
+
 type PagesContext = {
   request: Request
   env: StripeEnv & AdminEnv
@@ -130,7 +132,8 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       cursor.setDate(cursor.getDate() + 1)
     }
     const subtotal = subtotalCents / 100
-    const councilTax = nights * guestCount * COUNCIL_TAX_PER_PERSON_PER_NIGHT
+    const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
+    const councilTax = nights * guestCount * councilTaxRate
     const total = subtotal + councilTax
     const origin = new URL(request.url).origin
     const form = new URLSearchParams({

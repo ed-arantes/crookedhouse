@@ -1,5 +1,7 @@
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT, NIGHTLY_RATE } from '../../../lib/booking'
-import { json, type AdminEnv } from '../../_lib/admin'
+import { json, d1GetSetting, type AdminEnv } from '../../_lib/admin'
+
+const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
 
 type PricingRule = {
   id: string
@@ -69,7 +71,8 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   }
 
   const subtotal = subtotalCents / 100
-  const councilTax = nights * guests * COUNCIL_TAX_PER_PERSON_PER_NIGHT
+  const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
+  const councilTax = nights * guests * councilTaxRate
 
   return json({
     nights,

@@ -6,9 +6,10 @@ import {
   updateBookingStatus,
   deleteBooking,
   fetchAnalytics,
-  fetchPricingRules,
+  fetchPricingData,
   createPricingRule,
   updatePricingRule,
+  updateCouncilTax,
   deletePricingRule,
   type AdminBooking,
   type AnalyticsData,
@@ -259,14 +260,21 @@ export function AnalyticsTab() {
 
 export function PricingTab() {
   const [rules, setRules] = useState<PricingRule[]>([])
+  const [councilTax, setCouncilTax] = useState(2)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<PricingRule | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [taxSaving, setTaxSaving] = useState(false)
+  const [taxStatus, setTaxStatus] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setRules(await fetchPricingRules()) } catch { /* */ }
+    try {
+      const data = await fetchPricingData()
+      setRules(data.rules)
+      setCouncilTax(data.council_tax_per_person_per_night)
+    } catch { /* */ }
     setLoading(false)
   }, [])
 
@@ -293,6 +301,18 @@ export function PricingTab() {
     load()
   }
 
+  async function handleSaveTax() {
+    setTaxSaving(true)
+    setTaxStatus('')
+    try {
+      await updateCouncilTax(councilTax)
+      setTaxStatus('Tassa salvata.')
+    } catch {
+      setTaxStatus('Errore nel salvataggio.')
+    }
+    setTaxSaving(false)
+  }
+
   function formatPrice(cents: number): string {
     return `€${(cents / 100).toFixed(2)}`
   }
@@ -300,7 +320,36 @@ export function PricingTab() {
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h3 className="mb-3 text-sm font-medium text-foreground">Tassa di soggiorno</h3>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Tassa per persona per notte (in euro). applicata a tutti gli ospiti.
+        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">€</span>
+            <input
+              type="number"
+              min="0"
+              step="0.50"
+              value={councilTax}
+              onChange={(e) => setCouncilTax(Number(e.target.value))}
+              className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+            <span className="text-sm text-muted-foreground">/persona/notte</span>
+          </div>
+          <button
+            onClick={handleSaveTax}
+            disabled={taxSaving}
+            className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" /> {taxSaving ? '...' : 'Salva'}
+          </button>
+          {taxStatus && <span className="text-xs text-muted-foreground">{taxStatus}</span>}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{rules.length} {rules.length === 1 ? 'regola' : 'regole'} di prezzo</p>
         <button
