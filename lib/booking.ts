@@ -56,22 +56,28 @@ export function nightsBetween(start: Date | null, end: Date | null): number {
  return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)))
 }
 
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 export function formatShort(date: Date | null, locale: string = 'it-IT'): string {
   if (!date) return ''
-  return date.toLocaleDateString(locale, {
+  const raw = date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
   })
+  return raw.replace(/[a-zà-ú]+/g, (w) => capitalize(w))
 }
 
 export function formatLong(date: Date | null, locale: string = 'it-IT'): string {
   if (!date) return ''
-  return date.toLocaleDateString(locale, {
+  const raw = date.toLocaleDateString(locale, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
+  return raw.replace(/[a-zà-ú]+/g, (w) => capitalize(w))
 }
 
 export function formatCurrency(amount: number): string {

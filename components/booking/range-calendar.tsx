@@ -49,10 +49,11 @@ function MonthView({
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
   const cells = buildMonthGrid(year, month)
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
   const weekdays = Array.from({ length: 7 }, (_, i) =>
-    new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2024, 0, i + 8)),
+    cap(new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2024, 0, i + 8))),
   )
-  const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(viewDate)
+  const monthLabel = cap(new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(viewDate))
 
   return (
     <div className="w-[17rem]">

@@ -229,15 +229,15 @@ export function AnalyticsTab() {
             <div key={d.day} className="group relative flex-1" style={{ height: `${(d.count / maxViews) * 100}%` }}>
               <div className="h-full w-full rounded-t bg-accent/60 hover:bg-accent transition-colors" />
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-2 py-0.5 text-[10px] text-background opacity-0 group-hover:opacity-100 transition-opacity">
-                {d.day}: {d.count}
+                {formatEU(d.day)}: {d.count}
               </div>
             </div>
           ))}
         </div>
         {data.byDay.length > 0 && (
           <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-            <span>{data.byDay[0]?.day}</span>
-            <span>{data.byDay[data.byDay.length - 1]?.day}</span>
+            <span>{formatEU(data.byDay[0]?.day || '')}</span>
+            <span>{formatEU(data.byDay[data.byDay.length - 1]?.day || '')}</span>
           </div>
         )}
       </div>
