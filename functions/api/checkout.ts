@@ -160,14 +160,18 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       'line_items[0][quantity]': '1',
       'line_items[0][price_data][currency]': 'eur',
       'line_items[0][price_data][unit_amount]': String(total * 100),
-      'line_items[0][price_data][product_data][name]': 'Crooked House stay',
+      'line_items[0][price_data][product_data][name]': 'Crooked House Booking',
       'line_items[0][price_data][product_data][description]': `${nights} night${nights > 1 ? 's' : ''} \u00b7 ${guestCount} guest${guestCount > 1 ? 's' : ''}`,
+      customer_email: String(body.email || ''),
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#booking`,
       'metadata[check_in]': String(body.checkIn),
       'metadata[check_out]': String(body.checkOut),
       'metadata[nights]': String(nights),
       'metadata[guests]': String(guestCount),
+      'metadata[first_name]': String(body.firstName || ''),
+      'metadata[last_name]': String(body.lastName || ''),
+      'metadata[email]': String(body.email || ''),
     })
 
     const result = await stripeRequest<StripeCheckoutSession>(env, '/checkout/sessions', {
