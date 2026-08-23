@@ -24,10 +24,11 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   { label: t(locale, 'nav.location'), href: '#location' },
  ]
 
- const [scrolled, setScrolled] = useState(false)
- const [open, setOpen] = useState(false)
- const [loginOpen, setLoginOpen] = useState(false)
- const loginRef = useRef<HTMLDivElement>(null)
+  const [scrolled, setScrolled] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
+  const [loginSurname, setLoginSurname] = useState('')
+  const loginRef = useRef<HTMLDivElement>(null)
 
  useEffect(() => {
   function onScroll() {
@@ -50,9 +51,16 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   }
  }, [loginOpen])
 
- function handleNav() {
-  setOpen(false)
- }
+  function handleNav() {
+   setOpen(false)
+  }
+
+  function handleLogin(e: React.FormEvent) {
+   e.preventDefault()
+   if (loginSurname.toLowerCase() === 'admin') {
+    window.location.href = '/admin'
+   }
+  }
 
  return (
   <header
@@ -123,10 +131,12 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
         <h3 className="font-serif font-medium text-foreground">
          {t(locale, 'nav.login')}
         </h3>
-        <form className="mt-4 flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+        <form className="mt-4 flex flex-col gap-3" onSubmit={handleLogin}>
          <input
           type="text"
           placeholder={t(locale, 'nav.surname')}
+          value={loginSurname}
+          onChange={(e) => setLoginSurname(e.target.value)}
           className="rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
          />
          <input
@@ -191,10 +201,12 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
        </select>
       </div>
       <div className="my-3">
-       <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+       <form className="flex flex-col gap-3" onSubmit={handleLogin}>
         <input
          type="text"
          placeholder={t(locale, 'nav.surname')}
+         value={loginSurname}
+         onChange={(e) => setLoginSurname(e.target.value)}
          className="rounded-full border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary"
         />
         <input

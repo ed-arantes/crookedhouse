@@ -28,21 +28,14 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault()
   if (nights <= 0) return
+  setIsLoadingPayment(true)
+  setCheckoutError('')
 
   const form = e.currentTarget
   const formData = new FormData(form)
   const firstName = String(formData.get('firstName') || '')
   const lastName = String(formData.get('lastName') || '')
   const email = String(formData.get('email') || '')
-
-  if (lastName.toLowerCase() === 'admin') {
-    window.location.href = '/admin'
-    return
-  }
-
-  setIsLoadingPayment(true)
-  setCheckoutError('')
-
   const message = String(formData.get('message') || '')
 
   try {
