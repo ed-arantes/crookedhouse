@@ -717,13 +717,13 @@ function BlockedDatesTab() {
           <button onClick={nextMonth} className="rounded-lg px-3 py-1 text-sm hover:bg-muted">&rarr;</button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+        <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] text-muted-foreground">
           {['Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa', 'Do'].map((d) => (
-            <div key={d} className="py-1 font-medium">{d}</div>
+            <div key={d} className="py-0.5 font-medium">{d}</div>
           ))}
         </div>
 
-        <div className="mt-1 grid grid-cols-7 gap-1">
+        <div className="mt-0.5 grid grid-cols-7 gap-0.5">
           {days.map((day, i) => {
             if (day === null) return <div key={`e${i}`} />
             const dateStr = formatDate(viewYear, viewMonth, day)
@@ -745,7 +745,7 @@ function BlockedDatesTab() {
                 onClick={() => !isPast && !bookingStatus && toggleDate(dateStr)}
                 disabled={isPast || !!bookingStatus}
                 title={bookingStatus === 'paid' ? 'Prenotata e pagata' : bookingStatus === 'pending' ? 'In attesa di pagamento' : isBlocked ? (blocked.find((b) => b.date === dateStr)?.reason || 'Bloccata') : ''}
-                className={`aspect-square rounded-lg text-sm transition-colors ${cellClass}`}
+                className={`h-7 w-7 rounded text-[11px] transition-colors ${cellClass}`}
               >
                 {day}
               </button>

@@ -21,6 +21,7 @@ export function BookingsTab() {
   const [bookings, setBookings] = useState<AdminBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
+  const [lastAction, setLastAction] = useState<{ id: string; from: string; to: string } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -30,8 +31,19 @@ export function BookingsTab() {
 
   useEffect(() => { load() }, [load])
 
-  async function handleStatusChange(id: string, status: string) {
-    await updateBookingStatus(id, status)
+  async function handleStatusChange(id: string, newStatus: string) {
+    const booking = bookings.find((b) => b.id === id)
+    if (!booking) return
+    const oldStatus = booking.status
+    await updateBookingStatus(id, newStatus)
+    setLastAction({ id, from: oldStatus, to: newStatus })
+    load()
+  }
+
+  async function handleUndo() {
+    if (!lastAction) return
+    await updateBookingStatus(lastAction.id, lastAction.from)
+    setLastAction(null)
     load()
   }
 
@@ -70,6 +82,26 @@ export function BookingsTab() {
         </select>
         <span className="text-sm text-muted-foreground">{bookings.length} {bookings.length === 1 ? 'prenotazione' : 'prenotazioni'}</span>
       </div>
+
+      {lastAction && (
+        <div className="flex items-center gap-3 rounded-lg border border-accent/30 bg-accent/10 px-4 py-2 text-sm">
+          <span className="text-foreground">
+            Stato aggiornato: <span className="font-medium">{statusLabels[lastAction.to] || lastAction.to}</span>
+          </span>
+          <button
+            onClick={handleUndo}
+            className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accent-foreground hover:bg-accent/90"
+          >
+            Annulla
+          </button>
+          <button
+            onClick={() => setLastAction(null)}
+            className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+          >
+            Chiudi
+          </button>
+        </div>
+      )}
 
       {bookings.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nessuna prenotazione trovata.</p>
