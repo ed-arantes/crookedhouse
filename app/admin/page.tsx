@@ -35,6 +35,7 @@ import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
 import { BookingsTab, AnalyticsTab, PricingTab } from './admin-tabs'
+import { parseICalDates } from '@/lib/ical-parser'
 
 type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics'
 
@@ -633,6 +634,7 @@ function ReviewForm({ review, onSave, onCancel }: { review: Review | null; onSav
 function BlockedDatesTab() {
   const [blocked, setBlocked] = useState<BlockedDate[]>([])
   const [bookings, setBookings] = useState<AdminBooking[]>([])
+  const [icalDates, setIcalDates] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [reason, setReason] = useState('')
   const today = new Date()
@@ -642,9 +644,18 @@ function BlockedDatesTab() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [b, bk] = await Promise.all([fetchBlockedDates(), fetchBookings()])
+      const [b, bk, icalUrlData] = await Promise.all([fetchBlockedDates(), fetchBookings(), fetchIcalUrl()])
       setBlocked(b)
       setBookings(bk)
+      if (icalUrlData.url) {
+        try {
+          const res = await fetch(icalUrlData.url, { signal: AbortSignal.timeout(8000) })
+          if (res.ok) {
+            const text = await res.text()
+            setIcalDates(parseICalDates(text))
+          }
+        } catch { /* iCal fetch failed */ }
+      }
     } catch { /* */ }
     setLoading(false)
   }, [])
@@ -652,6 +663,7 @@ function BlockedDatesTab() {
   useEffect(() => { load() }, [load])
 
   const blockedSet = new Set(blocked.map((d) => d.date))
+  const icalSet = new Set(icalDates)
 
   // Build a map of date -> booking status for confirmed bookings
   const bookingDateMap = new Map<string, string>()
@@ -728,17 +740,20 @@ function BlockedDatesTab() {
             if (day === null) return <div key={`e${i}`} />
             const dateStr = formatDate(viewYear, viewMonth, day)
             const isBlocked = blockedSet.has(dateStr)
+            const isIcal = icalSet.has(dateStr)
             const bookingStatus = bookingDateMap.get(dateStr)
             const isPast = new Date(dateStr) < new Date(today.toISOString().slice(0, 10))
             const cellClass = isPast
               ? 'text-muted-foreground/30 cursor-not-allowed'
               : isBlocked
                 ? 'bg-red-500 text-white hover:bg-red-600'
-                : bookingStatus === 'paid'
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : bookingStatus === 'pending'
-                    ? 'bg-amber-400 text-white hover:bg-amber-500'
-                    : 'hover:bg-muted text-foreground'
+                : isIcal
+                  ? 'bg-sky-200 text-sky-900 hover:bg-sky-300'
+                  : bookingStatus === 'paid'
+                    ? 'bg-green-500 text-white hover:bg-green-600'
+                    : bookingStatus === 'pending'
+                      ? 'bg-amber-400 text-white hover:bg-amber-500'
+                      : 'hover:bg-muted text-foreground'
 
             let tooltip = ''
             if (bookingStatus) {
@@ -752,6 +767,8 @@ function BlockedDatesTab() {
             } else if (isBlocked) {
               const reason = blocked.find((b) => b.date === dateStr)?.reason
               tooltip = reason ? `Bloccata: ${reason}` : 'Bloccata (admin)'
+            } else if (isIcal) {
+              tooltip = 'Bloccata (iCal)'
             }
 
             return (
@@ -771,6 +788,7 @@ function BlockedDatesTab() {
 
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-red-500" /> Bloccata (admin)</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-sky-200" /> Bloccata (iCal)</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-amber-400" /> In attesa di pagamento</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-green-500" /> Pagata / Prenotata</span>
       </div>
@@ -784,6 +802,19 @@ function BlockedDatesTab() {
                 {d.date}
                 {d.reason && <span className="text-red-400">· {d.reason}</span>}
                 <button onClick={() => removeBlockedDate(d.date).then(load)} className="ml-0.5 hover:text-red-800">&times;</button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {icalDates.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">Date iCal ({icalDates.length})</p>
+          <div className="flex flex-wrap gap-2">
+            {icalDates.sort().map((d) => (
+              <span key={d} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
+                {d}
               </span>
             ))}
           </div>

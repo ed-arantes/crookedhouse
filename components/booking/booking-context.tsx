@@ -20,7 +20,7 @@ export type Guests = {
 type AvailabilityDate = {
   date: string
   reason?: string
-  source: 'admin' | 'ical'
+  source: 'admin' | 'ical' | 'booking'
 }
 
 type BookingState = {
