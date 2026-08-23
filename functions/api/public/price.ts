@@ -65,10 +65,12 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     rules = (results ?? []).map((r: any) => ({
       id: r.id,
       name: r.name ?? '',
-      start_date: r.start_date,
-      end_date: r.end_date,
-      price_per_night: r.price_per_night,
+      type: r.type ?? 'date_range',
+      start_date: r.start_date ?? '',
+      end_date: r.end_date ?? '',
+      price_per_night: r.price_per_night ?? 0,
       min_nights: r.min_nights ?? 1,
+      discount_percent: r.discount_percent ?? 0,
       priority: r.priority ?? 0,
     }))
   } catch { /* use fallback */ }
