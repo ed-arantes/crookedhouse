@@ -71,11 +71,13 @@ function MonthView({
         ))}
         {cells.map((day, i) => {
           if (!day) return <div key={`empty-${i}`} aria-hidden="true" />
-          const disabled = isBefore(day, today) || (disabledDates?.has(toISO(day)) ?? false)
+          const isDisabledDate = isBefore(day, today) || (disabledDates?.has(toISO(day)) ?? false)
           const isStart = isSameDay(day, checkIn)
           const isEnd = isSameDay(day, checkOut)
           const inRange = isBetween(day, checkIn, checkOut)
           const isEdge = isStart || isEnd
+          // Allow disabled dates to show as checkout edge (auto-selected)
+          const disabled = isDisabledDate && !isEnd
           return (
             <div
               key={day.toISOString()}
@@ -93,10 +95,10 @@ function MonthView({
                 aria-label={day.toDateString()}
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors',
-                  !disabled &&
+                  !isDisabledDate &&
                     !isEdge &&
                     'text-foreground hover:bg-primary/15',
-                  disabled && 'cursor-not-allowed text-muted-foreground/40',
+                  isDisabledDate && !isEnd && 'cursor-not-allowed text-muted-foreground/40',
                   isEdge &&
                     'bg-primary font-medium text-primary-foreground hover:bg-primary',
                 )}
@@ -125,6 +127,15 @@ export function RangeCalendar({
   function handleSelect(day: Date) {
     // No start yet, or a full range exists -> start fresh.
     if (!checkIn || (checkIn && checkOut)) {
+      // If next day is unavailable, auto-select 1-night stay
+      if (disabledDates && disabledDates.size > 0) {
+        const nextDay = new Date(day)
+        nextDay.setDate(nextDay.getDate() + 1)
+        if (disabledDates.has(toISO(nextDay))) {
+          onChange(day, nextDay)
+          return
+        }
+      }
       onChange(day, null)
       return
     }
