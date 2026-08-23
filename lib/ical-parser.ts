@@ -34,6 +34,42 @@ export function parseICalDates(text: string): string[] {
   return Array.from(dates).sort()
 }
 
+export type ICalEvent = {
+  summary: string
+  start: string
+  end: string
+  nights: number
+}
+
+/**
+ * Parse an iCal feed string and return structured event data.
+ * For all-day events, DTEND is exclusive (standard iCal), so nights = end - start.
+ */
+export function parseICalEvents(text: string): ICalEvent[] {
+  const events: ICalEvent[] = []
+  const blocks = text.split('BEGIN:VEVENT')
+
+  for (let i = 1; i < blocks.length; i++) {
+    const block = blocks[i].split('END:VEVENT')[0]
+    const start = extractDate(block, 'DTSTART')
+    const end = extractDate(block, 'DTEND')
+    const summary = extractField(block, 'SUMMARY') || 'Senza nome'
+    if (!start) continue
+
+    const endDate = end || start
+    const nights = Math.round((new Date(endDate).getTime() - new Date(start).getTime()) / 86400000) || 1
+    events.push({ summary, start, end: endDate, nights })
+  }
+
+  return events.sort((a, b) => a.start.localeCompare(b.start))
+}
+
+function extractField(block: string, field: string): string | null {
+  const regex = new RegExp(`${field}[^:]*:\\s*(.+)`, 'i')
+  const match = block.match(regex)
+  return match ? match[1].trim() : null
+}
+
 function extractDate(block: string, prefix: string): string | null {
   // Match lines like "DTSTART;VALUE=DATE:20260815" or "DTSTART:20260815T120000Z"
   const regex = new RegExp(`${prefix}(?:;[^:]*)?:\\s*(\\d{8}(?:T\\d{6}Z?)?)`, 'i')

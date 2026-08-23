@@ -35,7 +35,7 @@ import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
 import { BookingsTab, AnalyticsTab, PricingTab } from './admin-tabs'
-import { parseICalDates } from '@/lib/ical-parser'
+import { parseICalDates, parseICalEvents, type ICalEvent } from '@/lib/ical-parser'
 
 type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics'
 
@@ -1023,15 +1023,36 @@ function IcalTab() {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [events, setEvents] = useState<ICalEvent[]>([])
+  const [fetchError, setFetchError] = useState('')
+
+  const loadEvents = useCallback(async (icalUrl: string) => {
+    if (!icalUrl) { setEvents([]); return }
+    try {
+      const res = await fetch(icalUrl, { signal: AbortSignal.timeout(8000) })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const text = await res.text()
+      setEvents(parseICalEvents(text))
+      setFetchError('')
+    } catch {
+      setEvents([])
+      setFetchError('Impossibile caricare il feed iCal')
+    }
+  }, [])
 
   useEffect(() => {
-    fetchIcalUrl().then((data) => { setUrl(data.url); setLoading(false) }).catch(() => setLoading(false))
-  }, [])
+    fetchIcalUrl().then((data) => {
+      setUrl(data.url)
+      setLoading(false)
+      if (data.url) loadEvents(data.url)
+    }).catch(() => setLoading(false))
+  }, [loadEvents])
 
   async function handleSave() {
     setSaving(true)
     await saveIcalUrl(url)
     setSaving(false)
+    loadEvents(url)
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
@@ -1063,6 +1084,21 @@ function IcalTab() {
           <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 block truncate text-sm text-accent underline">
             {url}
           </a>
+        </div>
+      )}
+      {fetchError && (
+        <p className="text-sm text-destructive">{fetchError}</p>
+      )}
+      {events.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h3 className="mb-3 text-sm font-medium text-foreground">Prenotazioni iCal ({events.length})</h3>
+          <div className="space-y-2">
+            {events.map((e, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+                <span>{e.summary} · {e.start} → {e.end} ({e.nights} {e.nights === 1 ? 'notte' : 'notti'})</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
