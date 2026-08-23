@@ -29,14 +29,14 @@ import {
   type AdminImage,
   type AdminBooking,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, Database } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
-import { BookingsTab, AnalyticsTab, PricingTab } from './admin-tabs'
+import { BookingsTab, AnalyticsTab, PricingTab, UsageTab } from './admin-tabs'
 
-type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics'
+type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics' | 'usage'
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -124,6 +124,7 @@ export default function AdminPage() {
             ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
             ['images', <ImageIcon key="m" className="h-4 w-4" />, 'Immagini'],
             ['analytics', <BarChart3 key="a" className="h-4 w-4" />, 'Analisi'],
+            ['usage', <Database key="u" className="h-4 w-4" />, 'Utilizzo'],
             ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
           ] as const).map(([key, icon, label]) => (
             <button
@@ -148,6 +149,7 @@ export default function AdminPage() {
         {tab === 'bookings' && <BookingsTab />}
         {tab === 'pricing' && <PricingTab />}
         {tab === 'analytics' && <AnalyticsTab />}
+        {tab === 'usage' && <UsageTab />}
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ import {
   updatePricingRule,
   updateCouncilTax,
   deletePricingRule,
+  fetchUsage,
   type AdminBooking,
   type AnalyticsData,
   type PricingRule,
@@ -451,6 +452,113 @@ export function PricingTab() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+export function UsageTab() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const [data, setData] = useState<Record<string, any> | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try { setData(await fetchUsage()) } catch { /* */ }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
+  if (!data) return <p className="text-sm text-muted-foreground">Nessun dato disponibile.</p>
+
+  const d1 = data.d1_api
+  const r2 = data.r2_api
+  const local = data.d1_local
+  const r2Local = data.r2_local
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-sm font-medium text-foreground">Utilizzo risorse Cloudflare</h3>
+
+      {/* D1 */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h4 className="mb-3 text-sm font-medium text-foreground">D1 — crookedhouse-translations</h4>
+        {d1 ? (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">Storage</p>
+              <p className="text-lg font-medium text-foreground">{d1.storage?.current_bytes ? (d1.storage.current_bytes / (1024 * 1024)).toFixed(2) + ' MB' : 'N/A'}</p>
+              <p className="text-[10px] text-muted-foreground">limite gratuito: 5 GB</p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">Letture (24h)</p>
+              <p className="text-lg font-medium text-foreground">{d1.reads?.total ? d1.reads.total.toLocaleString() : 'N/A'}</p>
+              <p className="text-[10px] text-muted-foreground">limite gratuito: 100M/giorno</p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">Scritture (24h)</p>
+              <p className="text-lg font-medium text-foreground">{d1.writes?.total ? d1.writes.total.toLocaleString() : 'N/A'}</p>
+              <p className="text-[10px] text-muted-foreground">limite gratuito: 50M/giorno</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">API non disponibile</p>
+        )}
+        {local && (
+          <div className="mt-4">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Righi per tabella</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {Object.entries(local.tables).map(([table, count]) => (
+                <div key={table} className="rounded-lg bg-muted/30 px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">{table}: </span>
+                  <span className="font-medium text-foreground">{(count as number).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* R2 */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h4 className="mb-3 text-sm font-medium text-foreground">R2 — crookedhouse-images</h4>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {r2 ? (
+            <>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Storage</p>
+                <p className="text-lg font-medium text-foreground">{r2.storage?.current_bytes ? (r2.storage.current_bytes / (1024 * 1024)).toFixed(2) + ' MB' : 'N/A'}</p>
+                <p className="text-[10px] text-muted-foreground">limite gratuito: 10 GB</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Class A (mese)</p>
+                <p className="text-lg font-medium text-foreground">{r2.requests?.class_a_total ? r2.requests.class_a_total.toLocaleString() : 'N/A'}</p>
+                <p className="text-[10px] text-muted-foreground">limite gratuito: 1M/mese</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Class B (mese)</p>
+                <p className="text-lg font-medium text-foreground">{r2.requests?.class_b_total ? r2.requests.class_b_total.toLocaleString() : 'N/A'}</p>
+                <p className="text-[10px] text-muted-foreground">limite gratuito: 10M/mese</p>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground col-span-3">API non disponibile</p>
+          )}
+          {r2Local && (
+            <>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Oggetti locali</p>
+                <p className="text-lg font-medium text-foreground">{r2Local.objectCount.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Spazio locale</p>
+                <p className="text-lg font-medium text-foreground">{r2Local.totalSizeMB} MB</p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -300,4 +300,33 @@ export function deletePricingRule(id: string): Promise<{ ok: boolean }> {
   return adminFetch(`/api/admin/pricing?id=${id}`, { method: 'DELETE' })
 }
 
+// ---------------------------------------------------------------------------
+// Usage
+// ---------------------------------------------------------------------------
+
+export type UsageData = {
+  d1?: {
+    database: string
+    tables: Record<string, number>
+    totalRows: number
+    freeLimit: number
+    readsPerDay: number
+    writesPerDay: number
+  }
+  r2?: {
+    bucket: string
+    objectCount: number
+    truncated: boolean
+    totalSizeBytes: number
+    totalSizeMB: string
+    freeStorageGB: number
+    freeClassARequests: number
+    freeClassBRequests: number
+  }
+}
+
+export function fetchUsage(): Promise<UsageData> {
+  return adminFetch('/api/admin/usage')
+}
+
 import { apiUrl } from '@/lib/api-url'
