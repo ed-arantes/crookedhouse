@@ -122,6 +122,17 @@ export function fetchIcalUrl(): Promise<{ url: string }> {
   return adminFetch('/api/admin/ical')
 }
 
+export type ICalEvent = {
+  summary: string
+  start: string
+  end: string
+  nights: number
+}
+
+export function fetchIcalPreview(): Promise<{ url: string; events: ICalEvent[]; error?: string }> {
+  return adminFetch('/api/admin/ical?preview=1')
+}
+
 export function saveIcalUrl(url: string): Promise<{ ok: boolean }> {
   return adminFetch('/api/admin/ical', {
     method: 'POST',

@@ -16,6 +16,7 @@ import {
   saveContent,
   fetchIcalUrl,
   saveIcalUrl,
+  fetchIcalPreview,
   fetchAllImages,
   uploadImage,
   updateImage,
@@ -28,6 +29,7 @@ import {
   type BlockedDate,
   type AdminImage,
   type AdminBooking,
+  type ICalEvent,
 } from '@/lib/admin-api'
 import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
@@ -35,7 +37,6 @@ import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
 import { BookingsTab, AnalyticsTab, PricingTab } from './admin-tabs'
-import { parseICalDates, parseICalEvents, type ICalEvent } from '@/lib/ical-parser'
 
 type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics'
 
@@ -644,18 +645,21 @@ function BlockedDatesTab() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [b, bk, icalUrlData] = await Promise.all([fetchBlockedDates(), fetchBookings(), fetchIcalUrl()])
+      const [b, bk, icalData] = await Promise.all([fetchBlockedDates(), fetchBookings(), fetchIcalPreview()])
       setBlocked(b)
       setBookings(bk)
-      if (icalUrlData.url) {
-        try {
-          const res = await fetch(icalUrlData.url, { signal: AbortSignal.timeout(8000) })
-          if (res.ok) {
-            const text = await res.text()
-            setIcalDates(parseICalDates(text))
-          }
-        } catch { /* iCal fetch failed */ }
+      const dates = new Set<string>()
+      for (const ev of icalData.events || []) {
+        const start = new Date(`${ev.start}T00:00:00.000Z`)
+        const end = new Date(`${ev.end}T00:00:00.000Z`)
+        const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
+        for (let i = 0; i < nights; i++) {
+          const d = new Date(start)
+          d.setDate(d.getDate() + i)
+          dates.add(d.toISOString().slice(0, 10))
+        }
       }
+      setIcalDates(Array.from(dates))
     } catch { /* */ }
     setLoading(false)
   }, [])
@@ -1026,14 +1030,11 @@ function IcalTab() {
   const [events, setEvents] = useState<ICalEvent[]>([])
   const [fetchError, setFetchError] = useState('')
 
-  const loadEvents = useCallback(async (icalUrl: string) => {
-    if (!icalUrl) { setEvents([]); return }
+  const loadPreview = useCallback(async () => {
     try {
-      const res = await fetch(icalUrl, { signal: AbortSignal.timeout(8000) })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const text = await res.text()
-      setEvents(parseICalEvents(text))
-      setFetchError('')
+      const data = await fetchIcalPreview()
+      setEvents(data.events || [])
+      setFetchError(data.error || '')
     } catch {
       setEvents([])
       setFetchError('Impossibile caricare il feed iCal')
@@ -1044,15 +1045,15 @@ function IcalTab() {
     fetchIcalUrl().then((data) => {
       setUrl(data.url)
       setLoading(false)
-      if (data.url) loadEvents(data.url)
+      if (data.url) loadPreview()
     }).catch(() => setLoading(false))
-  }, [loadEvents])
+  }, [loadPreview])
 
   async function handleSave() {
     setSaving(true)
     await saveIcalUrl(url)
     setSaving(false)
-    loadEvents(url)
+    loadPreview()
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>

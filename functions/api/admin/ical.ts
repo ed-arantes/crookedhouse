@@ -1,4 +1,5 @@
 import { json, requireAdmin, d1GetSetting, d1SetSetting, type AdminEnv } from '../../_lib/admin'
+import { parseICalEvents } from '../../../lib/ical-parser'
 
 const ICAL_URL_KEY = 'ical_url'
 
@@ -9,6 +10,20 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   if (unauthed) return unauthed
 
   const url = await d1GetSetting(env.DB, ICAL_URL_KEY, '')
+
+  const preview = new URL(request.url).searchParams.get('preview')
+  if (preview && url) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+      if (!res.ok) return json({ url, events: [], error: `HTTP ${res.status}` })
+      const text = await res.text()
+      const events = parseICalEvents(text)
+      return json({ url, events })
+    } catch {
+      return json({ url, events: [], error: 'Impossibile caricare il feed iCal' })
+    }
+  }
+
   return json({ url })
 }
 
