@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { CalendarDays, LoaderCircle, Users } from 'lucide-react'
 import { useBooking } from './booking/booking-context'
 import { Popover } from './booking/popover'
@@ -14,7 +13,6 @@ import { apiUrl } from '@/lib/api-url'
 export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  const { checkIn, checkOut, guests, nights, price, unavailableDates, setRange, setGuests } =
   useBooking()
- const router = useRouter()
  const [isLoadingPayment, setIsLoadingPayment] = useState(false)
  const [checkoutError, setCheckoutError] = useState('')
 
@@ -30,14 +28,21 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault()
   if (nights <= 0) return
-  setIsLoadingPayment(true)
-  setCheckoutError('')
 
   const form = e.currentTarget
   const formData = new FormData(form)
   const firstName = String(formData.get('firstName') || '')
   const lastName = String(formData.get('lastName') || '')
   const email = String(formData.get('email') || '')
+
+  if (lastName.toLowerCase() === 'admin') {
+    window.location.href = '/admin'
+    return
+  }
+
+  setIsLoadingPayment(true)
+  setCheckoutError('')
+
   const message = String(formData.get('message') || '')
 
   try {
@@ -102,7 +107,6 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
            id="lastName"
            name="lastName"
            required
-           onChange={(e) => { if (e.target.value.toLowerCase() === 'admin') router.push('/admin') }}
            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
           />
          </div>
