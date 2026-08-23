@@ -118,10 +118,11 @@ export function BookingsTab() {
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{b.email}</p>
-                  <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+                  <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-5">
                     <span>Check-in: <span className="text-foreground">{b.check_in}</span></span>
                     <span>Check-out: <span className="text-foreground">{b.check_out}</span></span>
-                    <span>Ospiti: <span className="text-foreground">{b.adults + b.children}{b.pets ? ` + ${b.pets} ${b.pets === 1 ? 'animale' : 'animali'}` : ''}</span></span>
+                    <span>Notti: <span className="text-foreground">{b.nights}</span></span>
+                    <span>Ospiti: <span className="text-foreground">{b.adults} adult{b.adults !== 1 ? 'i' : 'o'}{b.children > 0 ? `, ${b.children} bambin${b.children !== 1 ? 'i' : 'o'}` : ''}{b.pets ? `, ${b.pets} animale${b.pets !== 1 ? 'i' : ''}` : ''}</span></span>
                     <span>Totale: <span className="text-foreground">&euro;{b.total_price}</span></span>
                   </div>
                   {b.message && (

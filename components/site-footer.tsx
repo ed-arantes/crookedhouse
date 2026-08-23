@@ -68,11 +68,11 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
        </li>
        <li className="flex items-center gap-3">
         <Phone className="h-4 w-4 shrink-0" />
-        +39 0344 000 000
+        +39 0123 000 000
        </li>
        <li className="flex items-center gap-3">
         <Mail className="h-4 w-4 shrink-0" />
-        stay@crookedhouse.it
+        crookedhousecomo@gmail.com
        </li>
       </ul>
      </div>

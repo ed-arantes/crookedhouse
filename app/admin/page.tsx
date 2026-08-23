@@ -739,12 +739,27 @@ function BlockedDatesTab() {
                   : bookingStatus === 'pending'
                     ? 'bg-amber-400 text-white hover:bg-amber-500'
                     : 'hover:bg-muted text-foreground'
+
+            let tooltip = ''
+            if (bookingStatus) {
+              const booking = bookings.find((b) => {
+                if (b.status !== bookingStatus) return false
+                return dateStr >= b.check_in && dateStr < b.check_out
+              })
+              if (booking) {
+                tooltip = `${booking.first_name} ${booking.last_name} · ${booking.check_in} → ${booking.check_out} (${booking.nights} ${booking.nights === 1 ? 'notte' : 'notti'}) · ${bookingStatus === 'paid' ? 'Pagata' : 'In attesa'}`
+              }
+            } else if (isBlocked) {
+              const reason = blocked.find((b) => b.date === dateStr)?.reason
+              tooltip = reason ? `Bloccata: ${reason}` : 'Bloccata (admin)'
+            }
+
             return (
               <button
                 key={dateStr}
                 onClick={() => !isPast && !bookingStatus && toggleDate(dateStr)}
                 disabled={isPast || !!bookingStatus}
-                title={bookingStatus === 'paid' ? 'Prenotata e pagata' : bookingStatus === 'pending' ? 'In attesa di pagamento' : isBlocked ? (blocked.find((b) => b.date === dateStr)?.reason || 'Bloccata') : ''}
+                title={tooltip}
                 className={`h-7 w-7 rounded text-[11px] transition-colors ${cellClass}`}
               >
                 {day}

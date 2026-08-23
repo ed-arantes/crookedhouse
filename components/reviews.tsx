@@ -23,7 +23,7 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
         {Array.from({ length: 5 }).map((_, i) => (
          <Star
           key={i}
-          className="h-5 w-5 fill-accent text-accent"
+          className={`h-5 w-5 ${i < Math.round(getReviewAverage(reviews) / 2) ? 'fill-accent text-accent' : 'text-primary-foreground/30'}`}
          />
         ))}
        </div>
@@ -52,9 +52,12 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
          className="min-w-[20rem] w-[22rem] flex-shrink-0 flex-col rounded-2xl bg-primary-foreground/10 p-6 backdrop-blur-sm"
         >
         <div className="mb-4 flex gap-0.5">
-         {Array.from({ length: 5 }).map((_, i) => (
-          <Star key={i} className="h-4 w-4 fill-accent text-accent" />
-         ))}
+         {Array.from({ length: 5 }).map((_, i) => {
+          const reviewStars = review.source === 'airbnb' ? (review.rating ?? 0) : (review.rating ? review.rating / 2 : 0)
+          return (
+           <Star key={i} className={`h-4 w-4 ${i < Math.round(reviewStars) ? 'fill-accent text-accent' : 'text-primary-foreground/30'}`} />
+          )
+         })}
         </div>
         <blockquote className="flex-1 text-pretty text-sm leading-relaxed text-primary-foreground/90">
          &ldquo;{review.text}&rdquo;
