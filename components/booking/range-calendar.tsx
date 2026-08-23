@@ -115,7 +115,7 @@ export function RangeCalendar({
   checkOut,
   onChange,
   months = 1,
-  locale = 'en',
+  locale = 'it',
   disabledDates,
 }: RangeCalendarProps) {
   const today = startOfDay(new Date())
@@ -131,6 +131,19 @@ export function RangeCalendar({
     if (isBefore(day, checkIn) || isSameDay(day, checkIn)) {
       onChange(day, null)
       return
+    }
+    // Check that all dates between checkIn and day are available.
+    if (disabledDates && disabledDates.size > 0) {
+      const cursor = new Date(checkIn)
+      cursor.setDate(cursor.getDate() + 1)
+      while (cursor < day) {
+        if (disabledDates.has(toISO(cursor))) {
+          // Gap found — start a new range from the clicked day.
+          onChange(day, null)
+          return
+        }
+        cursor.setDate(cursor.getDate() + 1)
+      }
     }
     onChange(checkIn, day)
   }

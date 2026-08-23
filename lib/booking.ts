@@ -56,22 +56,22 @@ export function nightsBetween(start: Date | null, end: Date | null): number {
  return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)))
 }
 
-export function formatShort(date: Date | null, locale: string = 'en'): string {
- if (!date) return ''
- return date.toLocaleDateString(locale, {
-  month: 'short',
-  day: 'numeric',
- })
+export function formatShort(date: Date | null, locale: string = 'it-IT'): string {
+  if (!date) return ''
+  return date.toLocaleDateString(locale, {
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
-export function formatLong(date: Date | null, locale: string = 'en'): string {
- if (!date) return ''
- return date.toLocaleDateString(locale, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
- })
+export function formatLong(date: Date | null, locale: string = 'it-IT'): string {
+  if (!date) return ''
+  return date.toLocaleDateString(locale, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 export function formatCurrency(amount: number): string {

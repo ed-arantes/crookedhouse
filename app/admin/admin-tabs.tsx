@@ -17,6 +17,7 @@ import {
   type PricingRule,
 } from '@/lib/admin-api'
 import { Plus, Pencil, Trash2, Save } from 'lucide-react'
+import { formatEU } from '@/lib/format-date'
 
 export function BookingsTab() {
   const [bookings, setBookings] = useState<AdminBooking[]>([])
@@ -120,8 +121,8 @@ export function BookingsTab() {
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{b.email}</p>
                   <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-5">
-                    <span>Check-in: <span className="text-foreground">{b.check_in}</span></span>
-                    <span>Check-out: <span className="text-foreground">{b.check_out}</span></span>
+                    <span>Check-in: <span className="text-foreground">{formatEU(b.check_in)}</span></span>
+                    <span>Check-out: <span className="text-foreground">{formatEU(b.check_out)}</span></span>
                     <span>Notti: <span className="text-foreground">{b.nights}</span></span>
                     <span>Ospiti: <span className="text-foreground">{b.adults} adult{b.adults !== 1 ? 'i' : 'o'}{b.children > 0 ? `, ${b.children} bambin${b.children !== 1 ? 'i' : 'o'}` : ''}{b.pets ? `, ${b.pets} animale${b.pets !== 1 ? 'i' : ''}` : ''}</span></span>
                     <span>Totale: <span className="text-foreground">&euro;{b.total_price}</span></span>
@@ -521,8 +522,8 @@ export function PricingTab() {
                   </div>
                   {rule.type === 'date_range' ? (
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-                      <span>Dal: <span className="text-foreground">{rule.start_date}</span></span>
-                      <span>Al: <span className="text-foreground">{rule.end_date}</span></span>
+                      <span>Dal: <span className="text-foreground">{formatEU(rule.start_date)}</span></span>
+                      <span>Al: <span className="text-foreground">{formatEU(rule.end_date)}</span></span>
                       <span>Prezzo: <span className="text-foreground">{formatPrice(rule.price_per_night)}/notte</span></span>
                       <span>Min. notti: <span className="text-foreground">{rule.min_nights}</span></span>
                     </div>

@@ -37,7 +37,7 @@ import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
 import { BookingsTab, AnalyticsTab, PricingTab } from './admin-tabs'
-
+import { formatEU } from '@/lib/format-date'
 type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics'
 
 export default function AdminPage() {
@@ -766,7 +766,7 @@ function BlockedDatesTab() {
                 return dateStr >= b.check_in && dateStr < b.check_out
               })
               if (booking) {
-                tooltip = `${booking.first_name} ${booking.last_name} · ${booking.check_in} → ${booking.check_out} (${booking.nights} ${booking.nights === 1 ? 'notte' : 'notti'}) · ${bookingStatus === 'paid' ? 'Pagata' : 'In attesa'}`
+                tooltip = `${booking.first_name} ${booking.last_name} · ${formatEU(booking.check_in)} → ${formatEU(booking.check_out)} (${booking.nights} ${booking.nights === 1 ? 'notte' : 'notti'}) · ${bookingStatus === 'paid' ? 'Pagata' : 'In attesa'}`
               }
             } else if (isBlocked) {
               const reason = blocked.find((b) => b.date === dateStr)?.reason
@@ -803,7 +803,7 @@ function BlockedDatesTab() {
           <div className="flex flex-wrap gap-2">
             {blocked.sort((a, b) => a.date.localeCompare(b.date)).map((d) => (
               <span key={d.date} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
-                {d.date}
+                {formatEU(d.date)}
                 {d.reason && <span className="text-red-400">· {d.reason}</span>}
                 <button onClick={() => removeBlockedDate(d.date).then(load)} className="ml-0.5 hover:text-red-800">&times;</button>
               </span>
@@ -818,7 +818,7 @@ function BlockedDatesTab() {
           <div className="flex flex-wrap gap-2">
             {icalDates.sort().map((d) => (
               <span key={d} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
-                {d}
+                {formatEU(d)}
               </span>
             ))}
           </div>
@@ -835,7 +835,7 @@ function BlockedDatesTab() {
                   ? 'border-green-200 bg-green-50 text-green-800'
                   : 'border-amber-200 bg-amber-50 text-amber-800'
               }`}>
-                <span>{b.first_name} {b.last_name} · {b.check_in} → {b.check_out} ({b.nights} {b.nights === 1 ? 'notte' : 'notti'})</span>
+                <span>{b.first_name} {b.last_name} · {formatEU(b.check_in)} → {formatEU(b.check_out)} ({b.nights} {b.nights === 1 ? 'notte' : 'notti'})</span>
                 <span className="font-semibold">{b.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
               </div>
             ))}
@@ -1096,7 +1096,7 @@ function IcalTab() {
           <div className="space-y-2">
             {events.map((e, i) => (
               <div key={i} className="flex items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
-                <span>{e.summary} · {e.start} → {e.end} ({e.nights} {e.nights === 1 ? 'notte' : 'notti'})</span>
+                <span>{e.summary} · {formatEU(e.start)} → {formatEU(e.end)} ({e.nights} {e.nights === 1 ? 'notte' : 'notti'})</span>
               </div>
             ))}
           </div>
