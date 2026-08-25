@@ -12,9 +12,51 @@ const LOCALE_NAMES: Record<string, string> = {
   ru: 'russian',
 }
 
+const PROTECTED_PHRASES = ['Crooked House', 'Grandola ed Uniti']
+
 interface TranslationPair {
   key: string
   value: string
+}
+
+function protect(text: string): { clean: string; restore: (s: string) => string } {
+  const placeholders: string[] = []
+  let clean = text
+  for (let i = 0; i < PROTECTED_PHRASES.length; i++) {
+    const phrase = PROTECTED_PHRASES[i]
+    const marker = `__PH${i}__`
+    if (clean.includes(phrase)) {
+      clean = clean.replaceAll(phrase, marker)
+      placeholders.push(marker)
+    }
+  }
+  return {
+    clean,
+    restore: (s: string) => {
+      let result = s
+      for (let i = 0; i < PROTECTED_PHRASES.length; i++) {
+        const marker = `__PH${i}__`
+        result = result.replaceAll(marker, PROTECTED_PHRASES[i])
+        result = result.replaceAll(marker.toLowerCase(), PROTECTED_PHRASES[i])
+      }
+      return result
+    },
+  }
+}
+
+function preserveCase(original: string, translated: string): string {
+  if (!original || !translated) return translated
+
+  const startsUpper = /^[A-ZÀ-Ý]/.test(original)
+  const isAllUpper = original === original.toUpperCase() && original !== original.toLowerCase()
+
+  if (isAllUpper) {
+    return translated.toUpperCase()
+  }
+  if (startsUpper && translated.length > 0) {
+    return translated.charAt(0).toUpperCase() + translated.slice(1)
+  }
+  return translated
 }
 
 async function translateText(
@@ -23,14 +65,16 @@ async function translateText(
   targetLocale: string
 ): Promise<string> {
   const targetName = LOCALE_NAMES[targetLocale] || targetLocale
+  const { clean, restore } = protect(text)
 
   const response = await ai.run('@cf/meta/m2m100-1.2b', {
-    text,
+    text: clean,
     source_lang: 'italian',
     target_lang: targetName,
   }) as { translated_text?: string }
 
-  return response?.translated_text ?? text
+  const translated = restore(response?.translated_text ?? clean)
+  return preserveCase(text, translated)
 }
 
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
