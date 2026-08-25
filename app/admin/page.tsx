@@ -964,45 +964,44 @@ function ContentTab() {
       await saveContent(activeLocale, current)
       setDirty(false)
       setStatus(`Contenuti ${LOCALE_LABELS[activeLocale]} salvati.`)
-
-      if (activeLocale === 'it') {
-        setTranslating(true)
-        setTranslateLog([])
-        setLogVisible(0)
-        try {
-          const pairs = Object.entries(current)
-            .filter(([, v]) => typeof v === 'string' && v.trim())
-            .map(([key, value]) => ({ key, value: value as string }))
-
-          const targetLocales = ['en', 'fr', 'de', 'es', 'ru']
-          setTranslateProgress({ done: 0, total: targetLocales.length, currentLocale: '' })
-
-          for (let i = 0; i < targetLocales.length; i++) {
-            const locale = targetLocales[i]
-            setTranslateProgress({ done: i, total: targetLocales.length, currentLocale: LOCALE_LABELS[locale] })
-            const { translations } = await translateContent(pairs, locale)
-            if (translations[locale]) {
-              await saveContent(locale, translations[locale])
-              const newEntries = Object.entries(translations[locale])
-                .filter(([, v]) => typeof v === 'string')
-                .map(([key, text]) => ({ key, text: text as string, locale }))
-              setTranslateLog((prev) => [...prev, ...newEntries])
-            }
-          }
-          setTranslateProgress({ done: targetLocales.length, total: targetLocales.length, currentLocale: '' })
-          setStatus('Contenuti salvati e tradotti in 5 lingue.')
-        } catch {
-          setStatus('Contenuti salvati. Traduzione fallita — riprova dalla tab Traduzioni.')
-        } finally {
-          setTranslating(false)
-        }
-      }
-
       setContent(await fetchAllContent())
     } catch {
       setStatus('Salvataggio non riuscito. Riprova.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleTranslate() {
+    setTranslating(true)
+    setTranslateLog([])
+    setLogVisible(0)
+    try {
+      const pairs = Object.entries(current)
+        .filter(([, v]) => typeof v === 'string' && v.trim())
+        .map(([key, value]) => ({ key, value: value as string }))
+
+      const targetLocales = ['en', 'fr', 'de', 'es', 'ru']
+      setTranslateProgress({ done: 0, total: targetLocales.length, currentLocale: '' })
+
+      for (let i = 0; i < targetLocales.length; i++) {
+        const locale = targetLocales[i]
+        setTranslateProgress({ done: i, total: targetLocales.length, currentLocale: LOCALE_LABELS[locale] })
+        const { translations } = await translateContent(pairs, locale)
+        if (translations[locale]) {
+          await saveContent(locale, translations[locale])
+          const newEntries = Object.entries(translations[locale])
+            .filter(([, v]) => typeof v === 'string')
+            .map(([key, text]) => ({ key, text: text as string, locale }))
+          setTranslateLog((prev) => [...prev, ...newEntries])
+        }
+      }
+      setTranslateProgress({ done: targetLocales.length, total: targetLocales.length, currentLocale: '' })
+      setStatus('Traduzione completata in 5 lingue.')
+    } catch {
+      setStatus('Traduzione fallita. Riprova.')
+    } finally {
+      setTranslating(false)
     }
   }
 
@@ -1030,13 +1029,22 @@ function ContentTab() {
           disabled={!dirty || saving || translating}
           className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
         >
-          <Save className="h-4 w-4" /> {translating ? 'Traduzione...' : saving ? 'Salvataggio...' : 'Salva'}
+          <Save className="h-4 w-4" /> {saving ? 'Salvataggio...' : 'Salva'}
         </button>
+        {activeLocale === 'it' && (
+          <button
+            onClick={handleTranslate}
+            disabled={saving || translating}
+            className="flex items-center gap-2 rounded-xl border border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent/10 disabled:opacity-50"
+          >
+            {translating ? 'Traduzione...' : 'Traduci in 5 lingue'}
+          </button>
+        )}
       </div>
       {status && <p className="text-sm text-muted-foreground" role="status">{status}</p>}
       {activeLocale !== 'it' && !translating && (
         <p className="text-xs text-muted-foreground/70">
-          Le modifiche vanno salvate singolarmente per ogni lingua. Salva dall'italiano per tradurre automaticamente.
+          Le modifiche vanno salvate singolarmente per ogni lingua. Usa &quot;Traduci in 5 lingue&quot; dall'italiano per tradurre automaticamente.
         </p>
       )}
 
