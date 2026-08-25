@@ -5,11 +5,11 @@ type PagesContext = { request: Request; env: AdminEnv }
 const TARGET_LOCALES = ['en', 'fr', 'de', 'es', 'ru'] as const
 
 const LOCALE_NAMES: Record<string, string> = {
-  en: 'English',
-  fr: 'French',
-  de: 'German',
-  es: 'Spanish',
-  ru: 'Russian',
+  en: 'english',
+  fr: 'french',
+  de: 'german',
+  es: 'spanish',
+  ru: 'russian',
 }
 
 interface TranslationPair {
@@ -17,27 +17,20 @@ interface TranslationPair {
   value: string
 }
 
-async function translateBatch(
+async function translateText(
   ai: AdminEnv['AI'],
-  texts: string[],
+  text: string,
   targetLocale: string
-): Promise<string[]> {
+): Promise<string> {
   const targetName = LOCALE_NAMES[targetLocale] || targetLocale
-  const joined = texts.join('\n---SPLIT---\n')
 
   const response = await ai.run('@cf/meta/m2m100-1.2b', {
-    text: joined,
-    source_lang: 'Italian',
+    text,
+    source_lang: 'italian',
     target_lang: targetName,
   }) as { translated_text?: string }
 
-  const translated = response?.translated_text ?? ''
-  const parts = translated.split('---SPLIT---')
-  if (parts.length === texts.length) {
-    return parts.map((p) => p.trim())
-  }
-  // Fallback: return the full translation repeated if split failed
-  return texts.map(() => translated.trim())
+  return response?.translated_text ?? text
 }
 
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -59,17 +52,15 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
   const results: Record<string, Record<string, string>> = {}
 
   for (const locale of locales) {
-    const keys = body.pairs.map((p) => p.key)
-    const values = body.pairs.map((p) => p.value)
-    try {
-      const translated = await translateBatch(env.AI, values, locale)
-      results[locale] = {}
-      for (let i = 0; i < keys.length; i++) {
-        results[locale][keys[i]] = translated[i] || values[i]
+    results[locale] = {}
+    for (const pair of body.pairs) {
+      try {
+        const translated = await translateText(env.AI, pair.value, locale)
+        results[locale][pair.key] = translated
+      } catch (err) {
+        console.error(`Translation of ${pair.key} to ${locale} failed:`, err)
+        results[locale][pair.key] = pair.value
       }
-    } catch (err) {
-      console.error(`Translation to ${locale} failed:`, err)
-      return json({ error: `Translation to ${locale} failed` }, 500)
     }
   }
 
