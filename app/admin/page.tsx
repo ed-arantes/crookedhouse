@@ -909,6 +909,9 @@ function ContentTab() {
   const [status, setStatus] = useState('')
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['Hero']))
   const [translating, setTranslating] = useState(false)
+  const [translateProgress, setTranslateProgress] = useState({ done: 0, total: 0, currentLocale: '' })
+  const [translateLog, setTranslateLog] = useState<{ key: string; text: string; locale: string }[]>([])
+  const [logVisible, setLogVisible] = useState(0)
 
   const LOCALE_LABELS: Record<string, string> = {
     it: '🇮🇹 Italiano',
@@ -922,6 +925,13 @@ function ContentTab() {
   useEffect(() => {
     fetchAllContent().then((c) => { setContent(c); setLoading(false) }).catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (translateLog.length === 0) return
+    if (logVisible >= translateLog.length) return
+    const timer = setTimeout(() => setLogVisible((v) => v + 1), 80)
+    return () => clearTimeout(timer)
+  }, [translateLog, logVisible])
 
   const current: Record<string, string | string[]> = content[activeLocale] ?? {}
 
@@ -957,16 +967,29 @@ function ContentTab() {
 
       if (activeLocale === 'it') {
         setTranslating(true)
-        setStatus('Traduzione in corso...')
+        setTranslateLog([])
+        setLogVisible(0)
         try {
           const pairs = Object.entries(current)
             .filter(([, v]) => typeof v === 'string' && v.trim())
             .map(([key, value]) => ({ key, value: value as string }))
 
-          const { translations } = await translateContent(pairs)
-          for (const [locale, overrides] of Object.entries(translations)) {
-            await saveContent(locale, overrides)
+          const targetLocales = ['en', 'fr', 'de', 'es', 'ru']
+          setTranslateProgress({ done: 0, total: targetLocales.length, currentLocale: '' })
+
+          for (let i = 0; i < targetLocales.length; i++) {
+            const locale = targetLocales[i]
+            setTranslateProgress({ done: i, total: targetLocales.length, currentLocale: LOCALE_LABELS[locale] })
+            const { translations } = await translateContent(pairs, locale)
+            if (translations[locale]) {
+              await saveContent(locale, translations[locale])
+              const newEntries = Object.entries(translations[locale])
+                .filter(([, v]) => typeof v === 'string')
+                .map(([key, text]) => ({ key, text: text as string, locale }))
+              setTranslateLog((prev) => [...prev, ...newEntries])
+            }
           }
+          setTranslateProgress({ done: targetLocales.length, total: targetLocales.length, currentLocale: '' })
           setStatus('Contenuti salvati e tradotti in 5 lingue.')
         } catch {
           setStatus('Contenuti salvati. Traduzione fallita — riprova dalla tab Traduzioni.')
@@ -1068,6 +1091,40 @@ function ContentTab() {
           )
         })}
       </div>
+
+      {translating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-2xl max-w-lg w-full space-y-4 max-h-[80vh] flex flex-col">
+            <div className="text-lg font-medium text-foreground text-center">Traduzione in corso...</div>
+            <div className="text-sm text-muted-foreground text-center">
+              {translateProgress.currentLocale || 'Preparazione...'}
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-accent transition-all duration-500"
+                style={{ width: `${translateProgress.total ? (translateProgress.done / translateProgress.total) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="text-xs text-muted-foreground text-center">
+              {translateProgress.done} / {translateProgress.total} lingue
+            </div>
+            {translateLog.length > 0 && (
+              <div className="flex-1 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 font-mono text-xs space-y-1.5 max-h-60">
+                {translateLog.slice(0, logVisible).map((entry, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span className="shrink-0 text-muted-foreground/60">{entry.locale}.</span>
+                    <span className="shrink-0 text-accent font-medium">{entry.key}</span>
+                    <span className="text-foreground break-words">
+                      {entry.text.slice(0, Math.min(entry.text.length, (logVisible - i) * 3))}
+                      {logVisible - i <= 2 && <span className="inline-block w-1.5 h-3 bg-accent animate-pulse ml-0.5" />}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
