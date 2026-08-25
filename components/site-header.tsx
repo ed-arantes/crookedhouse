@@ -112,7 +112,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
        }}
        className="cursor-pointer rounded-full bg-card/95 px-5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted/80 focus:outline-none focus:ring-0"
       >
-       {[defaultLocale].map((item) => (
+       {locales.map((item) => (
         <option key={item} value={item}>
          {LANGUAGE_LABELS[item]}
         </option>
