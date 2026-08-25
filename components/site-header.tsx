@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { defaultLocale, locales, t, type Locale } from '@/lib/i18n'
+import { locales, t, type Locale } from '@/lib/i18n'
 
 const LANGUAGE_LABELS: Record<Locale, string> = {
  en: 'English',
