@@ -1,6 +1,7 @@
 export type AdminEnv = {
   DB: Record<string, unknown>
   IMAGES: Record<string, unknown>
+  AI: { run: (model: string, body: Record<string, unknown>) => Promise<unknown> }
   ADMIN_PASSWORD?: string
   BOOKING_ENCRYPTION_KEY?: string
 }

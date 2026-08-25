@@ -1,5 +1,5 @@
 export const defaultLocale = 'it' as const
-export const locales = ['it', 'en', 'fr', 'de', 'es'] as const
+export const locales = ['it', 'en', 'fr', 'de', 'es', 'ru'] as const
 export type Locale = (typeof locales)[number]
 export type TranslationDictionary = Record<string, string | string[]>
 export type TranslationKey = string

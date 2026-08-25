@@ -1,8 +1,11 @@
 import { json, requireAdmin, d1GetTranslations, d1UpsertTranslations, type AdminEnv } from '../../_lib/admin'
-
-const LOCALES = ['it']
+import { locales, type Locale } from '../../../lib/i18n'
 
 type PagesContext = { request: Request; env: AdminEnv }
+
+function isValidLocale(locale: string): locale is Locale {
+  return (locales as readonly string[]).includes(locale)
+}
 
 export const onRequestGet = async ({ request, env }: PagesContext): Promise<Response> => {
   const unauthed = requireAdmin(env, request)
@@ -12,13 +15,13 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const locale = url.searchParams.get('locale')
 
   if (locale) {
-    if (!LOCALES.includes(locale)) return json({ error: 'Locale not available' }, 404)
+    if (!isValidLocale(locale)) return json({ error: 'Locale not available' }, 404)
     const translations = await d1GetTranslations(env.DB, locale)
     return json({ locale, translations })
   }
 
   const result: Record<string, Record<string, string | string[]>> = {}
-  for (const loc of LOCALES) {
+  for (const loc of locales) {
     result[loc] = await d1GetTranslations(env.DB, loc)
   }
   return json(result)
@@ -38,7 +41,7 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
   }
 
   const { locale, overrides } = body
-  if (!LOCALES.includes(locale)) return json({ error: 'Locale not available' }, 400)
+  if (!isValidLocale(locale)) return json({ error: 'Locale not available' }, 400)
   if (Object.values(overrides).some((value) =>
     typeof value !== 'string' && !(Array.isArray(value) && value.every((item) => typeof item === 'string'))
   )) {

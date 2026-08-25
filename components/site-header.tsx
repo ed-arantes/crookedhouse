@@ -12,6 +12,7 @@ const LANGUAGE_LABELS: Record<Locale, string> = {
  fr: 'Français',
  de: 'Deutsch',
  es: 'Español',
+ ru: 'Русский',
 }
 
 export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {

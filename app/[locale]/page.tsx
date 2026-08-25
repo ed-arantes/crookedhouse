@@ -1,9 +1,8 @@
 import { SiteShell } from '@/components/site-shell'
-import { getLocaleFromPathname, type Locale } from '@/lib/i18n'
-import { redirect } from 'next/navigation'
+import { getLocaleFromPathname, locales, type Locale } from '@/lib/i18n'
 
 export function generateStaticParams() {
- return [{ locale: 'it' }]
+ return locales.map((locale) => ({ locale }))
 }
 
 export default async function LocalePage({
@@ -12,7 +11,6 @@ export default async function LocalePage({
  params: Promise<{ locale: string }>
 }) {
  const { locale } = await params
- if (locale !== 'it') redirect('/it')
  const safeLocale = getLocaleFromPathname(`/${locale}`) as Locale
 
  return <SiteShell locale={safeLocale} />

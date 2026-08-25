@@ -118,6 +118,18 @@ export function saveContent(locale: string, overrides: Record<string, string | s
   })
 }
 
+export interface TranslateResponse {
+  translations: Record<string, Record<string, string>>
+}
+
+export function translateContent(pairs: { key: string; value: string }[], targetLocale?: string): Promise<TranslateResponse> {
+  return adminFetch('/api/admin/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pairs, targetLocale }),
+  })
+}
+
 export function fetchIcalUrl(): Promise<{ url: string }> {
   return adminFetch('/api/admin/ical')
 }

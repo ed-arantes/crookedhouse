@@ -14,6 +14,7 @@ import {
   removeBlockedDate,
   fetchAllContent,
   saveContent,
+  translateContent,
   fetchIcalUrl,
   saveIcalUrl,
   fetchIcalPreview,
@@ -902,11 +903,21 @@ function BoldTextarea({
 function ContentTab() {
   const [content, setContent] = useState<Record<string, Record<string, string | string[]>>>({})
   const [loading, setLoading] = useState(true)
-  const activeLocale = 'it'
+  const [activeLocale, setActiveLocale] = useState('it')
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState('')
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['Hero']))
+  const [translating, setTranslating] = useState(false)
+
+  const LOCALE_LABELS: Record<string, string> = {
+    it: '🇮🇹 Italiano',
+    en: '🇬🇧 English',
+    fr: '🇫🇷 Français',
+    de: '🇩🇪 Deutsch',
+    es: '🇪🇸 Español',
+    ru: '🇷🇺 Русский',
+  }
 
   useEffect(() => {
     fetchAllContent().then((c) => { setContent(c); setLoading(false) }).catch(() => setLoading(false))
@@ -941,9 +952,30 @@ function ContentTab() {
     setStatus('')
     try {
       await saveContent(activeLocale, current)
-      setContent(await fetchAllContent())
       setDirty(false)
-      setStatus('Contenuti salvati in D1.')
+      setStatus(`Contenuti ${LOCALE_LABELS[activeLocale]} salvati.`)
+
+      if (activeLocale === 'it') {
+        setTranslating(true)
+        setStatus('Traduzione in corso...')
+        try {
+          const pairs = Object.entries(current)
+            .filter(([, v]) => typeof v === 'string' && v.trim())
+            .map(([key, value]) => ({ key, value: value as string }))
+
+          const { translations } = await translateContent(pairs)
+          for (const [locale, overrides] of Object.entries(translations)) {
+            await saveContent(locale, overrides)
+          }
+          setStatus('Contenuti salvati e tradotti in 5 lingue.')
+        } catch {
+          setStatus('Contenuti salvati. Traduzione fallita — riprova dalla tab Traduzioni.')
+        } finally {
+          setTranslating(false)
+        }
+      }
+
+      setContent(await fetchAllContent())
     } catch {
       setStatus('Salvataggio non riuscito. Riprova.')
     } finally {
@@ -955,18 +987,35 @@ function ContentTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <span className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground">Italiano</span>
+      <div className="flex flex-wrap items-center gap-2">
+        {(Object.keys(LOCALE_LABELS) as string[]).map((loc) => (
+          <button
+            key={loc}
+            onClick={() => { setActiveLocale(loc); setDirty(false); setStatus('') }}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeLocale === loc
+                ? 'bg-accent text-accent-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            {LOCALE_LABELS[loc]}
+          </button>
+        ))}
         <div className="flex-1" />
         <button
           onClick={handleSave}
-          disabled={!dirty || saving}
+          disabled={!dirty || saving || translating}
           className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
         >
-          <Save className="h-4 w-4" /> {saving ? 'Salvataggio...' : 'Salva'}
+          <Save className="h-4 w-4" /> {translating ? 'Traduzione...' : saving ? 'Salvataggio...' : 'Salva'}
         </button>
       </div>
       {status && <p className="text-sm text-muted-foreground" role="status">{status}</p>}
+      {activeLocale !== 'it' && !translating && (
+        <p className="text-xs text-muted-foreground/70">
+          Le modifiche vanno salvate singolarmente per ogni lingua. Salva dall'italiano per tradurre automaticamente.
+        </p>
+      )}
 
       <div className="space-y-2">
         {CONTENT_SECTIONS.map((section) => {
