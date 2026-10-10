@@ -18,10 +18,14 @@ async function readValue(value: string, key: string): Promise<string> {
   }
 }
 
+function normalizeIdentity(value: string): string {
+  return value.normalize('NFKC').trim().toLowerCase()
+}
+
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
   const body = await request.json().catch(() => null) as { surname?: unknown; email?: unknown } | null
-  const surname = typeof body?.surname === 'string' ? body.surname.trim().toLocaleLowerCase() : ''
-  const email = typeof body?.email === 'string' ? body.email.trim().toLocaleLowerCase() : ''
+  const surname = typeof body?.surname === 'string' ? normalizeIdentity(body.surname) : ''
+  const email = typeof body?.email === 'string' ? normalizeIdentity(body.email) : ''
   if (!surname || surname.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     return json({ error: 'Inserisci cognome ed email validi.' }, 400)
   }
@@ -38,8 +42,8 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
         readValue(row.last_name_encrypted, key),
         readValue(row.email_encrypted, key),
       ])
-      if (storedSurname.trim().toLocaleLowerCase() === surname &&
-        storedEmail.trim().toLocaleLowerCase() === email) {
+      if (normalizeIdentity(storedSurname) === surname &&
+        normalizeIdentity(storedEmail) === email) {
         matches.push(row.id)
       }
     }

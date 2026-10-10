@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   fetchBookings,
   updateBookingStatus,
+  amendBooking,
+  requestBookingPayment,
   deleteBooking,
   fetchAnalytics,
   fetchPricingData,
@@ -27,6 +29,13 @@ export function BookingsTab() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
   const [lastAction, setLastAction] = useState<{ id: string; from: string; to: string } | null>(null)
+  const [editingBooking, setEditingBooking] = useState<string | null>(null)
+  const [editCheckIn, setEditCheckIn] = useState('')
+  const [editCheckOut, setEditCheckOut] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editResult, setEditResult] = useState<{ bookingId: string; due: number; credit: number } | null>(null)
+  const [actionError, setActionError] = useState('')
+  const [requestingPayment, setRequestingPayment] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -58,6 +67,43 @@ export function BookingsTab() {
     load()
   }
 
+  function startEditing(booking: AdminBooking) {
+    setEditingBooking(booking.id)
+    setEditCheckIn(booking.check_in)
+    setEditCheckOut(booking.check_out)
+    setEditResult(null)
+    setActionError('')
+  }
+
+  async function saveAmendment(event: React.FormEvent<HTMLFormElement>, id: string) {
+    event.preventDefault()
+    setSavingEdit(true)
+    setActionError('')
+    try {
+      const result = await amendBooking(id, editCheckIn, editCheckOut)
+      setEditResult({ bookingId: id, due: result.due_amount, credit: result.credit_amount })
+      setEditingBooking(null)
+      await load()
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'Impossibile modificare la prenotazione.')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  async function handleRequestPayment(id: string) {
+    setRequestingPayment(id)
+    setActionError('')
+    try {
+      await requestBookingPayment(id)
+      await load()
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'Impossibile registrare la richiesta di pagamento.')
+    } finally {
+      setRequestingPayment(null)
+    }
+  }
+
   const statusColors: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-800',
     paid: 'bg-green-100 text-green-800',
@@ -87,6 +133,14 @@ export function BookingsTab() {
         </select>
         <span className="text-sm text-muted-foreground">{bookings.length} {bookings.length === 1 ? 'prenotazione' : 'prenotazioni'}</span>
       </div>
+      {actionError && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{actionError}</p>}
+      {editResult && (
+        <p role="status" className="rounded-lg border border-accent/30 bg-accent/10 p-3 text-sm">
+          Modifica salvata.
+          {editResult.due > 0 && ` Importo ancora da pagare: €${editResult.due}.`}
+          {editResult.credit > 0 && ` Credito/rimborso da gestire: €${editResult.credit}.`}
+        </p>
+      )}
 
       {lastAction && (
         <div className="flex items-center gap-3 rounded-lg border border-accent/30 bg-accent/10 px-4 py-2 text-sm">
@@ -130,11 +184,48 @@ export function BookingsTab() {
                     <span>Ospiti: <span className="text-foreground">{b.adults} adult{b.adults !== 1 ? 'i' : 'o'}{b.children > 0 ? `, ${b.children} bambin${b.children !== 1 ? 'i' : 'o'}` : ''}{b.pets ? `, ${b.pets} animale${b.pets !== 1 ? 'i' : ''}` : ''}</span></span>
                     <span>Totale: <span className="text-foreground">&euro;{b.total_price}</span></span>
                   </div>
+                  {b.paid_amount > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      <span className="text-muted-foreground">Incassato: <span className="text-foreground">€{b.paid_amount}</span></span>
+                      {b.total_price > b.paid_amount && (
+                        <span className="font-medium text-amber-700">Residuo: €{b.total_price - b.paid_amount}</span>
+                      )}
+                      {b.credit_amount > 0 && (
+                        <span className="font-medium text-blue-700">Credito/rimborso: €{b.credit_amount}</span>
+                      )}
+                      {b.payment_requested_at && (
+                        <span className="text-muted-foreground">Richiesta pagamento registrata (collegamento pagamento non attivo)</span>
+                      )}
+                    </div>
+                  )}
                   {b.message && (
                     <p className="mt-2 text-xs text-muted-foreground italic">&ldquo;{b.message}&rdquo;</p>
                   )}
                 </div>
-                <div className="flex shrink-0 gap-1">
+                <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                  {b.status !== 'pending' ? (
+                    <button
+                      type="button"
+                      onClick={() => editingBooking === b.id ? setEditingBooking(null) : startEditing(b)}
+                      className="rounded-lg border border-border px-2 py-1 text-xs font-medium hover:bg-muted"
+                    >
+                      {editingBooking === b.id ? 'Chiudi' : 'Modifica date'}
+                    </button>
+                  ) : (
+                    <span className="self-center text-xs text-muted-foreground" title="The current checkout keeps its original dates and total.">
+                      Modifica dopo la gestione del checkout
+                    </span>
+                  )}
+                  {b.status === 'paid' && b.total_price > b.paid_amount && !b.payment_requested_at && (
+                    <button
+                      type="button"
+                      onClick={() => handleRequestPayment(b.id)}
+                      disabled={requestingPayment === b.id}
+                      className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 disabled:opacity-60"
+                    >
+                      {requestingPayment === b.id ? 'Salvataggio...' : 'Richiedi pagamento residuo'}
+                    </button>
+                  )}
                   {b.status === 'pending' && (
                     <button
                       onClick={() => handleStatusChange(b.id, 'paid')}
@@ -159,6 +250,24 @@ export function BookingsTab() {
                   </button>
                 </div>
               </div>
+              {editingBooking === b.id && (
+                <form onSubmit={(event) => saveAmendment(event, b.id)} className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Check-in
+                    <input required type="date" value={editCheckIn} onChange={(event) => setEditCheckIn(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+                  </label>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Check-out
+                    <input required type="date" min={editCheckIn} value={editCheckOut} onChange={(event) => setEditCheckOut(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+                  </label>
+                  <button disabled={savingEdit} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-60">
+                    {savingEdit ? 'Salvataggio...' : 'Salva modifica'}
+                  </button>
+                  <p className="text-xs text-muted-foreground sm:col-span-3">
+                    Notti e totale saranno ricalcolati con i prezzi attuali. Le date non disponibili o già occupate non possono essere selezionate. Le modifiche non aggiornano un checkout Stripe.
+                  </p>
+                </form>
+              )}
             </div>
           ))}
         </div>

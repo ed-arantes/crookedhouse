@@ -29,7 +29,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
    try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
      await (env.DB as any).prepare(
-      "UPDATE bookings SET status = 'paid' WHERE session_id = ?"
+      "UPDATE bookings SET status = 'paid', paid_amount = total_price WHERE session_id = ?"
     ).bind(sessionId).run()
    } catch { /* booking may not exist if encryption key was not set */ }
   }

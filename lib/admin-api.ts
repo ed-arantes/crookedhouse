@@ -233,6 +233,9 @@ export type AdminBooking = {
   pets: number
   message: string
   total_price: number
+  paid_amount: number
+  credit_amount: number
+  payment_requested_at: string | null
   status: string
   created_at: string
 }
@@ -271,6 +274,37 @@ export function updateBookingStatus(id: string, status: string): Promise<{ ok: b
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, status }),
+  })
+}
+
+export type BookingAmendmentResult = {
+  ok: boolean
+  check_in: string
+  check_out: string
+  nights: number
+  total_price: number
+  paid_amount: number
+  due_amount: number
+  credit_amount: number
+}
+
+export function amendBooking(
+  id: string,
+  checkIn: string,
+  checkOut: string,
+): Promise<BookingAmendmentResult> {
+  return adminFetch('/api/admin/bookings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, action: 'amend', check_in: checkIn, check_out: checkOut }),
+  })
+}
+
+export function requestBookingPayment(id: string): Promise<{ ok: boolean; payment_connected: boolean }> {
+  return adminFetch('/api/admin/bookings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, action: 'request_payment' }),
   })
 }
 
