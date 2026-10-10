@@ -347,7 +347,7 @@ export type PricingRule = {
 export type PricingData = {
   rules: PricingRule[]
   council_tax_per_person_per_night: number
-  base_fare_per_night: number
+  base_fare_per_night: number | null
 }
 
 export function fetchPricingData(): Promise<PricingData> {

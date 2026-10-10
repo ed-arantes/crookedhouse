@@ -1,5 +1,3 @@
-import { NIGHTLY_RATE } from './booking'
-
 export type PricingRule = {
   id: string
   name: string
@@ -79,6 +77,11 @@ export function calculateBookingPrice(
   }
 }
 
-export function defaultBaseFare(value?: number): number {
-  return Number.isFinite(value) && value !== undefined && value >= 0 ? value : NIGHTLY_RATE
+export function parseBaseFare(value: string): number | null {
+  if (!value.trim()) return null
+  const fare = Number(value)
+  if (!Number.isFinite(fare) || fare < 0) {
+    throw new Error('Configured base fare is invalid')
+  }
+  return fare
 }

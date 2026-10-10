@@ -1,5 +1,5 @@
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../../lib/booking'
-import { calculateBookingPrice, defaultBaseFare, type PricingRule } from '../../../lib/pricing'
+import { calculateBookingPrice, parseBaseFare, type PricingRule } from '../../../lib/pricing'
 import { json, d1GetSetting, type AdminEnv } from '../../_lib/admin'
 
 const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
@@ -33,7 +33,8 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     ...rule,
     type: (rule.type === 'date_range' ? 'date_adjustment' : rule.type) as PricingRule['type'],
   }))
-  const baseFare = defaultBaseFare(Number(await d1GetSetting(env.DB, 'base_fare_per_night', '95')))
+  const baseFare = parseBaseFare(await d1GetSetting(env.DB, 'base_fare_per_night', ''))
+  if (baseFare === null) return json({ error: 'Base fare is not configured' }, 503)
   const price = calculateBookingPrice(checkIn, checkOut, baseFare, rules)
   const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
   const councilTax = nights * guests * councilTaxRate

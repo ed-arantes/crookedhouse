@@ -616,7 +616,7 @@ export function AnalyticsTab() {
 export function PricingTab() {
   const [rules, setRules] = useState<PricingRule[]>([])
   const [councilTax, setCouncilTax] = useState('2')
-  const [baseFare, setBaseFare] = useState('95')
+  const [baseFare, setBaseFare] = useState('')
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<PricingRule | null>(null)
   const [isAdding, setIsAdding] = useState(false)
@@ -633,7 +633,7 @@ export function PricingTab() {
       const data = await fetchPricingData()
       setRules(data.rules)
       setCouncilTax(String(data.council_tax_per_person_per_night))
-      setBaseFare(String(data.base_fare_per_night))
+      setBaseFare(data.base_fare_per_night === null ? '' : String(data.base_fare_per_night))
       setLoadError('')
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Impossibile caricare i prezzi.')
@@ -843,6 +843,18 @@ function formatMonthDay(value: string): string {
   return `${day}/${month}`
 }
 
+function toMonthDay(value: string): string {
+  const match = /^(\d{2})\/(\d{2})$/.exec(value)
+  return match ? `${match[2]}-${match[1]}` : ''
+}
+
+function isValidDayMonth(value: string): boolean {
+  if (!/^\d{2}\/\d{2}$/.test(value)) return false
+  const monthDay = toMonthDay(value)
+  const date = new Date(`2000-${monthDay}T00:00:00.000Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(5, 10) === monthDay
+}
+
 function PricingRuleForm({
   rule,
   onSave,
@@ -854,14 +866,19 @@ function PricingRuleForm({
   onCancel: () => void
   saving: boolean
 }) {
+  const initialType = rule?.type ?? 'date_adjustment'
   const [form, setForm] = useState({
     name: rule?.name ?? '',
-    type: rule?.type ?? 'date_adjustment' as 'date_adjustment' | 'annual_adjustment' | 'nights_discount',
-    start_date: rule?.start_date ?? new Date().toISOString().slice(0, 10),
-    end_date: rule?.end_date ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-    adjustment_percent: String(rule?.adjustment_percent ?? 10),
+    type: initialType as 'date_adjustment' | 'annual_adjustment' | 'nights_discount',
+    start_date: rule?.type === 'annual_adjustment'
+      ? formatMonthDay(rule.start_date)
+      : rule?.start_date ?? new Date().toISOString().slice(0, 10),
+    end_date: rule?.type === 'annual_adjustment'
+      ? formatMonthDay(rule.end_date)
+      : rule?.end_date ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+    adjustment_percent: rule ? String(rule.adjustment_percent) : '',
     min_nights: String(rule?.min_nights ?? 1),
-    discount_percent: String(rule?.discount_percent ?? 10),
+    discount_percent: rule ? String(rule.discount_percent) : '',
     priority: rule?.priority ?? 0,
   })
   const [validationError, setValidationError] = useState('')
@@ -880,10 +897,8 @@ function PricingRuleForm({
       return
     }
     if (form.type === 'annual_adjustment' &&
-      (![form.start_date, form.end_date].every((value) => /^\d{2}-\d{2}$/.test(value) &&
-        !Number.isNaN(new Date(`2000-${value}T00:00:00.000Z`).getTime()) &&
-        new Date(`2000-${value}T00:00:00.000Z`).toISOString().slice(5, 10) === value))) {
-      setValidationError('Inserisci date valide nel formato giorno e mese.')
+      ![form.start_date, form.end_date].every(isValidDayMonth)) {
+      setValidationError('Inserisci date valide nel formato giorno/mese.')
       return
     }
     if (form.type === 'nights_discount' &&
@@ -896,6 +911,8 @@ function PricingRuleForm({
     onSave({
       id: rule?.id ?? '',
       ...form,
+      start_date: form.type === 'annual_adjustment' ? toMonthDay(form.start_date) : form.start_date,
+      end_date: form.type === 'annual_adjustment' ? toMonthDay(form.end_date) : form.end_date,
       adjustment_percent: form.type !== 'nights_discount' ? adjustmentPercent : 0,
       min_nights: minNights,
       discount_percent: form.type === 'nights_discount' ? discountPercent : 0,
@@ -917,12 +934,12 @@ function PricingRuleForm({
           onChange={(e) => {
             const type = e.target.value as 'date_adjustment' | 'annual_adjustment' | 'nights_discount'
             if (type === 'annual_adjustment' && form.type === 'date_adjustment') {
-              update('start_date', form.start_date.slice(5))
-              update('end_date', form.end_date.slice(5))
+              update('start_date', formatMonthDay(form.start_date.slice(5)))
+              update('end_date', formatMonthDay(form.end_date.slice(5)))
             } else if (type === 'date_adjustment' && form.type === 'annual_adjustment') {
               const year = new Date().getUTCFullYear()
-              update('start_date', `${year}-${form.start_date}`)
-              update('end_date', `${year}-${form.end_date}`)
+              update('start_date', `${year}-${toMonthDay(form.start_date)}`)
+              update('end_date', `${year}-${toMonthDay(form.end_date)}`)
             }
             update('type', type)
           }}
@@ -945,18 +962,22 @@ function PricingRuleForm({
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Dal</label>
               <input
-                type="date"
-                value={form.type === 'annual_adjustment' ? `2000-${form.start_date}` : form.start_date}
-                onChange={(e) => update('start_date', form.type === 'annual_adjustment' ? e.target.value.slice(5) : e.target.value)}
+                type={form.type === 'annual_adjustment' ? 'text' : 'date'}
+                inputMode={form.type === 'annual_adjustment' ? 'numeric' : undefined}
+                placeholder={form.type === 'annual_adjustment' ? 'GG/MM' : undefined}
+                value={form.start_date}
+                onChange={(e) => update('start_date', e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Al</label>
               <input
-                type="date"
-                value={form.type === 'annual_adjustment' ? `2000-${form.end_date}` : form.end_date}
-                onChange={(e) => update('end_date', form.type === 'annual_adjustment' ? e.target.value.slice(5) : e.target.value)}
+                type={form.type === 'annual_adjustment' ? 'text' : 'date'}
+                inputMode={form.type === 'annual_adjustment' ? 'numeric' : undefined}
+                placeholder={form.type === 'annual_adjustment' ? 'GG/MM' : undefined}
+                value={form.end_date}
+                onChange={(e) => update('end_date', e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>

@@ -1,5 +1,5 @@
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../lib/booking'
-import { calculateBookingPrice, defaultBaseFare, type PricingRule } from '../../lib/pricing'
+import { calculateBookingPrice, parseBaseFare, type PricingRule } from '../../lib/pricing'
 import {
   json,
   stripeRequest,
@@ -15,25 +15,21 @@ const MAX_GUESTS = 4
 const ICAL_URL_KEY = 'ical_url'
 
 async function getPricingRules(db: Record<string, unknown>): Promise<PricingRule[]> {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { results } = await (db as any)
-      .prepare('SELECT id, name, type, start_date, end_date, adjustment_percent, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date')
-      .all()
-    return (results ?? []).map((row: Record<string, unknown>) => ({
-      id: String(row.id ?? ''),
-      name: String(row.name ?? ''),
-      type: (row.type === 'date_range' ? 'date_adjustment' : row.type ?? 'date_adjustment') as PricingRule['type'],
-      start_date: String(row.start_date ?? ''),
-      end_date: String(row.end_date ?? ''),
-      adjustment_percent: Number(row.adjustment_percent ?? 0),
-      min_nights: Number(row.min_nights ?? 1),
-      discount_percent: Number(row.discount_percent ?? 0),
-      priority: Number(row.priority ?? 0),
-    }))
-  } catch {
-    return []
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results } = await (db as any)
+    .prepare('SELECT id, name, type, start_date, end_date, adjustment_percent, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date')
+    .all()
+  return (results ?? []).map((row: Record<string, unknown>) => ({
+    id: String(row.id ?? ''),
+    name: String(row.name ?? ''),
+    type: (row.type === 'date_range' ? 'date_adjustment' : row.type ?? 'date_adjustment') as PricingRule['type'],
+    start_date: String(row.start_date ?? ''),
+    end_date: String(row.end_date ?? ''),
+    adjustment_percent: Number(row.adjustment_percent ?? 0),
+    min_nights: Number(row.min_nights ?? 1),
+    discount_percent: Number(row.discount_percent ?? 0),
+    priority: Number(row.priority ?? 0),
+  }))
 }
 
 const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
@@ -106,7 +102,8 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     // Generate every night of the stay and check against unavailable dates
     const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
     const pricingRules = await getPricingRules(env.DB)
-    const baseFare = defaultBaseFare(Number(await d1GetSetting(env.DB, 'base_fare_per_night', '95')))
+    const baseFare = parseBaseFare(await d1GetSetting(env.DB, 'base_fare_per_night', ''))
+    if (baseFare === null) throw new Error('Base fare is not configured')
     for (let i = 0; i < nights; i++) {
       const date = new Date(start)
       date.setUTCDate(date.getUTCDate() + i)
@@ -125,7 +122,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       mode: 'payment',
       'line_items[0][quantity]': '1',
       'line_items[0][price_data][currency]': 'eur',
-      'line_items[0][price_data][unit_amount]': String(total * 100),
+      'line_items[0][price_data][unit_amount]': String(Math.round(total * 100)),
       'line_items[0][price_data][product_data][name]': 'Crooked House Booking',
       'line_items[0][price_data][product_data][description]': `${nights} night${nights > 1 ? 's' : ''} \u00b7 ${guestCount} guest${guestCount > 1 ? 's' : ''}`,
       customer_email: String(body.email || ''),

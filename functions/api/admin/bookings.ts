@@ -8,7 +8,7 @@ import {
   type AdminEnv,
 } from '../../_lib/admin'
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../../lib/booking'
-import { calculateBookingPrice, defaultBaseFare, type PricingRule } from '../../../lib/pricing'
+import { calculateBookingPrice, parseBaseFare, type PricingRule } from '../../../lib/pricing'
 import { parseICalDates } from '../../../lib/ical-parser'
 
 type PagesContext = {
@@ -196,7 +196,8 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
         ...rule,
         type: (rule.type === 'date_range' ? 'date_adjustment' : rule.type) as PricingRule['type'],
       }))
-      const baseFare = defaultBaseFare(Number(await d1GetSetting(env.DB, 'base_fare_per_night', '95')))
+      const baseFare = parseBaseFare(await d1GetSetting(env.DB, 'base_fare_per_night', ''))
+      if (baseFare === null) return json({ error: 'Base fare is not configured' }, 503)
       const dateCursor = new Date(start)
       for (let index = 0; index < nights; index++) {
         const date = dateCursor.toISOString().slice(0, 10)

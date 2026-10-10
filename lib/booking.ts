@@ -1,4 +1,3 @@
-export const NIGHTLY_RATE = 95
 export const COUNCIL_TAX_PER_PERSON_PER_NIGHT = 2
 
 export const MONTHS = [
@@ -94,17 +93,6 @@ export type PriceBreakdown = {
  subtotal: number
  councilTax: number
  total: number
-}
-
-export function priceBreakdown(nights: number, guests: number): PriceBreakdown {
- const subtotal = nights * NIGHTLY_RATE
- const councilTax = nights * guests * COUNCIL_TAX_PER_PERSON_PER_NIGHT
- return {
-  nights,
-  subtotal,
-  councilTax,
-  total: subtotal + councilTax,
- }
 }
 
 /** Build the grid of days for a given month, padded with nulls for alignment. */

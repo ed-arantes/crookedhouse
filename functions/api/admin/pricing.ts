@@ -1,5 +1,5 @@
 import { json, requireAdmin, d1GetSetting, d1SetSetting, type AdminEnv } from '../../_lib/admin'
-import { defaultBaseFare, type PricingRule } from '../../../lib/pricing'
+import { parseBaseFare, type PricingRule } from '../../../lib/pricing'
 
 const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
 const COUNCIL_TAX_DEFAULT = '2'
@@ -42,7 +42,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   }))
 
   const councilTax = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, COUNCIL_TAX_DEFAULT), 10) || 2
-  const baseFare = defaultBaseFare(Number(await d1GetSetting(env.DB, BASE_FARE_KEY, '95')))
+  const baseFare = parseBaseFare(await d1GetSetting(env.DB, BASE_FARE_KEY, ''))
 
   return json({ rules, council_tax_per_person_per_night: councilTax, base_fare_per_night: baseFare })
 }
