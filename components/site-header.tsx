@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { ChevronDown, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { locales, t, type Locale } from '@/lib/i18n'
 
@@ -17,6 +18,7 @@ const LANGUAGE_LABELS: Record<Locale, string> = {
 
 export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
  const router = useRouter()
+ const actionPillClass = 'w-[7rem] justify-center'
  const NAV = [
   { label: t(locale, 'nav.apartment'), href: '#about' },
   { label: t(locale, 'nav.gallery'), href: '#gallery' },
@@ -27,9 +29,6 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
 
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const [loginOpen, setLoginOpen] = useState(false)
-  const [loginSurname, setLoginSurname] = useState('')
-  const loginRef = useRef<HTMLDivElement>(null)
 
  useEffect(() => {
   function onScroll() {
@@ -40,27 +39,8 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   return () => window.removeEventListener('scroll', onScroll)
  }, [])
 
- useEffect(() => {
-  function handleClickOutside(e: MouseEvent) {
-   if (loginRef.current && !loginRef.current.contains(e.target as Node)) {
-    setLoginOpen(false)
-   }
-  }
-  if (loginOpen) {
-   document.addEventListener('mousedown', handleClickOutside)
-   return () => document.removeEventListener('mousedown', handleClickOutside)
-  }
- }, [loginOpen])
-
   function handleNav() {
    setOpen(false)
-  }
-
-  function handleLogin(e: React.FormEvent) {
-   e.preventDefault()
-   if (loginSurname.toLowerCase() === 'admin') {
-    window.location.href = '/admin'
-   }
   }
 
  return (
@@ -68,8 +48,8 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
    className={cn(
     'fixed inset-x-0 top-0 z-50 transition-all duration-300',
     scrolled
-     ? 'border-b border-border/80 bg-background/80 backdrop-blur-xl'
-     : 'border-b border-transparent bg-background/60 backdrop-blur-md',
+     ? 'border-b border-border/30 bg-background/30 backdrop-blur-lg'
+     : 'border-b border-transparent bg-background/20 backdrop-blur-sm',
    )}
   >
    <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
@@ -79,7 +59,8 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
       e.preventDefault()
       window.scrollTo({ top: 0, behavior: 'smooth' })
      }}
-     className="type-heading font-serif font-semibold tracking-tight text-foreground transition-colors"
+     className="type-heading font-serif font-semibold tracking-tight transition-colors"
+     style={{ color: 'var(--accent)' }}
     >
      Crooked House
     </a>
@@ -98,7 +79,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
     </nav>
 
     <div className="flex items-center gap-2">
-     <div className="hidden md:block">
+     <div className="relative hidden md:block">
       <label className="sr-only" htmlFor="language-switcher">
        Select language
       </label>
@@ -110,7 +91,10 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
         const nextLocale = event.target.value as Locale
         router.push(`/${nextLocale}`, { scroll: false })
        }}
-       className="cursor-pointer rounded-full bg-card/95 px-5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted/80 focus:outline-none focus:ring-0"
+       className={cn(
+        actionPillClass,
+        'appearance-none cursor-pointer rounded-full bg-card/95 px-5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted/80 focus:outline-none focus:ring-0',
+       )}
       >
        {locales.map((item) => (
         <option key={item} value={item}>
@@ -118,42 +102,21 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
         </option>
        ))}
       </select>
+      <ChevronDown
+       aria-hidden="true"
+       className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground"
+      />
      </div>
-     <div className="relative hidden md:block" ref={loginRef}>
-      <button
-       type="button"
-       onClick={() => setLoginOpen((v) => !v)}
-       className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+     <div className="hidden md:block">
+      <Link
+       href={`/${locale}/account`}
+       className={cn(
+        actionPillClass,
+        'inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90',
+       )}
       >
-       {t(locale, 'nav.book')}
-      </button>
-      {loginOpen && (
-       <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-border bg-card p-5 shadow-lg">
-        <h3 className="font-serif font-medium text-foreground">
-         {t(locale, 'nav.login')}
-        </h3>
-        <form className="mt-4 flex flex-col gap-3" onSubmit={handleLogin}>
-         <input
-          type="text"
-          placeholder={t(locale, 'nav.surname')}
-          value={loginSurname}
-          onChange={(e) => setLoginSurname(e.target.value)}
-          className="rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
-         />
-         <input
-          type="email"
-          placeholder={t(locale, 'nav.email')}
-          className="rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
-         />
-         <button
-          type="submit"
-          className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
-         >
-          {t(locale, 'nav.loginButton')}
-         </button>
-        </form>
-       </div>
-      )}
+       {t(locale, 'nav.login')}
+      </Link>
      </div>
      <button
       type="button"
@@ -201,28 +164,13 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
         ))}
        </select>
       </div>
-      <div className="my-3">
-       <form className="flex flex-col gap-3" onSubmit={handleLogin}>
-        <input
-         type="text"
-         placeholder={t(locale, 'nav.surname')}
-         value={loginSurname}
-         onChange={(e) => setLoginSurname(e.target.value)}
-         className="rounded-full border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary"
-        />
-        <input
-         type="email"
-         placeholder={t(locale, 'nav.email')}
-         className="rounded-full border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary"
-        />
-        <button
-         type="submit"
-         className="rounded-full bg-accent px-5 py-3 text-sm font-medium text-accent-foreground"
-        >
-         {t(locale, 'nav.loginButton')}
-        </button>
-       </form>
-      </div>
+      <Link
+       href={`/${locale}/account`}
+       onClick={handleNav}
+       className="my-3 rounded-full bg-accent px-5 py-3 text-center text-sm font-medium text-accent-foreground"
+      >
+       {t(locale, 'nav.login')}
+      </Link>
      </nav>
     </div>
    )}

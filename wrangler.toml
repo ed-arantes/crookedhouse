@@ -5,11 +5,13 @@ pages_build_output_dir = "out"
 [[r2_buckets]]
 binding = "IMAGES"
 bucket_name = "crookedhouse-images"
+remote = true
 
 [[d1_databases]]
 binding = "DB"
 database_name = "crookedhouse-translations"
 database_id = "a3b9127b-ee7a-450c-84a6-97c162453803"
+remote = true
 
 [ai]
 binding = "AI"

@@ -12,7 +12,10 @@ import {
   updateCouncilTax,
   deletePricingRule,
   fetchUsage,
+  fetchAdminMessages,
+  replyToGuest,
   type AdminBooking,
+  type AdminMessage,
   type AnalyticsData,
   type PricingRule,
 } from '@/lib/admin-api'
@@ -160,6 +163,110 @@ export function BookingsTab() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+export function MessagesTab() {
+  const [messages, setMessages] = useState<AdminMessage[]>([])
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [refresh, setRefresh] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    fetchAdminMessages()
+      .then((data) => {
+        if (active) {
+          setMessages(data)
+          setError('')
+        }
+      })
+      .catch((cause) => {
+        if (active) setError(cause instanceof Error ? cause.message : 'Impossibile caricare i messaggi.')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [refresh])
+
+  async function sendReply(bookingId: string) {
+    const message = drafts[bookingId]?.trim()
+    if (!message) return
+    setSending(bookingId)
+    setError('')
+    try {
+      await replyToGuest(bookingId, message)
+      setDrafts((current) => ({ ...current, [bookingId]: '' }))
+      setLoading(true)
+      setRefresh((value) => value + 1)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Impossibile inviare la risposta.')
+    } finally {
+      setSending(null)
+    }
+  }
+
+  const conversations = Array.from(
+    messages.reduce((groups, message) => {
+      const group = groups.get(message.booking_id) ?? []
+      group.push(message)
+      groups.set(message.booking_id, group)
+      return groups
+    }, new Map<string, AdminMessage[]>()),
+    ([bookingId, items]) => ({ bookingId, items }),
+  )
+
+  if (loading && messages.length === 0) return <p className="text-sm text-muted-foreground">Caricamento messaggi...</p>
+
+  return (
+    <div className="space-y-4">
+      {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+      <div className="flex justify-end">
+        <button onClick={() => { setLoading(true); setRefresh((value) => value + 1) }} className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">
+          Aggiorna
+        </button>
+      </div>
+      {conversations.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nessun messaggio dagli ospiti.</p>
+      ) : conversations.map(({ bookingId, items }) => {
+        const latest = items[0]
+        return (
+          <section key={bookingId} className="space-y-3 rounded-xl border border-border bg-card p-4">
+            <div>
+              <p className="font-medium">{latest.guest_name} <span className="font-normal text-muted-foreground">({latest.guest_email})</span></p>
+              <p className="text-sm text-muted-foreground">Soggiorno: {formatEU(latest.check_in)} – {formatEU(latest.check_out)}</p>
+            </div>
+            <div className="max-h-80 space-y-3 overflow-y-auto rounded-lg bg-background p-3">
+              {items.slice().reverse().map((message) => (
+                <article key={message.id} className={`rounded-lg p-3 text-sm ${message.sender === 'host' ? 'ml-6 bg-accent/10' : 'mr-6 bg-secondary'}`}>
+                  <div className="mb-1 flex justify-between gap-3 text-xs text-muted-foreground">
+                    <span>{message.sender === 'host' ? 'Host' : latest.guest_name}</span>
+                    <time>{message.created_at}</time>
+                  </div>
+                  <p className="whitespace-pre-wrap break-words">{message.message}</p>
+                </article>
+              ))}
+            </div>
+            <form onSubmit={(event) => { event.preventDefault(); void sendReply(bookingId) }} className="flex flex-col gap-2 sm:flex-row">
+              <textarea
+                value={drafts[bookingId] ?? ''}
+                maxLength={2000}
+                onChange={(event) => setDrafts((current) => ({ ...current, [bookingId]: event.target.value }))}
+                placeholder="Rispondi all'ospite..."
+                rows={2}
+                className="min-w-0 flex-1 resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+              <button disabled={sending === bookingId || !drafts[bookingId]?.trim()} className="self-end rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50">
+                {sending === bookingId ? 'Invio...' : 'Rispondi'}
+              </button>
+            </form>
+          </section>
+        )
+      })}
     </div>
   )
 }

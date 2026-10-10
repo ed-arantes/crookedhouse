@@ -25,3 +25,16 @@ npm run lint
 npx tsc --noEmit
 npm run build
 ```
+
+## Local development with Cloudflare data
+
+Run `npm run dev:cloudflare` and open `http://localhost:3000`. Next.js serves the
+site with hot reload, while Wrangler runs the Pages Functions on port `8788`.
+The local frontend sends `/api` requests to that Wrangler server. The D1 and R2
+bindings in `wrangler.toml` are remote, so the Functions use the configured
+Cloudflare database and bucket rather than local copies.
+
+Authenticate Wrangler with `npx wrangler login` if needed. Changes made through
+the local app (including admin edits, uploads, and deletes) affect the remote
+Cloudflare resources. If `out` does not exist yet, the dev command creates the
+empty directory Wrangler needs. No export rebuild is needed for local UI edits.

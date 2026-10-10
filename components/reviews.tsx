@@ -10,7 +10,7 @@ import { RichText } from '@/components/rich-text'
 export function Reviews({ locale = 'en' }: { locale?: Locale }) {
   const { reviews } = useSiteData()
   return (
-   <section id="reviews" className="bg-primary pb-20 pt-14 text-primary-foreground md:pb-28 md:pt-24">
+   <section id="reviews" className="bg-primary py-20 text-primary-foreground md:py-28">
     <div className="mx-auto max-w-7xl px-5 md:px-8">
      <div className="flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
       <div className="max-w-xl">

@@ -29,7 +29,7 @@ export function Location({ locale = 'en' }: { locale?: Locale }) {
  const villageImg = images.location?.[0]
 
  return (
-  <section id="location" className="mx-auto max-w-7xl px-5 pb-20 pt-14 md:px-8 md:pb-28 md:pt-24">
+  <section id="location" className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
    <div className="max-w-2xl">
     <h2 className="type-heading text-balance font-serif font-medium text-foreground">
      <RichText text={t(locale, 'location.headline')} />

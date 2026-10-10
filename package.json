@@ -5,6 +5,7 @@
  "scripts": {
   "build": "next build",
   "dev": "next dev",
+  "dev:cloudflare": "node scripts/dev-cloudflare.mjs",
   "start": "next start",
   "lint": "eslint .",
   "test": "tsx --test lib/*.test.ts"

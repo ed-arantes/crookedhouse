@@ -24,7 +24,7 @@ function Field({
  active?: boolean
 }) {
  return (
-  <div className="flex items-center gap-3 px-5 py-3 text-left">
+  <div className="flex items-center gap-3 px-2.5 py-2 text-left md:px-3">
    <span className="text-primary">{icon}</span>
    <span className="min-w-0">
     <span className="block text-[0.7rem] font-medium uppercase tracking-wide text-muted-foreground">
@@ -69,7 +69,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
 
   return (
   <>
-  <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:flex-row md:flex-nowrap md:items-center md:gap-0 md:rounded-full md:p-2">
+  <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-2xl border border-border bg-card/95 p-1.5 backdrop-blur md:flex-row md:flex-nowrap md:items-center md:justify-center md:gap-0 md:rounded-full md:px-1.5 md:py-1.5">
    <div className="hidden md:block">
     <Field
      icon={<MapPin className="h-4 w-4" />}
@@ -147,7 +147,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
    <button
     type="button"
     onClick={handleReserve}
-    className="ml-2 flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 md:ml-4 md:mr-2 md:rounded-full"
+    className="ml-1 flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 md:ml-2 md:mr-1 md:rounded-full"
    >
     <Search className="h-4 w-4" />
     <span>{t(locale, 'widgets.reserve')}</span>

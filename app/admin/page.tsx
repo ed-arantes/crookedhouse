@@ -32,14 +32,14 @@ import {
   type AdminBooking,
   type ICalEvent,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
-import { BookingsTab, AnalyticsTab, PricingTab } from './admin-tabs'
+import { BookingsTab, AnalyticsTab, PricingTab, MessagesTab } from './admin-tabs'
 import { formatEU } from '@/lib/format-date'
-type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'pricing' | 'analytics'
+type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'messages' | 'pricing' | 'analytics'
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -122,6 +122,7 @@ export default function AdminPage() {
           {([
             ['blocked', <Calendar key="b" className="h-4 w-4" />, 'Calendario'],
             ['bookings', <CalendarCheck key="k" className="h-4 w-4" />, 'Prenotazioni'],
+            ['messages', <MessagesSquare key="m" className="h-4 w-4" />, 'Messaggi'],
             ['pricing', <DollarSign key="p" className="h-4 w-4" />, 'Prezzi'],
             ['reviews', <MessageSquareQuote key="r" className="h-4 w-4" />, 'Recensioni'],
             ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
@@ -149,6 +150,7 @@ export default function AdminPage() {
         {tab === 'ical' && <IcalTab />}
         {tab === 'images' && <ImagesTab />}
         {tab === 'bookings' && <BookingsTab />}
+        {tab === 'messages' && <MessagesTab />}
         {tab === 'pricing' && <PricingTab />}
         {tab === 'analytics' && <AnalyticsTab />}
       </div>

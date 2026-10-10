@@ -237,6 +237,30 @@ export type AdminBooking = {
   created_at: string
 }
 
+export type AdminMessage = {
+  id: string
+  booking_id: string
+  sender: 'guest' | 'host'
+  message: string
+  created_at: string
+  guest_name: string
+  guest_email: string
+  check_in: string
+  check_out: string
+}
+
+export function fetchAdminMessages(): Promise<AdminMessage[]> {
+  return adminFetch('/api/admin/messages')
+}
+
+export function replyToGuest(bookingId: string, message: string): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ booking_id: bookingId, message }),
+  })
+}
+
 export function fetchBookings(status?: string): Promise<AdminBooking[]> {
   const qs = status ? `?status=${status}` : ''
   return adminFetch(`/api/admin/bookings${qs}`)

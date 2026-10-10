@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 import { useSiteData } from '@/components/site-data-provider'
@@ -44,6 +45,14 @@ export function Services({ locale = 'en' }: { locale?: Locale }) {
       </h2>
       <p className="type-body mt-6 text-pretty">
        <RichText text={t(locale, 'services.body')} />
+      </p>
+      <p className="type-body mt-4">
+       <Link
+        href={`/${locale}/servizi`}
+        className="font-medium underline underline-offset-4 transition-opacity hover:opacity-80"
+       >
+        Scopri di più
+       </Link>
       </p>
      </div>
     </div>
