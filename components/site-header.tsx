@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { locales, t, type Locale } from '@/lib/i18n'
+import { apiUrl } from '@/lib/api-url'
 
 const LANGUAGE_LABELS: Record<Locale, string> = {
  en: 'English',
@@ -29,6 +30,12 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
 
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
+  const [surname, setSurname] = useState('')
+  const [email, setEmail] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginLoading, setLoginLoading] = useState(false)
+  const loginRef = useRef<HTMLDivElement>(null)
 
  useEffect(() => {
   function onScroll() {
@@ -39,8 +46,40 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   return () => window.removeEventListener('scroll', onScroll)
  }, [])
 
+ useEffect(() => {
+  function handleClickOutside(event: MouseEvent) {
+   if (loginRef.current && !loginRef.current.contains(event.target as Node)) {
+    setLoginOpen(false)
+   }
+  }
+  if (!loginOpen) return
+  document.addEventListener('mousedown', handleClickOutside)
+  return () => document.removeEventListener('mousedown', handleClickOutside)
+ }, [loginOpen])
+
   function handleNav() {
    setOpen(false)
+  }
+
+  async function handleGuestLogin(event: React.FormEvent<HTMLFormElement>) {
+   event.preventDefault()
+   setLoginError('')
+   setLoginLoading(true)
+   try {
+    const response = await fetch(apiUrl('/api/guest/auth'), {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ surname, email }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || t(locale, 'nav.login'))
+    setLoginOpen(false)
+    router.push(`/${locale}/account`)
+   } catch (error) {
+    setLoginError(error instanceof Error ? error.message : t(locale, 'nav.login'))
+   } finally {
+    setLoginLoading(false)
+   }
   }
 
  return (
@@ -107,16 +146,52 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground"
       />
      </div>
-     <div className="hidden md:block">
-      <Link
-       href={`/${locale}/account`}
+     <div className="relative hidden md:block" ref={loginRef}>
+      <button
+       type="button"
+       onClick={() => setLoginOpen((value) => !value)}
        className={cn(
         actionPillClass,
         'inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90',
        )}
       >
        {t(locale, 'nav.login')}
-      </Link>
+      </button>
+      {loginOpen && (
+       <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-border bg-card p-5 shadow-lg">
+        <h3 className="font-serif font-medium text-foreground">
+         {t(locale, 'nav.login')}
+        </h3>
+        <form className="mt-4 flex flex-col gap-3" onSubmit={handleGuestLogin}>
+         <input
+          type="text"
+          autoComplete="family-name"
+          placeholder={t(locale, 'nav.surname')}
+          value={surname}
+          onChange={(event) => setSurname(event.target.value)}
+          required
+          className="rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
+         />
+         <input
+          type="email"
+          autoComplete="email"
+          placeholder={t(locale, 'nav.email')}
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+          className="rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary"
+         />
+         {loginError && <p role="alert" className="text-sm text-destructive">{loginError}</p>}
+         <button
+          type="submit"
+          disabled={loginLoading}
+          className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-60"
+         >
+          {loginLoading ? '...' : t(locale, 'nav.loginButton')}
+         </button>
+        </form>
+       </div>
+      )}
      </div>
      <button
       type="button"
