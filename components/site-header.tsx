@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { locales, t, type Locale } from '@/lib/i18n'
@@ -19,13 +19,16 @@ const LANGUAGE_LABELS: Record<Locale, string> = {
 
 export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
  const router = useRouter()
+ const pathname = usePathname()
+ const isHomePage = pathname === '/' || pathname === `/${locale}`
  const actionPillClass = 'w-[7rem] justify-center'
  const NAV = [
-  { label: t(locale, 'nav.apartment'), href: '#about' },
-  { label: t(locale, 'nav.gallery'), href: '#gallery' },
-  { label: t(locale, 'nav.amenities'), href: '#amenities' },
-  { label: t(locale, 'nav.reviews'), href: '#reviews' },
-  { label: t(locale, 'nav.location'), href: '#location' },
+  { label: t(locale, 'nav.apartment'), href: isHomePage ? '#about' : `/${locale}#about` },
+  { label: t(locale, 'nav.gallery'), href: isHomePage ? '#gallery' : `/${locale}#gallery` },
+  { label: t(locale, 'nav.amenities'), href: isHomePage ? '#amenities' : `/${locale}#amenities` },
+  { label: t(locale, 'nav.reviews'), href: isHomePage ? '#reviews' : `/${locale}#reviews` },
+  { label: t(locale, 'nav.location'), href: isHomePage ? '#location' : `/${locale}#location` },
+  { label: 'FAQ', href: '/faq' },
  ]
 
   const [scrolled, setScrolled] = useState(false)
@@ -106,7 +109,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   >
    <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
     <a
-     href="#top"
+     href={isHomePage ? '#top' : `/${locale}#top`}
      onClick={(e) => {
       e.preventDefault()
       window.scrollTo({ top: 0, behavior: 'smooth' })
