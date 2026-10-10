@@ -55,6 +55,13 @@ export function nightsBetween(start: Date | null, end: Date | null): number {
  return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)))
 }
 
+export function formatDateLocal(date: Date): string {
+ const year = date.getFullYear()
+ const month = String(date.getMonth() + 1).padStart(2, '0')
+ const day = String(date.getDate()).padStart(2, '0')
+ return `${year}-${month}-${day}`
+}
+
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }

@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { nightsBetween, type PriceBreakdown } from '@/lib/booking'
+import { formatDateLocal, nightsBetween, type PriceBreakdown } from '@/lib/booking'
 import { apiUrl } from '@/lib/api-url'
 
 export type Guests = {
@@ -65,8 +65,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       setPrice({ nights: 0, subtotal: 0, councilTax: 0, total: 0 })
       return
     }
-    const ci = checkIn?.toISOString().slice(0, 10)
-    const co = checkOut?.toISOString().slice(0, 10)
+    const ci = checkIn ? formatDateLocal(checkIn) : undefined
+    const co = checkOut ? formatDateLocal(checkOut) : undefined
     if (!ci || !co) return
 
     fetch(apiUrl(`/api/public/price?check_in=${ci}&check_out=${co}&guests=${guestCount}`))

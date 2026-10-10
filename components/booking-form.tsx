@@ -6,7 +6,7 @@ import { useBooking } from './booking/booking-context'
 import { Popover } from './booking/popover'
 import { RangeCalendar } from './booking/range-calendar'
 import { GuestSelector, guestLabel } from './booking/guest-selector'
-import { formatLong, formatCurrency } from '@/lib/booking'
+import { formatDateLocal, formatLong, formatCurrency } from '@/lib/booking'
 import { t, type Locale } from '@/lib/i18n'
 import { apiUrl } from '@/lib/api-url'
 
@@ -43,8 +43,8 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-     checkIn: checkIn?.toISOString().slice(0, 10),
-     checkOut: checkOut?.toISOString().slice(0, 10),
+     checkIn: checkIn ? formatDateLocal(checkIn) : undefined,
+     checkOut: checkOut ? formatDateLocal(checkOut) : undefined,
      guests,
      firstName,
      lastName,
