@@ -48,3 +48,4 @@ graphify-out/
 *.test.tsx
 *.spec.ts
 *.spec.tsx
+!lib/locale-detection.test.ts

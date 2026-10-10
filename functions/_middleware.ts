@@ -14,16 +14,12 @@ type PagesContext = {
   next: () => Promise<Response>
 }
 
-const SUPPORTED_LOCALE_PATH = /^\/(?:it|en|fr|de|es|ru)(?:\/|$)/
-
 export async function onRequest({ request, next }: PagesContext): Promise<Response> {
   const url = new URL(request.url)
   const path = url.pathname.replace(/\/+$/, '') || '/'
   const redirectingFromUnlocalizedPage = path === '/' || path === '/servizi'
 
-  if (!redirectingFromUnlocalizedPage || SUPPORTED_LOCALE_PATH.test(path)) {
-    return next()
-  }
+  if (!redirectingFromUnlocalizedPage) return next()
 
   const locale = getLocalePreference(request.headers.get('Cookie'))
     ?? getLocaleForCountry(

@@ -92,6 +92,7 @@ export function getLocaleFromAcceptLanguage(acceptLanguage: string): Locale {
 
 export function getLocaleForCountry(country: string | undefined, acceptLanguage: string): Locale {
   const countryLocales = country ? COUNTRY_LOCALES[country.toUpperCase()] : undefined
+  if (country && !countryLocales) return 'en'
   if (!countryLocales) return getLocaleFromAcceptLanguage(acceptLanguage)
 
   const browserPreference = acceptedLocales(acceptLanguage)
