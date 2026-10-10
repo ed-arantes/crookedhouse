@@ -68,22 +68,28 @@ function capitalize(s: string): string {
 
 export function formatShort(date: Date | null, locale: string = 'it-IT'): string {
   if (!date) return ''
-  const raw = date.toLocaleDateString(locale, {
-    month: 'short',
+  const parts = new Intl.DateTimeFormat(locale, {
     day: 'numeric',
-  })
-  return raw.replace(/[a-zà-ú]+/g, (w) => capitalize(w))
+    month: 'short',
+  }).formatToParts(date)
+  const day = parts.find((part) => part.type === 'day')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  return day && month ? `${day} ${capitalize(month)}` : ''
 }
 
 export function formatLong(date: Date | null, locale: string = 'it-IT'): string {
   if (!date) return ''
-  const raw = date.toLocaleDateString(locale, {
+  const parts = new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  })
-  return raw.replace(/[a-zà-ú]+/g, (w) => capitalize(w))
+  }).formatToParts(date)
+  const weekday = parts.find((part) => part.type === 'weekday')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const year = parts.find((part) => part.type === 'year')?.value
+  return [weekday && capitalize(weekday), day, month && capitalize(month), year].filter(Boolean).join(' ')
 }
 
 export function formatCurrency(amount: number): string {

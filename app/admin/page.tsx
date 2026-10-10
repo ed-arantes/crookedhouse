@@ -76,13 +76,13 @@ export default function AdminPage() {
       <div className="flex min-h-screen items-center justify-center bg-background p-5">
         <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4">
           <h1 className="type-heading font-serif text-center text-2xl font-medium text-foreground">
-            Admin
+            Amministrazione
           </h1>
           <input
             type="password"
             value={passwordInput}
             onChange={(e) => setPasswordInput(e.target.value)}
-            placeholder="Password"
+            placeholder="Password amministratore"
             autoFocus
             className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
           />
@@ -103,11 +103,11 @@ export default function AdminPage() {
       <div className="mx-auto max-w-5xl px-5 py-8 md:px-8">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="type-heading font-serif text-2xl font-medium text-foreground">
-            Pannello Admin
+            Pannello amministratore
           </h1>
           {usesRemoteApi && (
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-              Online / Produzione
+              Ambiente di produzione
             </span>
           )}
           <button
@@ -159,10 +159,10 @@ export default function AdminPage() {
 }
 
 const SECTION_LABELS: Record<string, string> = {
-  hero: 'Hero',
+  hero: 'Intestazione',
   gallery: 'Galleria',
   apartment: 'Appartamento',
-  layout: 'Layout',
+  layout: 'Disposizione',
   services: 'Servizi',
   location: 'Posizione',
   explore: 'Esplora',
@@ -358,7 +358,7 @@ function ImagesTab() {
                 value={pendingSection === section ? pendingAlt : ''}
                 onChange={(e) => { setPendingSection(section); setPendingAlt(e.target.value) }}
                 onFocus={() => setPendingSection(section)}
-                placeholder="Alt text"
+                placeholder="Testo alternativo"
                 className="w-32 rounded-lg border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary"
               />
               <button
@@ -407,15 +407,15 @@ function ImagesTab() {
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSaveAlt(img); if (e.key === 'Escape') setEditingAlt(null) }}
                         className="min-w-0 flex-1 rounded border border-border bg-background px-1 py-0.5 text-[10px] outline-none"
                       />
-                      <button onClick={() => handleSaveAlt(img)} className="text-[10px] text-accent">OK</button>
+                      <button onClick={() => handleSaveAlt(img)} className="text-[10px] text-accent">Ok</button>
                     </div>
                   ) : (
                     <p
                       className="truncate text-[10px] text-muted-foreground cursor-pointer hover:text-foreground"
                       onClick={() => { setEditingAlt(img.id); setAltValue(img.alt) }}
-                      title="Click to edit alt text"
+                      title="Fai clic per modificare il testo alternativo"
                     >
-                      {img.alt || '(no alt)'}
+                      {img.alt || '(senza testo alternativo)'}
                     </p>
                   )}
                 </div>
@@ -773,7 +773,7 @@ function BlockedDatesTab() {
               }
             } else if (isBlocked) {
               const reason = blocked.find((b) => b.date === dateStr)?.reason
-              tooltip = reason ? `Bloccata: ${reason}` : 'Bloccata (admin)'
+              tooltip = reason ? `Bloccata: ${reason}` : 'Bloccata dall’amministratore'
             } else if (isIcal) {
               tooltip = 'Bloccata (iCal)'
             }
@@ -794,7 +794,7 @@ function BlockedDatesTab() {
       </div>
 
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-red-500" /> Bloccata (admin)</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-red-500" /> Bloccata dall’amministratore</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-sky-200" /> Bloccata (iCal)</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-amber-400" /> In attesa di pagamento</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-green-500" /> Pagata / Prenotata</span>

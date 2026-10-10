@@ -15,7 +15,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   if (preview && url) {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
-      if (!res.ok) return json({ url, events: [], error: `HTTP ${res.status}` })
+      if (!res.ok) return json({ url, events: [], error: `Il feed iCal ha restituito un errore (HTTP ${res.status}).` })
       const text = await res.text()
       const events = parseICalEvents(text)
       return json({ url, events })

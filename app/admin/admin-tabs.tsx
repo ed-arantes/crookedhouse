@@ -23,7 +23,8 @@ import {
   type PricingRule,
 } from '@/lib/admin-api'
 import { Plus, Pencil, Trash2, Save } from 'lucide-react'
-import { formatEU } from '@/lib/format-date'
+import { formatDateTimeEU, formatEU, parseEUDate } from '@/lib/format-date'
+import { formatDateLocal } from '@/lib/booking'
 
 export function BookingsTab() {
   const [bookings, setBookings] = useState<AdminBooking[]>([])
@@ -70,18 +71,24 @@ export function BookingsTab() {
 
   function startEditing(booking: AdminBooking) {
     setEditingBooking(booking.id)
-    setEditCheckIn(booking.check_in)
-    setEditCheckOut(booking.check_out)
+    setEditCheckIn(formatEU(booking.check_in))
+    setEditCheckOut(formatEU(booking.check_out))
     setEditResult(null)
     setActionError('')
   }
 
   async function saveAmendment(event: React.FormEvent<HTMLFormElement>, id: string) {
     event.preventDefault()
+    const checkIn = parseEUDate(editCheckIn)
+    const checkOut = parseEUDate(editCheckOut)
+    if (!checkIn || !checkOut) {
+      setActionError('Inserisci date valide nel formato GG/MM/AAAA.')
+      return
+    }
     setSavingEdit(true)
     setActionError('')
     try {
-      const result = await amendBooking(id, editCheckIn, editCheckOut)
+      const result = await amendBooking(id, checkIn, checkOut)
       setEditResult({ bookingId: id, due: result.due_amount, credit: result.credit_amount })
       setEditingBooking(null)
       await load()
@@ -179,10 +186,10 @@ export function BookingsTab() {
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{b.email}</p>
                   <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-5">
-                    <span>Check-in: <span className="text-foreground">{formatEU(b.check_in)}</span></span>
-                    <span>Check-out: <span className="text-foreground">{formatEU(b.check_out)}</span></span>
+                    <span>Arrivo: <span className="text-foreground">{formatEU(b.check_in)}</span></span>
+                    <span>Partenza: <span className="text-foreground">{formatEU(b.check_out)}</span></span>
                     <span>Notti: <span className="text-foreground">{b.nights}</span></span>
-                    <span>Ospiti: <span className="text-foreground">{b.adults} adult{b.adults !== 1 ? 'i' : 'o'}{b.children > 0 ? `, ${b.children} bambin${b.children !== 1 ? 'i' : 'o'}` : ''}{b.pets ? `, ${b.pets} animale${b.pets !== 1 ? 'i' : ''}` : ''}</span></span>
+                    <span>Ospiti: <span className="text-foreground">{b.adults} adult{b.adults !== 1 ? 'i' : 'o'}{b.children > 0 ? `, ${b.children} bambin${b.children !== 1 ? 'i' : 'o'}` : ''}{b.pets ? `, ${b.pets} ${b.pets === 1 ? 'animale' : 'animali'}` : ''}</span></span>
                     <span>Totale: <span className="text-foreground">&euro;{b.total_price}</span></span>
                   </div>
                   {b.paid_amount > 0 && (
@@ -213,7 +220,7 @@ export function BookingsTab() {
                       {editingBooking === b.id ? 'Chiudi' : 'Modifica date'}
                     </button>
                   ) : (
-                    <span className="self-center text-xs text-muted-foreground" title="The current checkout keeps its original dates and total.">
+                    <span className="self-center text-xs text-muted-foreground" title="Il checkout attuale mantiene le date e l’importo originali.">
                       Modifica dopo la gestione del checkout
                     </span>
                   )}
@@ -254,12 +261,12 @@ export function BookingsTab() {
               {editingBooking === b.id && (
                 <form onSubmit={(event) => saveAmendment(event, b.id)} className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                   <label className="text-xs font-medium text-muted-foreground">
-                    Check-in
-                    <input required type="date" value={editCheckIn} onChange={(event) => setEditCheckIn(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+                    Arrivo
+                    <input required type="text" inputMode="numeric" placeholder="GG/MM/AAAA" value={editCheckIn} onChange={(event) => setEditCheckIn(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
                   </label>
                   <label className="text-xs font-medium text-muted-foreground">
-                    Check-out
-                    <input required type="date" min={editCheckIn} value={editCheckOut} onChange={(event) => setEditCheckOut(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+                    Partenza
+                    <input required type="text" inputMode="numeric" placeholder="GG/MM/AAAA" value={editCheckOut} onChange={(event) => setEditCheckOut(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
                   </label>
                   <button disabled={savingEdit} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-60">
                     {savingEdit ? 'Salvataggio...' : 'Salva modifica'}
@@ -354,8 +361,8 @@ export function MessagesTab() {
               {items.slice().reverse().map((message) => (
                 <article key={message.id} className={`rounded-lg p-3 text-sm ${message.sender === 'host' ? 'ml-6 bg-accent/10' : 'mr-6 bg-secondary'}`}>
                   <div className="mb-1 flex justify-between gap-3 text-xs text-muted-foreground">
-                    <span>{message.sender === 'host' ? 'Host' : latest.guest_name}</span>
-                    <time>{message.created_at}</time>
+                    <span>{message.sender === 'host' ? 'Gestore' : latest.guest_name}</span>
+                    <time>{formatDateTimeEU(message.created_at)}</time>
                   </div>
                   <p className="whitespace-pre-wrap break-words">{message.message}</p>
                 </article>
@@ -485,7 +492,7 @@ export function AnalyticsTab() {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
-          <h3 className="mb-3 text-sm font-medium text-foreground">Referrer</h3>
+          <h3 className="mb-3 text-sm font-medium text-foreground">Provenienza</h3>
           {data.topReferrers.length === 0 ? (
             <p className="text-xs text-muted-foreground">Nessun dato.</p>
           ) : (
@@ -533,18 +540,18 @@ export function AnalyticsTab() {
               {d1 ? (
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">Storage</p>
-                    <p className="text-lg font-medium text-foreground">{d1.storage?.current_bytes ? (d1.storage.current_bytes / (1024 * 1024)).toFixed(2) + ' MB' : 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Spazio di archiviazione</p>
+                    <p className="text-lg font-medium text-foreground">{d1.storage?.current_bytes ? (d1.storage.current_bytes / (1024 * 1024)).toFixed(2) + ' MB' : 'Non disponibile'}</p>
                     <p className="text-[10px] text-muted-foreground">limite gratuito: 5 GB</p>
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3">
                     <p className="text-xs text-muted-foreground">Letture (24h)</p>
-                    <p className="text-lg font-medium text-foreground">{d1.reads?.total ? d1.reads.total.toLocaleString() : 'N/A'}</p>
+                    <p className="text-lg font-medium text-foreground">{d1.reads?.total ? d1.reads.total.toLocaleString('it-IT') : 'Non disponibile'}</p>
                     <p className="text-[10px] text-muted-foreground">limite gratuito: 100M/giorno</p>
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3">
                     <p className="text-xs text-muted-foreground">Scritture (24h)</p>
-                    <p className="text-lg font-medium text-foreground">{d1.writes?.total ? d1.writes.total.toLocaleString() : 'N/A'}</p>
+                    <p className="text-lg font-medium text-foreground">{d1.writes?.total ? d1.writes.total.toLocaleString('it-IT') : 'Non disponibile'}</p>
                     <p className="text-[10px] text-muted-foreground">limite gratuito: 50M/giorno</p>
                   </div>
                 </div>
@@ -553,7 +560,7 @@ export function AnalyticsTab() {
               )}
               {local && (
                 <div className="mt-3">
-                  <p className="mb-2 text-[10px] font-medium text-muted-foreground">Righi per tabella</p>
+                  <p className="mb-2 text-[10px] font-medium text-muted-foreground">Record per tabella</p>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {Object.entries(local.tables).map(([table, count]) => (
                       <div key={table} className="rounded-lg bg-muted/30 px-3 py-2 text-xs">
@@ -572,18 +579,18 @@ export function AnalyticsTab() {
                 {r2 ? (
                   <>
                     <div className="rounded-lg bg-muted/50 p-3">
-                      <p className="text-xs text-muted-foreground">Storage</p>
-                      <p className="text-lg font-medium text-foreground">{r2.storage?.current_bytes ? (r2.storage.current_bytes / (1024 * 1024)).toFixed(2) + ' MB' : 'N/A'}</p>
+                      <p className="text-xs text-muted-foreground">Spazio di archiviazione</p>
+                      <p className="text-lg font-medium text-foreground">{r2.storage?.current_bytes ? (r2.storage.current_bytes / (1024 * 1024)).toFixed(2) + ' MB' : 'Non disponibile'}</p>
                       <p className="text-[10px] text-muted-foreground">limite gratuito: 10 GB</p>
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3">
-                      <p className="text-xs text-muted-foreground">Class A (mese)</p>
-                      <p className="text-lg font-medium text-foreground">{r2.requests?.class_a_total ? r2.requests.class_a_total.toLocaleString() : 'N/A'}</p>
+                      <p className="text-xs text-muted-foreground">Operazioni di classe A (mese)</p>
+                      <p className="text-lg font-medium text-foreground">{r2.requests?.class_a_total ? r2.requests.class_a_total.toLocaleString('it-IT') : 'Non disponibile'}</p>
                       <p className="text-[10px] text-muted-foreground">limite gratuito: 1M/mese</p>
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3">
-                      <p className="text-xs text-muted-foreground">Class B (mese)</p>
-                      <p className="text-lg font-medium text-foreground">{r2.requests?.class_b_total ? r2.requests.class_b_total.toLocaleString() : 'N/A'}</p>
+                      <p className="text-xs text-muted-foreground">Operazioni di classe B (mese)</p>
+                      <p className="text-lg font-medium text-foreground">{r2.requests?.class_b_total ? r2.requests.class_b_total.toLocaleString('it-IT') : 'Non disponibile'}</p>
                       <p className="text-[10px] text-muted-foreground">limite gratuito: 10M/mese</p>
                     </div>
                   </>
@@ -867,15 +874,18 @@ function PricingRuleForm({
   saving: boolean
 }) {
   const initialType = rule?.type ?? 'date_adjustment'
+  const defaultStart = formatEU(formatDateLocal(new Date()))
+  const followingWeek = new Date()
+  followingWeek.setDate(followingWeek.getDate() + 7)
   const [form, setForm] = useState({
     name: rule?.name ?? '',
     type: initialType as 'date_adjustment' | 'annual_adjustment' | 'nights_discount',
     start_date: rule?.type === 'annual_adjustment'
       ? formatMonthDay(rule.start_date)
-      : rule?.start_date ?? new Date().toISOString().slice(0, 10),
+      : rule ? formatEU(rule.start_date) : defaultStart,
     end_date: rule?.type === 'annual_adjustment'
       ? formatMonthDay(rule.end_date)
-      : rule?.end_date ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+      : rule ? formatEU(rule.end_date) : formatEU(formatDateLocal(followingWeek)),
     adjustment_percent: rule ? String(rule.adjustment_percent) : '',
     min_nights: String(rule?.min_nights ?? 1),
     discount_percent: rule ? String(rule.discount_percent) : '',
@@ -901,6 +911,12 @@ function PricingRuleForm({
       setValidationError('Inserisci date valide nel formato giorno/mese.')
       return
     }
+    if (form.type === 'date_adjustment' &&
+      (!parseEUDate(form.start_date) || !parseEUDate(form.end_date) ||
+        parseEUDate(form.end_date)! < parseEUDate(form.start_date)!)) {
+      setValidationError('Inserisci date valide in ordine cronologico nel formato GG/MM/AAAA.')
+      return
+    }
     if (form.type === 'nights_discount' &&
       (!form.min_nights.trim() || !Number.isInteger(minNights) || minNights < 1 ||
         !form.discount_percent.trim() || !Number.isFinite(discountPercent) || discountPercent < 1 || discountPercent > 100)) {
@@ -911,8 +927,8 @@ function PricingRuleForm({
     onSave({
       id: rule?.id ?? '',
       ...form,
-      start_date: form.type === 'annual_adjustment' ? toMonthDay(form.start_date) : form.start_date,
-      end_date: form.type === 'annual_adjustment' ? toMonthDay(form.end_date) : form.end_date,
+      start_date: form.type === 'annual_adjustment' ? toMonthDay(form.start_date) : parseEUDate(form.start_date)!,
+      end_date: form.type === 'annual_adjustment' ? toMonthDay(form.end_date) : parseEUDate(form.end_date)!,
       adjustment_percent: form.type !== 'nights_discount' ? adjustmentPercent : 0,
       min_nights: minNights,
       discount_percent: form.type === 'nights_discount' ? discountPercent : 0,
@@ -934,12 +950,12 @@ function PricingRuleForm({
           onChange={(e) => {
             const type = e.target.value as 'date_adjustment' | 'annual_adjustment' | 'nights_discount'
             if (type === 'annual_adjustment' && form.type === 'date_adjustment') {
-              update('start_date', formatMonthDay(form.start_date.slice(5)))
-              update('end_date', formatMonthDay(form.end_date.slice(5)))
+              update('start_date', form.start_date.slice(0, 5))
+              update('end_date', form.end_date.slice(0, 5))
             } else if (type === 'date_adjustment' && form.type === 'annual_adjustment') {
               const year = new Date().getUTCFullYear()
-              update('start_date', `${year}-${toMonthDay(form.start_date)}`)
-              update('end_date', `${year}-${toMonthDay(form.end_date)}`)
+              update('start_date', `${form.start_date}/${year}`)
+              update('end_date', `${form.end_date}/${year}`)
             }
             update('type', type)
           }}
@@ -962,9 +978,9 @@ function PricingRuleForm({
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Dal</label>
               <input
-                type={form.type === 'annual_adjustment' ? 'text' : 'date'}
-                inputMode={form.type === 'annual_adjustment' ? 'numeric' : undefined}
-                placeholder={form.type === 'annual_adjustment' ? 'GG/MM' : undefined}
+                type="text"
+                inputMode="numeric"
+                placeholder={form.type === 'annual_adjustment' ? 'GG/MM' : 'GG/MM/AAAA'}
                 value={form.start_date}
                 onChange={(e) => update('start_date', e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
@@ -973,9 +989,9 @@ function PricingRuleForm({
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Al</label>
               <input
-                type={form.type === 'annual_adjustment' ? 'text' : 'date'}
-                inputMode={form.type === 'annual_adjustment' ? 'numeric' : undefined}
-                placeholder={form.type === 'annual_adjustment' ? 'GG/MM' : undefined}
+                type="text"
+                inputMode="numeric"
+                placeholder={form.type === 'annual_adjustment' ? 'GG/MM' : 'GG/MM/AAAA'}
                 value={form.end_date}
                 onChange={(e) => update('end_date', e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"

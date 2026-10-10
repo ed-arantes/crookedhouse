@@ -25,20 +25,89 @@ export function clearPassword() {
   localStorage.removeItem('admin_password')
 }
 
+const ADMIN_ERROR_TRANSLATIONS: Record<string, string> = {
+  'Admin not configured': 'Accesso amministratore non configurato.',
+  'Invalid password': 'Password non corretta.',
+  'Locale not available': 'Lingua non disponibile.',
+  'Missing locale or overrides': 'Indica la lingua e i contenuti da salvare.',
+  'Invalid translation value': 'Valore di traduzione non valido.',
+  'Missing id': 'Identificativo mancante.',
+  'Booking not found': 'Prenotazione non trovata.',
+  'No remaining payment due for this booking': 'Non ci sono importi residui da richiedere per questa prenotazione.',
+  'Messaging is not configured': 'Il servizio messaggi non è configurato.',
+  'Payment has already been requested or is no longer due': 'Il pagamento è già stato richiesto oppure non è più dovuto.',
+  'Unable to record payment request': 'Impossibile registrare la richiesta di pagamento.',
+  'Invalid check-in or check-out date': 'La data di arrivo o di partenza non è valida.',
+  'Stay must be between 1 and 365 nights': 'Il soggiorno deve essere compreso tra 1 e 365 notti.',
+  'Pending bookings cannot be amended until their existing checkout is handled.': 'Le prenotazioni in attesa non possono essere modificate finché il pagamento esistente non è stato gestito.',
+  'Dates overlap another confirmed booking': 'Le date si sovrappongono a un’altra prenotazione confermata.',
+  'Unable to verify calendar availability. Try again later.': 'Impossibile verificare la disponibilità del calendario. Riprova più tardi.',
+  'Base fare is not configured': 'La tariffa base non è configurata.',
+  'Booking could not be updated': 'Impossibile aggiornare la prenotazione.',
+  'Unable to amend booking': 'Impossibile modificare la prenotazione.',
+  'Missing status': 'Stato mancante.',
+  'Invalid status': 'Stato non valido.',
+  'Missing dates': 'Seleziona le date da bloccare.',
+  'Missing date': 'Data mancante.',
+  'Date not found': 'Data non trovata.',
+  'Missing url': 'URL mancante.',
+  'Unable to load messages': 'Impossibile caricare i messaggi.',
+  'A booking and a message of up to 2000 characters are required': 'Seleziona una prenotazione e inserisci un messaggio di massimo 2000 caratteri.',
+  'Unable to send reply': 'Impossibile inviare la risposta.',
+  'Expected multipart/form-data': 'Formato di caricamento non valido.',
+  'Missing file or section': 'File o sezione mancante.',
+  'File must be an image': 'Il file deve essere un’immagine.',
+  'Image not found': 'Immagine non trovata.',
+  'Missing section or orderedIds': 'Sezione o ordine delle immagini mancante.',
+  'Missing required fields': 'Compila tutti i campi obbligatori.',
+  'Review not found': 'Recensione non trovata.',
+  'Missing ids': 'Identificativi mancanti.',
+  'Missing pairs array': 'Elenco dei testi da tradurre mancante.',
+  'Invalid pricing condition': 'Condizione di prezzo non valida.',
+  'Invalid date adjustment condition': 'Variazione per date non valida.',
+  'Invalid recurring date adjustment condition': 'Variazione ricorrente annuale non valida.',
+  'Invalid night discount condition': 'Sconto per durata non valido.',
+  'Invalid council tax amount': 'Importo della tassa di soggiorno non valido.',
+  'Invalid base fare': 'Tariffa base non valida.',
+}
+
+function translateAdminError(message: string, status: number): string {
+  const knownTranslation = ADMIN_ERROR_TRANSLATIONS[message]
+  if (knownTranslation) return knownTranslation
+  const invalidSection = /^Invalid section: (.+)$/.exec(message)
+  if (invalidSection) return `Sezione non valida: ${invalidSection[1]}`
+  const invalidDate = /^Invalid date format: (.+)$/.exec(message)
+  if (invalidDate) return `Formato data non valido: ${invalidDate[1]}`
+  if (/^Date .+ is unavailable$/.test(message)) return 'La data selezionata non è disponibile.'
+  if (status === 401 || status === 403) return 'Accesso non autorizzato. Verifica la password amministratore.'
+  if (status >= 500) return 'Si è verificato un errore del server. Riprova più tardi.'
+  return 'Impossibile completare l’operazione. Verifica i dati e riprova.'
+}
+
 function authHeaders(): Record<string, string> {
   return { Authorization: `Bearer ${getPassword()}` }
 }
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(apiUrl(path), {
-    ...init,
-    headers: { ...authHeaders(), ...init?.headers },
-  })
+  let res: Response
+  try {
+    res = await fetch(apiUrl(path), {
+      ...init,
+      headers: { ...authHeaders(), ...init?.headers },
+    })
+  } catch {
+    throw new Error('Impossibile connettersi al server. Controlla la connessione e riprova.')
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error(body.error || res.statusText)
+    const message = typeof body.error === 'string' ? body.error : res.statusText
+    throw new Error(translateAdminError(message, res.status))
   }
-  return res.json()
+  try {
+    return await res.json()
+  } catch {
+    throw new Error('Il server ha restituito una risposta non valida.')
+  }
 }
 
 export async function adminLogin(password: string): Promise<boolean> {
