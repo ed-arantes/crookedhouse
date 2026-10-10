@@ -12,6 +12,7 @@ import {
   createPricingRule,
   updatePricingRule,
   updateCouncilTax,
+  updateBaseFare,
   deletePricingRule,
   fetchUsage,
   fetchAdminMessages,
@@ -615,12 +616,16 @@ export function AnalyticsTab() {
 export function PricingTab() {
   const [rules, setRules] = useState<PricingRule[]>([])
   const [councilTax, setCouncilTax] = useState(2)
+  const [baseFare, setBaseFare] = useState(95)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<PricingRule | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const [saving, setSaving] = useState(false)
   const [taxSaving, setTaxSaving] = useState(false)
   const [taxStatus, setTaxStatus] = useState('')
+  const [fareSaving, setFareSaving] = useState(false)
+  const [fareStatus, setFareStatus] = useState('')
+  const [loadError, setLoadError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -628,7 +633,11 @@ export function PricingTab() {
       const data = await fetchPricingData()
       setRules(data.rules)
       setCouncilTax(data.council_tax_per_person_per_night)
-    } catch { /* */ }
+      setBaseFare(data.base_fare_per_night)
+      setLoadError('')
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Impossibile caricare i prezzi.')
+    }
     setLoading(false)
   }, [])
 
@@ -645,7 +654,9 @@ export function PricingTab() {
       setEditing(null)
       setIsAdding(false)
       load()
-    } catch { /* */ }
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Impossibile salvare la condizione.')
+    }
     setSaving(false)
   }
 
@@ -667,14 +678,51 @@ export function PricingTab() {
     setTaxSaving(false)
   }
 
-  function formatPrice(cents: number): string {
-    return `€${(cents / 100).toFixed(0)}`
+  async function handleSaveFare() {
+    setFareSaving(true)
+    setFareStatus('')
+    try {
+      await updateBaseFare(baseFare)
+      setFareStatus('Tariffa base salvata.')
+    } catch (error) {
+      setFareStatus(error instanceof Error ? error.message : 'Errore nel salvataggio.')
+    } finally {
+      setFareSaving(false)
+    }
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
 
   return (
     <div className="space-y-6">
+      {loadError && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{loadError}</p>}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h3 className="mb-3 text-sm font-medium text-foreground">Tariffa base</h3>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Prezzo per notte prima delle condizioni di prezzo e dello sconto per durata.
+        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">€</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={baseFare}
+              onChange={(event) => setBaseFare(Number(event.target.value))}
+              className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <button
+            onClick={handleSaveFare}
+            disabled={fareSaving}
+            className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" /> {fareSaving ? '...' : 'Salva'}
+          </button>
+          {fareStatus && <span role="status" className="text-xs text-muted-foreground">{fareStatus}</span>}
+        </div>
+      </div>
       <div className="rounded-xl border border-border bg-card p-4">
         <h3 className="mb-3 text-sm font-medium text-foreground">Tassa di soggiorno</h3>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -733,15 +781,15 @@ export function PricingTab() {
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <span>{rule.name || 'Regola senza nome'}</span>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {rule.type === 'nights_discount' ? 'Sconto' : 'Prezzo'}
+                      {rule.type === 'nights_discount' ? 'Sconto durata' : 'Variazione date'}
                     </span>
                   </div>
-                  {rule.type === 'date_range' ? (
+                  {rule.type === 'date_adjustment' ? (
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
                       <span>Dal: <span className="text-foreground">{formatEU(rule.start_date)}</span></span>
                       <span>Al: <span className="text-foreground">{formatEU(rule.end_date)}</span></span>
-                      <span>Prezzo: <span className="text-foreground">{formatPrice(rule.price_per_night)}/notte</span></span>
-                      <span>Min. notti: <span className="text-foreground">{rule.min_nights}</span></span>
+                      <span>Variazione: <span className={`font-medium ${rule.adjustment_percent < 0 ? 'text-green-700' : 'text-foreground'}`}>{rule.adjustment_percent > 0 ? '+' : ''}{rule.adjustment_percent}%</span></span>
+                      <span>Applicata insieme alle altre variazioni sulle stesse date</span>
                     </div>
                   ) : (
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
@@ -789,10 +837,10 @@ function PricingRuleForm({
 }) {
   const [form, setForm] = useState({
     name: rule?.name ?? '',
-    type: rule?.type ?? 'date_range' as 'date_range' | 'nights_discount',
+    type: rule?.type ?? 'date_adjustment' as 'date_adjustment' | 'nights_discount',
     start_date: rule?.start_date ?? new Date().toISOString().slice(0, 10),
     end_date: rule?.end_date ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-    price_per_night: rule?.price_per_night ? rule.price_per_night / 100 : 95,
+    adjustment_percent: rule?.adjustment_percent ?? 10,
     min_nights: rule?.min_nights ?? 1,
     discount_percent: rule?.discount_percent ?? 10,
     priority: rule?.priority ?? 0,
@@ -806,7 +854,8 @@ function PricingRuleForm({
     onSave({
       id: rule?.id ?? '',
       ...form,
-      price_per_night: form.price_per_night * 100,
+      adjustment_percent: form.type === 'date_adjustment' ? form.adjustment_percent : 0,
+      discount_percent: form.type === 'nights_discount' ? form.discount_percent : 0,
     })
   }
 
@@ -822,15 +871,15 @@ function PricingRuleForm({
         />
         <select
           value={form.type}
-          onChange={(e) => update('type', e.target.value as 'date_range' | 'nights_discount')}
+          onChange={(e) => update('type', e.target.value as 'date_adjustment' | 'nights_discount')}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
         >
-          <option value="date_range">Prezzo per date</option>
+          <option value="date_adjustment">Aumento / diminuzione per date</option>
           <option value="nights_discount">Sconto per notti</option>
         </select>
       </div>
 
-      {form.type === 'date_range' ? (
+      {form.type === 'date_adjustment' ? (
         <>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -852,28 +901,21 @@ function PricingRuleForm({
               />
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Prezzo a notte (€)</label>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Aumento / diminuzione percentuale</label>
+            <div className="relative">
               <input
                 type="number"
-                min="0"
-                step="1"
-                value={form.price_per_night}
-                onChange={(e) => update('price_per_night', Number(e.target.value))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                min="-100"
+                max="1000"
+                step="0.1"
+                value={form.adjustment_percent}
+                onChange={(e) => update('adjustment_percent', Number(e.target.value))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-8 text-sm outline-none focus:border-primary"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Notti minime</label>
-              <input
-                type="number"
-                min="1"
-                value={form.min_nights}
-                onChange={(e) => update('min_nights', Number(e.target.value))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-              />
-            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Usa valori positivi per aumentare o negativi per diminuire. Le condizioni sovrapposte si sommano.</p>
           </div>
         </>
       ) : (
@@ -899,6 +941,9 @@ function PricingRuleForm({
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            Se più condizioni sono valide, si applica a tutto il soggiorno lo sconto della condizione con il numero più alto di notti minime.
+          </p>
         </div>
       )}
 

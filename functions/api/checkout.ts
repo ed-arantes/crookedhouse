@@ -1,4 +1,5 @@
-import { COUNCIL_TAX_PER_PERSON_PER_NIGHT, NIGHTLY_RATE } from '../../lib/booking'
+import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../lib/booking'
+import { calculateBookingPrice, defaultBaseFare, type PricingRule } from '../../lib/pricing'
 import {
   json,
   stripeRequest,
@@ -13,58 +14,26 @@ import { encrypt } from '../../lib/encryption'
 const MAX_GUESTS = 4
 const ICAL_URL_KEY = 'ical_url'
 
-type PricingRule = {
-  id: string
-  name: string
-  type: 'date_range' | 'nights_discount'
-  start_date: string
-  end_date: string
-  price_per_night: number
-  min_nights: number
-  discount_percent: number
-  priority: number
-}
-
 async function getPricingRules(db: Record<string, unknown>): Promise<PricingRule[]> {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { results } = await (db as any)
-      .prepare('SELECT * FROM pricing_rules ORDER BY priority DESC, start_date')
+      .prepare('SELECT id, name, type, start_date, end_date, adjustment_percent, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date')
       .all()
-    return (results ?? []).map((r: any) => ({
-      id: r.id,
-      name: r.name ?? '',
-      type: r.type ?? 'date_range',
-      start_date: r.start_date ?? '',
-      end_date: r.end_date ?? '',
-      price_per_night: r.price_per_night ?? 0,
-      min_nights: r.min_nights ?? 1,
-      discount_percent: r.discount_percent ?? 0,
-      priority: r.priority ?? 0,
+    return (results ?? []).map((row: Record<string, unknown>) => ({
+      id: String(row.id ?? ''),
+      name: String(row.name ?? ''),
+      type: (row.type === 'date_range' ? 'date_adjustment' : row.type ?? 'date_adjustment') as PricingRule['type'],
+      start_date: String(row.start_date ?? ''),
+      end_date: String(row.end_date ?? ''),
+      adjustment_percent: Number(row.adjustment_percent ?? 0),
+      min_nights: Number(row.min_nights ?? 1),
+      discount_percent: Number(row.discount_percent ?? 0),
+      priority: Number(row.priority ?? 0),
     }))
   } catch {
     return []
   }
-}
-
-function calculateNightlyPrice(rules: PricingRule[], dateStr: string): number {
-  for (const rule of rules) {
-    if (rule.type === 'date_range' && dateStr >= rule.start_date && dateStr <= rule.end_date) {
-      return rule.price_per_night
-    }
-  }
-  return NIGHTLY_RATE * 100
-}
-
-function getNightDiscount(rules: PricingRule[], nights: number): number {
-  let bestDiscount = 0
-  for (const rule of rules) {
-    if (rule.type === 'nights_discount' && nights >= rule.min_nights) {
-      if (rule.discount_percent > bestDiscount) {
-        bestDiscount = rule.discount_percent
-      }
-    }
-  }
-  return bestDiscount
 }
 
 const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
@@ -137,20 +106,17 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     // Generate every night of the stay and check against unavailable dates
     const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
     const pricingRules = await getPricingRules(env.DB)
-    let subtotalCents = 0
-    let cursor = new Date(start)
+    const baseFare = defaultBaseFare(Number(await d1GetSetting(env.DB, 'base_fare_per_night', '95')))
     for (let i = 0; i < nights; i++) {
-      const iso = cursor.toISOString().slice(0, 10)
+      const date = new Date(start)
+      date.setUTCDate(date.getUTCDate() + i)
+      const iso = date.toISOString().slice(0, 10)
       if (blockedSet.has(iso)) {
         return json({ error: 'Selected dates are no longer available' }, 409)
       }
-      subtotalCents += calculateNightlyPrice(pricingRules, iso)
-      cursor.setDate(cursor.getDate() + 1)
     }
-    const subtotalBeforeDiscount = subtotalCents / 100
-    const discountPercent = getNightDiscount(pricingRules, nights)
-    const discountAmount = subtotalBeforeDiscount * (discountPercent / 100)
-    const subtotal = subtotalBeforeDiscount - discountAmount
+    const price = calculateBookingPrice(String(body.checkIn), String(body.checkOut), baseFare, pricingRules)
+    const subtotal = price.subtotal
     const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
     const councilTax = nights * guestCount * councilTaxRate
     const total = subtotal + councilTax

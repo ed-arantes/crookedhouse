@@ -7,7 +7,8 @@ import {
   encrypt,
   type AdminEnv,
 } from '../../_lib/admin'
-import { COUNCIL_TAX_PER_PERSON_PER_NIGHT, NIGHTLY_RATE } from '../../../lib/booking'
+import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../../lib/booking'
+import { calculateBookingPrice, defaultBaseFare, type PricingRule } from '../../../lib/pricing'
 import { parseICalDates } from '../../../lib/ical-parser'
 
 type PagesContext = {
@@ -189,31 +190,20 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
       }
 
       const { results: pricingRows } = await db.prepare(
-        'SELECT type, start_date, end_date, price_per_night, min_nights, discount_percent FROM pricing_rules ORDER BY priority DESC, start_date',
+        'SELECT id, name, type, start_date, end_date, adjustment_percent, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date',
       ).all()
-      const rules = pricingRows as Array<{
-        type: string
-        start_date: string
-        end_date: string
-        price_per_night: number
-        min_nights: number
-        discount_percent: number
-      }>
-      let subtotalCents = 0
+      const rules = (pricingRows as Array<Omit<PricingRule, 'type'> & { type: string }>).map((rule) => ({
+        ...rule,
+        type: (rule.type === 'date_range' ? 'date_adjustment' : rule.type) as PricingRule['type'],
+      }))
+      const baseFare = defaultBaseFare(Number(await d1GetSetting(env.DB, 'base_fare_per_night', '95')))
       const dateCursor = new Date(start)
       for (let index = 0; index < nights; index++) {
         const date = dateCursor.toISOString().slice(0, 10)
         if (blockedDates.has(date)) return json({ error: `Date ${date} is unavailable` }, 409)
-        const rule = rules.find((item) =>
-          item.type === 'date_range' && date >= item.start_date && date <= item.end_date,
-        )
-        subtotalCents += rule?.price_per_night ?? NIGHTLY_RATE * 100
         dateCursor.setUTCDate(dateCursor.getUTCDate() + 1)
       }
-      const discount = rules.reduce((best, item) =>
-        item.type === 'nights_discount' && nights >= item.min_nights
-          ? Math.max(best, item.discount_percent)
-          : best, 0)
+      const price = calculateBookingPrice(body.check_in, body.check_out, baseFare, rules)
       const guestCount = Number(booking.adults) + Number(booking.children)
       const councilTax = parseInt(await d1GetSetting(
         env.DB,
@@ -221,7 +211,7 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
         String(COUNCIL_TAX_PER_PERSON_PER_NIGHT),
       ), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
       const newTotal = Math.round(
-        ((subtotalCents / 100) * (1 - discount / 100) + nights * guestCount * councilTax) * 100,
+        (price.subtotal + nights * guestCount * councilTax) * 100,
       ) / 100
       const paidAmount = Number(booking.paid_amount)
       const dueAmount = Math.max(0, newTotal - paidAmount)

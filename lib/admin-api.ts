@@ -335,10 +335,10 @@ export function fetchAnalytics(range = '30'): Promise<AnalyticsData> {
 export type PricingRule = {
   id: string
   name: string
-  type: 'date_range' | 'nights_discount'
+  type: 'date_adjustment' | 'nights_discount'
   start_date: string
   end_date: string
-  price_per_night: number
+  adjustment_percent: number
   min_nights: number
   discount_percent: number
   priority: number
@@ -347,6 +347,7 @@ export type PricingRule = {
 export type PricingData = {
   rules: PricingRule[]
   council_tax_per_person_per_night: number
+  base_fare_per_night: number
 }
 
 export function fetchPricingData(): Promise<PricingData> {
@@ -374,6 +375,14 @@ export function updateCouncilTax(councilTax: number): Promise<{ ok: boolean }> {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ council_tax: councilTax }),
+  })
+}
+
+export function updateBaseFare(baseFare: number): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/pricing', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base_fare: baseFare }),
   })
 }
 
