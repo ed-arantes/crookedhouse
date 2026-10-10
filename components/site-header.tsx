@@ -61,6 +61,12 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
    setOpen(false)
   }
 
+  function selectLanguage(nextLocale: Locale) {
+   const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+   document.cookie = `crookedhouse_locale=${nextLocale}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`
+   router.push(`/${nextLocale}`, { scroll: false })
+  }
+
   async function handleGuestLogin(event: React.FormEvent<HTMLFormElement>) {
    event.preventDefault()
    setLoginError('')
@@ -135,7 +141,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
        value={locale}
        onChange={(event) => {
         const nextLocale = event.target.value as Locale
-        router.push(`/${nextLocale}`, { scroll: false })
+        selectLanguage(nextLocale)
        }}
        className={cn(
         actionPillClass,
@@ -235,7 +241,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
         onChange={(event) => {
          const nextLocale = event.target.value as Locale
          setOpen(false)
-         router.push(`/${nextLocale}`, { scroll: false })
+         selectLanguage(nextLocale)
         }}
         className="w-full cursor-pointer rounded-full bg-card/95 px-5 py-3 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted/80 focus:outline-none focus:ring-0"
        >
