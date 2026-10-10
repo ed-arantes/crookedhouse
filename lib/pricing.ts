@@ -3,7 +3,7 @@ import { NIGHTLY_RATE } from './booking'
 export type PricingRule = {
   id: string
   name: string
-  type: 'date_adjustment' | 'nights_discount'
+  type: 'date_adjustment' | 'annual_adjustment' | 'nights_discount'
   start_date: string
   end_date: string
   adjustment_percent: number
@@ -48,9 +48,17 @@ export function calculateBookingPrice(
     const date = new Date(start)
     date.setUTCDate(date.getUTCDate() + index)
     const dateString = date.toISOString().slice(0, 10)
+    const monthDay = dateString.slice(5)
     const adjustment = rules
-      .filter((rule) => rule.type === 'date_adjustment' &&
-        dateString >= rule.start_date && dateString <= rule.end_date)
+      .filter((rule) => {
+        if (rule.type === 'date_adjustment') {
+          return dateString >= rule.start_date && dateString <= rule.end_date
+        }
+        if (rule.type !== 'annual_adjustment') return false
+        return rule.start_date <= rule.end_date
+          ? monthDay >= rule.start_date && monthDay <= rule.end_date
+          : monthDay >= rule.start_date || monthDay <= rule.end_date
+      })
       .reduce((sum, rule) => sum + rule.adjustment_percent, 0)
     const priceCents = Math.max(0, Math.round(baseFare * 100 * (1 + adjustment / 100)))
     subtotalCents += priceCents

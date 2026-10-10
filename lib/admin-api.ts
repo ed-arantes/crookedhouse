@@ -335,7 +335,7 @@ export function fetchAnalytics(range = '30'): Promise<AnalyticsData> {
 export type PricingRule = {
   id: string
   name: string
-  type: 'date_adjustment' | 'nights_discount'
+  type: 'date_adjustment' | 'annual_adjustment' | 'nights_discount'
   start_date: string
   end_date: string
   adjustment_percent: number

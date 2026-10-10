@@ -615,8 +615,8 @@ export function AnalyticsTab() {
 
 export function PricingTab() {
   const [rules, setRules] = useState<PricingRule[]>([])
-  const [councilTax, setCouncilTax] = useState(2)
-  const [baseFare, setBaseFare] = useState(95)
+  const [councilTax, setCouncilTax] = useState('2')
+  const [baseFare, setBaseFare] = useState('95')
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<PricingRule | null>(null)
   const [isAdding, setIsAdding] = useState(false)
@@ -632,8 +632,8 @@ export function PricingTab() {
     try {
       const data = await fetchPricingData()
       setRules(data.rules)
-      setCouncilTax(data.council_tax_per_person_per_night)
-      setBaseFare(data.base_fare_per_night)
+      setCouncilTax(String(data.council_tax_per_person_per_night))
+      setBaseFare(String(data.base_fare_per_night))
       setLoadError('')
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Impossibile caricare i prezzi.')
@@ -667,10 +667,15 @@ export function PricingTab() {
   }
 
   async function handleSaveTax() {
+    const value = Number(councilTax)
+    if (!councilTax.trim() || !Number.isFinite(value) || value < 0) {
+      setTaxStatus('Inserisci un importo valido (zero o superiore).')
+      return
+    }
     setTaxSaving(true)
     setTaxStatus('')
     try {
-      await updateCouncilTax(councilTax)
+      await updateCouncilTax(value)
       setTaxStatus('Tassa salvata.')
     } catch {
       setTaxStatus('Errore nel salvataggio.')
@@ -679,10 +684,15 @@ export function PricingTab() {
   }
 
   async function handleSaveFare() {
+    const value = Number(baseFare)
+    if (!baseFare.trim() || !Number.isFinite(value) || value < 0) {
+      setFareStatus('Inserisci un importo valido (zero o superiore).')
+      return
+    }
     setFareSaving(true)
     setFareStatus('')
     try {
-      await updateBaseFare(baseFare)
+      await updateBaseFare(value)
       setFareStatus('Tariffa base salvata.')
     } catch (error) {
       setFareStatus(error instanceof Error ? error.message : 'Errore nel salvataggio.')
@@ -709,7 +719,7 @@ export function PricingTab() {
               min="0"
               step="0.01"
               value={baseFare}
-              onChange={(event) => setBaseFare(Number(event.target.value))}
+              onChange={(event) => setBaseFare(event.target.value)}
               className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
@@ -736,7 +746,7 @@ export function PricingTab() {
               min="0"
               step="1"
               value={councilTax}
-              onChange={(e) => setCouncilTax(Number(e.target.value))}
+              onChange={(e) => setCouncilTax(e.target.value)}
               className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
@@ -781,13 +791,17 @@ export function PricingTab() {
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <span>{rule.name || 'Regola senza nome'}</span>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {rule.type === 'nights_discount' ? 'Sconto durata' : 'Variazione date'}
+                      {rule.type === 'nights_discount'
+                        ? 'Sconto durata'
+                        : rule.type === 'annual_adjustment'
+                          ? 'Variazione ricorrente annuale'
+                          : 'Variazione date'}
                     </span>
                   </div>
-                  {rule.type === 'date_adjustment' ? (
+                  {rule.type === 'date_adjustment' || rule.type === 'annual_adjustment' ? (
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-                      <span>Dal: <span className="text-foreground">{formatEU(rule.start_date)}</span></span>
-                      <span>Al: <span className="text-foreground">{formatEU(rule.end_date)}</span></span>
+                      <span>Dal: <span className="text-foreground">{rule.type === 'annual_adjustment' ? formatMonthDay(rule.start_date) : formatEU(rule.start_date)}</span></span>
+                      <span>Al: <span className="text-foreground">{rule.type === 'annual_adjustment' ? formatMonthDay(rule.end_date) : formatEU(rule.end_date)}</span></span>
                       <span>Variazione: <span className={`font-medium ${rule.adjustment_percent < 0 ? 'text-green-700' : 'text-foreground'}`}>{rule.adjustment_percent > 0 ? '+' : ''}{rule.adjustment_percent}%</span></span>
                       <span>Applicata insieme alle altre variazioni sulle stesse date</span>
                     </div>
@@ -824,6 +838,11 @@ export function PricingTab() {
   )
 }
 
+function formatMonthDay(value: string): string {
+  const [month, day] = value.split('-')
+  return `${day}/${month}`
+}
+
 function PricingRuleForm({
   rule,
   onSave,
@@ -837,25 +856,49 @@ function PricingRuleForm({
 }) {
   const [form, setForm] = useState({
     name: rule?.name ?? '',
-    type: rule?.type ?? 'date_adjustment' as 'date_adjustment' | 'nights_discount',
+    type: rule?.type ?? 'date_adjustment' as 'date_adjustment' | 'annual_adjustment' | 'nights_discount',
     start_date: rule?.start_date ?? new Date().toISOString().slice(0, 10),
     end_date: rule?.end_date ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-    adjustment_percent: rule?.adjustment_percent ?? 10,
-    min_nights: rule?.min_nights ?? 1,
-    discount_percent: rule?.discount_percent ?? 10,
+    adjustment_percent: String(rule?.adjustment_percent ?? 10),
+    min_nights: String(rule?.min_nights ?? 1),
+    discount_percent: String(rule?.discount_percent ?? 10),
     priority: rule?.priority ?? 0,
   })
+  const [validationError, setValidationError] = useState('')
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
   function handleSave() {
+    const adjustmentPercent = Number(form.adjustment_percent)
+    const minNights = Number(form.min_nights)
+    const discountPercent = Number(form.discount_percent)
+    if ((form.type === 'date_adjustment' || form.type === 'annual_adjustment') &&
+      (!form.adjustment_percent.trim() || !Number.isFinite(adjustmentPercent) || adjustmentPercent < -100 || adjustmentPercent > 1000)) {
+      setValidationError('Inserisci una variazione percentuale tra -100 e 1000.')
+      return
+    }
+    if (form.type === 'annual_adjustment' &&
+      (![form.start_date, form.end_date].every((value) => /^\d{2}-\d{2}$/.test(value) &&
+        !Number.isNaN(new Date(`2000-${value}T00:00:00.000Z`).getTime()) &&
+        new Date(`2000-${value}T00:00:00.000Z`).toISOString().slice(5, 10) === value))) {
+      setValidationError('Inserisci date valide nel formato giorno e mese.')
+      return
+    }
+    if (form.type === 'nights_discount' &&
+      (!form.min_nights.trim() || !Number.isInteger(minNights) || minNights < 1 ||
+        !form.discount_percent.trim() || !Number.isFinite(discountPercent) || discountPercent < 1 || discountPercent > 100)) {
+      setValidationError('Inserisci almeno 1 notte e uno sconto tra 1% e 100%.')
+      return
+    }
+    setValidationError('')
     onSave({
       id: rule?.id ?? '',
       ...form,
-      adjustment_percent: form.type === 'date_adjustment' ? form.adjustment_percent : 0,
-      discount_percent: form.type === 'nights_discount' ? form.discount_percent : 0,
+      adjustment_percent: form.type !== 'nights_discount' ? adjustmentPercent : 0,
+      min_nights: minNights,
+      discount_percent: form.type === 'nights_discount' ? discountPercent : 0,
     })
   }
 
@@ -871,23 +914,40 @@ function PricingRuleForm({
         />
         <select
           value={form.type}
-          onChange={(e) => update('type', e.target.value as 'date_adjustment' | 'nights_discount')}
+          onChange={(e) => {
+            const type = e.target.value as 'date_adjustment' | 'annual_adjustment' | 'nights_discount'
+            if (type === 'annual_adjustment' && form.type === 'date_adjustment') {
+              update('start_date', form.start_date.slice(5))
+              update('end_date', form.end_date.slice(5))
+            } else if (type === 'date_adjustment' && form.type === 'annual_adjustment') {
+              const year = new Date().getUTCFullYear()
+              update('start_date', `${year}-${form.start_date}`)
+              update('end_date', `${year}-${form.end_date}`)
+            }
+            update('type', type)
+          }}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
         >
           <option value="date_adjustment">Aumento / diminuzione per date</option>
+          <option value="annual_adjustment">Aumento / diminuzione ricorrente ogni anno</option>
           <option value="nights_discount">Sconto per notti</option>
         </select>
       </div>
 
-      {form.type === 'date_adjustment' ? (
+      {form.type === 'date_adjustment' || form.type === 'annual_adjustment' ? (
         <>
+          {form.type === 'annual_adjustment' && (
+            <p className="text-xs text-muted-foreground">
+              Questa variazione si ripete ogni anno. L’anno selezionato non viene considerato.
+            </p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Dal</label>
               <input
                 type="date"
-                value={form.start_date}
-                onChange={(e) => update('start_date', e.target.value)}
+                value={form.type === 'annual_adjustment' ? `2000-${form.start_date}` : form.start_date}
+                onChange={(e) => update('start_date', form.type === 'annual_adjustment' ? e.target.value.slice(5) : e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -895,8 +955,8 @@ function PricingRuleForm({
               <label className="mb-1 block text-xs text-muted-foreground">Al</label>
               <input
                 type="date"
-                value={form.end_date}
-                onChange={(e) => update('end_date', e.target.value)}
+                value={form.type === 'annual_adjustment' ? `2000-${form.end_date}` : form.end_date}
+                onChange={(e) => update('end_date', form.type === 'annual_adjustment' ? e.target.value.slice(5) : e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -910,7 +970,7 @@ function PricingRuleForm({
                 max="1000"
                 step="0.1"
                 value={form.adjustment_percent}
-                onChange={(e) => update('adjustment_percent', Number(e.target.value))}
+                onChange={(e) => update('adjustment_percent', e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-8 text-sm outline-none focus:border-primary"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
@@ -926,7 +986,7 @@ function PricingRuleForm({
               type="number"
               min="1"
               value={form.min_nights}
-              onChange={(e) => update('min_nights', Number(e.target.value))}
+              onChange={(e) => update('min_nights', e.target.value)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
@@ -937,7 +997,7 @@ function PricingRuleForm({
               min="1"
               max="100"
               value={form.discount_percent}
-              onChange={(e) => update('discount_percent', Number(e.target.value))}
+              onChange={(e) => update('discount_percent', e.target.value)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
@@ -947,6 +1007,7 @@ function PricingRuleForm({
         </div>
       )}
 
+      {validationError && <p role="alert" className="text-sm text-destructive">{validationError}</p>}
       <div className="flex gap-2">
         <button
           onClick={handleSave}
