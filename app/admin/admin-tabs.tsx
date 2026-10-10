@@ -502,7 +502,9 @@ export function AnalyticsTab() {
                 return (
                   <div key={r.referrer}>
                     <div className="flex justify-between text-xs">
-                      <span className="truncate text-foreground">{r.referrer}</span>
+                      <span className="truncate text-foreground">
+                        {r.referrer === 'Direct' ? 'Accesso diretto' : r.referrer}
+                      </span>
                       <span className="shrink-0 pl-2 text-muted-foreground">{r.count} ({pct.toFixed(0)}%)</span>
                     </div>
                     <div className="mt-1 h-1.5 rounded-full bg-muted">

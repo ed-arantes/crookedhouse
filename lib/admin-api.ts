@@ -111,18 +111,24 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function adminLogin(password: string): Promise<boolean> {
+  let res: Response
   try {
-    const res = await fetch(apiUrl('/api/admin/auth'), {
+    res = await fetch(apiUrl('/api/admin/auth'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
     })
-    if (!res.ok) return false
-    setPassword(password)
-    return true
   } catch {
-    return false
+    throw new Error('Impossibile connettersi al server. Controlla la connessione e riprova.')
   }
+  if (res.status === 401) return false
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }))
+    const message = typeof body.error === 'string' ? body.error : res.statusText
+    throw new Error(translateAdminError(message, res.status))
+  }
+  setPassword(password)
+  return true
 }
 
 export function fetchReviews(): Promise<Review[]> {

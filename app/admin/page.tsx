@@ -57,12 +57,16 @@ export default function AdminPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoginError('')
-    const ok = await adminLogin(passwordInput)
-    if (ok) {
-      setAuthenticated(true)
-      setPasswordInput('')
-    } else {
-      setLoginError('Password errata')
+    try {
+      const ok = await adminLogin(passwordInput)
+      if (ok) {
+        setAuthenticated(true)
+        setPasswordInput('')
+      } else {
+        setLoginError('Password errata')
+      }
+    } catch (cause) {
+      setLoginError(cause instanceof Error ? cause.message : 'Accesso non riuscito. Riprova.')
     }
   }
 
@@ -174,6 +178,12 @@ const SPAN_OPTIONS = [
   { value: 'md:col-span-2', label: '2 colonne' },
   { value: 'col-span-2 md:col-span-1', label: '2 colonne (mobile)' },
 ]
+
+const CONTENT_SECTION_LABELS: Record<string, string> = {
+  Hero: 'Intestazione',
+  Layout: 'Disposizione',
+  Footer: 'Piè di pagina',
+}
 
 function ImagesTab() {
   const [images, setImages] = useState<AdminImage[]>([])
@@ -559,7 +569,9 @@ function ReviewsTab() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   {review.name}
-                  <span className="text-xs text-muted-foreground">({review.source})</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({review.source === 'booking' ? 'Booking.com' : review.source === 'agoda' ? 'Agoda' : 'Airbnb'})
+                  </span>
                   {typeof review.rating === 'number' && (
                     <span className="flex items-center gap-0.5 text-xs text-accent">
                       <Star className="h-3 w-3 fill-current" /> {review.rating}
@@ -1062,7 +1074,7 @@ function ContentTab() {
                 className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
               >
                 <span className="flex items-center gap-2">
-                  {section.label}
+                  {CONTENT_SECTION_LABELS[section.label] || section.label}
                 </span>
                 <span className="text-muted-foreground text-xs">{isOpen ? '−' : '+'}</span>
               </button>
