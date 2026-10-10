@@ -19,6 +19,26 @@ export type BookingPrice = {
   nightly_prices: Array<{ date: string; price: number }>
 }
 
+function monthDayValue(value: string): number | null {
+  const match = /^(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+  const month = Number(match[1])
+  const day = Number(match[2])
+  const date = new Date(Date.UTC(2000, month - 1, day))
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null
+  return month * 100 + day
+}
+
+function matchesAnnualAdjustment(monthDay: string, rule: PricingRule): boolean {
+  const dateValue = monthDayValue(monthDay)
+  const startValue = monthDayValue(rule.start_date)
+  const endValue = monthDayValue(rule.end_date)
+  if (dateValue === null || startValue === null || endValue === null) return false
+  return startValue <= endValue
+    ? dateValue >= startValue && dateValue <= endValue
+    : dateValue >= startValue || dateValue <= endValue
+}
+
 export function getNightDiscount(rules: PricingRule[], nights: number): number {
   const eligible = rules.filter((rule) =>
     rule.type === 'nights_discount' && nights >= rule.min_nights,
@@ -53,9 +73,7 @@ export function calculateBookingPrice(
           return dateString >= rule.start_date && dateString <= rule.end_date
         }
         if (rule.type !== 'annual_adjustment') return false
-        return rule.start_date <= rule.end_date
-          ? monthDay >= rule.start_date && monthDay <= rule.end_date
-          : monthDay >= rule.start_date || monthDay <= rule.end_date
+        return matchesAnnualAdjustment(monthDay, rule)
       })
       .reduce((sum, rule) => sum + rule.adjustment_percent, 0)
     const priceCents = Math.max(0, Math.round(baseFare * 100 * (1 + adjustment / 100)))
