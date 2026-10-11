@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { SiteFooter } from '@/components/site-footer'
 import { RichText } from '@/components/rich-text'
 import { apiUrl } from '@/lib/api-url'
 import { DEFAULT_FAQ_ITEMS, type FaqItem } from '@/lib/faq-content'
@@ -64,7 +63,6 @@ export default function FaqPage() {
           </div>
         </div>
       </main>
-      <SiteFooter locale="it" />
     </>
   )
 }
