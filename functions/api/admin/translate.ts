@@ -67,13 +67,17 @@ async function translateText(
   const targetName = LOCALE_NAMES[targetLocale] || targetLocale
   const { clean, restore } = protect(text)
 
-  const response = await ai.run('@cf/meta/m2m100-1.2b', {
-    text: clean,
-    source_lang: 'italian',
-    target_lang: targetName,
-  }) as { translated_text?: string }
+  const response = await ai.run('@cf/google/gemma-4-26b-a4b-it', {
+    messages: [
+      {
+        role: 'system',
+        content: `Translate text from Italian to ${targetName}. Preserve formatting and placeholders. Return only the translated text, without quotes or explanations.`,
+      },
+      { role: 'user', content: clean },
+    ],
+  }) as { response?: string }
 
-  const translated = restore(response?.translated_text ?? clean)
+  const translated = restore(response?.response?.trim() || clean)
   return preserveCase(text, translated)
 }
 
