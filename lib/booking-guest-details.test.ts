@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { saveBookingGuestDetails, readBookingGuestDetails, validateGuestDetails } from '../functions/_lib/booking-guest-details'
 import type { AdminEnv } from '../functions/_lib/admin'
+import { onRequestPost } from '../functions/api/checkout'
 
 const validGuests = [
   {
@@ -82,4 +83,34 @@ test('refuses to store guest details if encryption is not configured', async () 
   assert.ok(response instanceof Response)
   assert.equal(response.status, 500)
   assert.equal(databaseRead, false)
+})
+
+test('rejects invalid booking-form contact details before creating checkout', async () => {
+  const validBooking = {
+    checkIn: '2026-12-10',
+    checkOut: '2026-12-12',
+    guests: { adults: 1, children: 0, pets: false },
+    firstName: 'Maria',
+    lastName: 'Rossi',
+    email: 'maria@example.com',
+  }
+  const invalidContacts = [
+    { ...validBooking, firstName: '   ' },
+    { ...validBooking, lastName: 'R'.repeat(121) },
+    { ...validBooking, email: 'not-an-email' },
+  ]
+
+  for (const body of invalidContacts) {
+    const response = await onRequestPost({
+      request: new Request('https://example.com/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+      env: {} as Parameters<typeof onRequestPost>[0]['env'],
+    })
+
+    assert.equal(response.status, 400)
+    assert.deepEqual(await response.json(), { error: 'Invalid booking contact details' })
+  }
 })

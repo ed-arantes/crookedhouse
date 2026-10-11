@@ -62,8 +62,8 @@ const DETAILS_COPY: Record<Locale, {
  detailsDeleted: string
 }> = {
  it: {
-  detailsTitle: 'Dati personali degli ospiti',
-  detailsIntro: 'Inserisci i dati di ogni ospite della prenotazione.',
+  detailsTitle: 'Dati personali dell’ospite',
+  detailsIntro: 'Nome e cognome inseriti nella prenotazione sono precompilati per il capogruppo. Completa i dati richiesti e correggili se necessario.',
   groupLeader: 'Capogruppo',
   firstName: 'Nome',
   lastName: 'Cognome',
@@ -82,7 +82,7 @@ const DETAILS_COPY: Record<Locale, {
  },
  en: {
   detailsTitle: 'Guest personal details',
-  detailsIntro: 'Enter the personal details for each guest on this booking.',
+  detailsIntro: 'The name entered during booking is prefilled for the group leader. Complete the required details and correct the name if needed.',
   groupLeader: 'Group leader',
   firstName: 'First name',
   lastName: 'Last name',
@@ -101,7 +101,7 @@ const DETAILS_COPY: Record<Locale, {
  },
  fr: {
   detailsTitle: 'Informations personnelles des voyageurs',
-  detailsIntro: 'Saisissez les informations de chaque voyageur de cette réservation.',
+  detailsIntro: 'Le nom saisi lors de la réservation est prérempli pour le responsable du groupe. Complétez les informations requises et corrigez-le si nécessaire.',
   groupLeader: 'Responsable du groupe',
   firstName: 'Prénom',
   lastName: 'Nom',
@@ -120,7 +120,7 @@ const DETAILS_COPY: Record<Locale, {
  },
  de: {
   detailsTitle: 'Persönliche Daten der Gäste',
-  detailsIntro: 'Geben Sie die persönlichen Daten aller Gäste dieser Buchung ein.',
+  detailsIntro: 'Der bei der Buchung eingegebene Name ist für die Gruppenleitung vorausgefüllt. Ergänzen Sie die erforderlichen Angaben und korrigieren Sie den Namen bei Bedarf.',
   groupLeader: 'Gruppenleitung',
   firstName: 'Vorname',
   lastName: 'Nachname',
@@ -139,7 +139,7 @@ const DETAILS_COPY: Record<Locale, {
  },
  es: {
   detailsTitle: 'Datos personales de los huéspedes',
-  detailsIntro: 'Introduce los datos personales de cada huésped de esta reserva.',
+  detailsIntro: 'El nombre introducido durante la reserva aparece para el responsable del grupo. Completa los datos requeridos y corrígelo si es necesario.',
   groupLeader: 'Responsable del grupo',
   firstName: 'Nombre',
   lastName: 'Apellido',
@@ -158,7 +158,7 @@ const DETAILS_COPY: Record<Locale, {
  },
  ru: {
   detailsTitle: 'Личные данные гостей',
-  detailsIntro: 'Укажите личные данные каждого гостя в бронировании.',
+  detailsIntro: 'Имя, указанное при бронировании, предварительно заполнено для руководителя группы. Заполните обязательные данные и при необходимости исправьте имя.',
   groupLeader: 'Руководитель группы',
   firstName: 'Имя',
   lastName: 'Фамилия',

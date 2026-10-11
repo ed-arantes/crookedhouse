@@ -183,6 +183,9 @@ export function BookingsTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <span>{b.first_name} {b.last_name}</span>
+                    {(b.first_name || b.last_name) && (
+                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">Capogruppo</span>
+                    )}
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColors[b.status] || ''}`}>
                       {statusLabels[b.status] || b.status}
                     </span>

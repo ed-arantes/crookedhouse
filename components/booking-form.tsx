@@ -86,6 +86,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
            id="firstName"
            name="firstName"
            required
+           maxLength={120}
            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
           />
          </div>
@@ -100,6 +101,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
            id="lastName"
            name="lastName"
            required
+           maxLength={120}
            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
           />
          </div>
@@ -117,6 +119,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
           name="email"
           type="email"
           required
+          maxLength={254}
           className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
          />
         </div>

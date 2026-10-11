@@ -63,6 +63,14 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const pets = body?.guests?.pets ? 1 : 0
     const guestCount = adults + children
 
+    const firstName = typeof body?.firstName === 'string' ? body.firstName.trim() : ''
+    const lastName = typeof body?.lastName === 'string' ? body.lastName.trim() : ''
+    const email = typeof body?.email === 'string' ? body.email.trim() : ''
+    if (!firstName || firstName.length > 120 || !lastName || lastName.length > 120 ||
+      !email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: 'Invalid booking contact details' }, 400)
+    }
+
     if (!start || !end || end <= start || !Number.isInteger(adults) || adults < 1 ||
       !Number.isInteger(children) || children < 0 || guestCount > MAX_GUESTS) {
       return json({ error: 'Invalid booking details' }, 400)
@@ -125,16 +133,16 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       'line_items[0][price_data][unit_amount]': String(Math.round(total * 100)),
       'line_items[0][price_data][product_data][name]': 'Crooked House Booking',
       'line_items[0][price_data][product_data][description]': `${nights} night${nights > 1 ? 's' : ''} \u00b7 ${guestCount} guest${guestCount > 1 ? 's' : ''}`,
-      customer_email: String(body.email || ''),
+      customer_email: email,
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#booking`,
       'metadata[check_in]': String(body.checkIn),
       'metadata[check_out]': String(body.checkOut),
       'metadata[nights]': String(nights),
       'metadata[guests]': String(guestCount),
-      'metadata[first_name]': String(body.firstName || ''),
-      'metadata[last_name]': String(body.lastName || ''),
-      'metadata[email]': String(body.email || ''),
+      'metadata[first_name]': firstName,
+      'metadata[last_name]': lastName,
+      'metadata[email]': email,
     })
 
     const result = await stripeRequest<StripeCheckoutSession>(env, '/checkout/sessions', {
@@ -150,9 +158,6 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     console.log('BOOKING_ENCRYPTION_KEY present:', !!encKey, 'length:', encKey?.length)
 
     const bookingId = crypto.randomUUID()
-    const firstName = typeof body.firstName === 'string' ? body.firstName : ''
-    const lastName = typeof body.lastName === 'string' ? body.lastName : ''
-    const email = typeof body.email === 'string' ? body.email : ''
     const message = typeof body.message === 'string' ? body.message : ''
 
     if (encKey) {

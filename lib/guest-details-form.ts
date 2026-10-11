@@ -30,8 +30,8 @@ export function guestDetailsFormValues(
   return Array.from({ length: guestCount }, (_, index) => {
     const savedGuest = savedGuests[index]
     return {
-      first_name: savedGuest?.first_name?.trim() || (index === 0 ? booking.first_name : ''),
-      last_name: savedGuest?.last_name?.trim() || (index === 0 ? booking.last_name : ''),
+      first_name: savedGuest?.first_name?.trim() || (index === 0 ? booking.first_name.trim() : ''),
+      last_name: savedGuest?.last_name?.trim() || (index === 0 ? booking.last_name.trim() : ''),
       date_of_birth: savedGuest?.date_of_birth ? formatEU(savedGuest.date_of_birth) : '',
       document_number: index === 0 ? savedGuest?.document_number ?? '' : '',
     }
