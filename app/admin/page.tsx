@@ -648,6 +648,26 @@ function ReviewForm({ review, onSave, onCancel }: { review: Review | null; onSav
   )
 }
 
+function groupByYearMonth<T>(
+  items: T[],
+  getDate: (item: T) => string,
+): Array<{ year: string; month: number; items: T[] }> {
+  const groups = new Map<string, T[]>()
+  for (const item of items) {
+    const date = getDate(item)
+    const key = date.slice(0, 7)
+    const group = groups.get(key) ?? []
+    group.push(item)
+    groups.set(key, group)
+  }
+
+  return Array.from(groups, ([key, groupItems]) => ({
+    year: key.slice(0, 4),
+    month: Number(key.slice(5, 7)) - 1,
+    items: groupItems,
+  })).sort((a, b) => a.year.localeCompare(b.year) || a.month - b.month)
+}
+
 function BlockedDatesTab() {
   const [blocked, setBlocked] = useState<BlockedDate[]>([])
   const [bookings, setBookings] = useState<AdminBooking[]>([])
@@ -722,6 +742,15 @@ function BlockedDatesTab() {
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
 
   const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
+  const groupedBlocked = groupByYearMonth(
+    [...blocked].sort((a, b) => a.date.localeCompare(b.date)),
+    (date) => date.date,
+  )
+  const groupedIcal = groupByYearMonth([...icalDates].sort(), (date) => date)
+  const groupedBookings = groupByYearMonth(
+    [...bookings].sort((a, b) => a.check_in.localeCompare(b.check_in)),
+    (booking) => booking.check_in,
+  )
 
   function prevMonth() {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1) }
@@ -814,48 +843,69 @@ function BlockedDatesTab() {
       </div>
 
       {blocked.length > 0 && (
-        <div>
+        <div className="space-y-2">
           <p className="mb-2 text-sm font-medium text-foreground">Date bloccate ({blocked.length})</p>
-          <div className="flex flex-wrap gap-2">
-            {blocked.sort((a, b) => a.date.localeCompare(b.date)).map((d) => (
-              <span key={d.date} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
-                {formatEU(d.date)}
-                {d.reason && <span className="text-red-400">· {d.reason}</span>}
-                <button onClick={() => removeBlockedDate(d.date).then(load)} className="ml-0.5 hover:text-red-800">&times;</button>
-              </span>
-            ))}
-          </div>
+          {groupedBlocked.map((group) => (
+            <details key={`${group.year}-${group.month}`} className="rounded-lg border border-border bg-card">
+              <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
+                {monthNames[group.month]} {group.year} <span className="text-xs font-normal text-muted-foreground">({group.items.length})</span>
+              </summary>
+              <div className="flex flex-wrap gap-2 border-t border-border px-3 py-3">
+                {group.items.map((date) => (
+                  <span key={date.date} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
+                    {formatEU(date.date)}
+                    {date.reason && <span className="text-red-400">· {date.reason}</span>}
+                    <button onClick={() => removeBlockedDate(date.date).then(load)} className="ml-0.5 hover:text-red-800">&times;</button>
+                  </span>
+                ))}
+              </div>
+            </details>
+          ))}
         </div>
       )}
 
       {icalDates.length > 0 && (
-        <div>
+        <div className="space-y-2">
           <p className="mb-2 text-sm font-medium text-foreground">Date iCal ({icalDates.length})</p>
-          <div className="flex flex-wrap gap-2">
-            {icalDates.sort().map((d) => (
-              <span key={d} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
-                {formatEU(d)}
-              </span>
-            ))}
-          </div>
+          {groupedIcal.map((group) => (
+            <details key={`${group.year}-${group.month}`} className="rounded-lg border border-border bg-card">
+              <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
+                {monthNames[group.month]} {group.year} <span className="text-xs font-normal text-muted-foreground">({group.items.length})</span>
+              </summary>
+              <div className="flex flex-wrap gap-2 border-t border-border px-3 py-3">
+                {group.items.map((date) => (
+                  <span key={date} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
+                    {formatEU(date)}
+                  </span>
+                ))}
+              </div>
+            </details>
+          ))}
         </div>
       )}
 
       {bookings.length > 0 && (
-        <div>
+        <div className="space-y-2">
           <p className="mb-2 text-sm font-medium text-foreground">Prenotazioni ({bookings.length}) — {bookings.length === 1 ? 'Prenotazione' : 'Prenotazioni'}</p>
-          <div className="space-y-2">
-            {bookings.sort((a, b) => a.check_in.localeCompare(b.check_in)).map((b) => (
-              <div key={b.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
-                b.status === 'paid'
-                  ? 'border-green-200 bg-green-50 text-green-800'
-                  : 'border-amber-200 bg-amber-50 text-amber-800'
-              }`}>
-                <span>{b.first_name} {b.last_name} · {formatEU(b.check_in)} → {formatEU(b.check_out)} ({b.nights} {b.nights === 1 ? 'notte' : 'notti'})</span>
-                <span className="font-semibold">{b.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
+          {groupedBookings.map((group) => (
+            <details key={`${group.year}-${group.month}`} className="rounded-lg border border-border bg-card">
+              <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
+                {monthNames[group.month]} {group.year} <span className="text-xs font-normal text-muted-foreground">({group.items.length})</span>
+              </summary>
+              <div className="space-y-2 border-t border-border px-3 py-3">
+                {group.items.map((booking) => (
+                  <div key={booking.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
+                    booking.status === 'paid'
+                      ? 'border-green-200 bg-green-50 text-green-800'
+                      : 'border-amber-200 bg-amber-50 text-amber-800'
+                  }`}>
+                    <span>{booking.first_name} {booking.last_name} · {formatEU(booking.check_in)} → {formatEU(booking.check_out)} ({booking.nights} {booking.nights === 1 ? 'notte' : 'notti'})</span>
+                    <span className="font-semibold">{booking.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </details>
+          ))}
         </div>
       )}
     </div>
