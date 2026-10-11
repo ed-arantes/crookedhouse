@@ -183,9 +183,6 @@ export function BookingsTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <span>{b.first_name} {b.last_name}</span>
-                    {(b.first_name || b.last_name) && (
-                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">Capogruppo</span>
-                    )}
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColors[b.status] || ''}`}>
                       {statusLabels[b.status] || b.status}
                     </span>
@@ -215,7 +212,11 @@ export function BookingsTab() {
                   {b.message && (
                     <p className="mt-2 text-xs text-muted-foreground italic">&ldquo;{b.message}&rdquo;</p>
                   )}
-                  <BookingGuestDetailsPanel bookingId={b.id} />
+                  <BookingGuestDetailsPanel
+                    bookingId={b.id}
+                    bookingFirstName={b.first_name}
+                    bookingLastName={b.last_name}
+                  />
                 </div>
                 <div className="flex shrink-0 flex-wrap justify-end gap-1">
                   {b.status !== 'pending' ? (
@@ -291,7 +292,15 @@ export function BookingsTab() {
   )
 }
 
-function BookingGuestDetailsPanel({ bookingId }: { bookingId: string }) {
+function BookingGuestDetailsPanel({
+  bookingId,
+  bookingFirstName,
+  bookingLastName,
+}: {
+  bookingId: string
+  bookingFirstName: string
+  bookingLastName: string
+}) {
   const [open, setOpen] = useState(false)
   const [guests, setGuests] = useState<BookingGuestDetails[] | null>(null)
   const [loaded, setLoaded] = useState(false)
@@ -373,7 +382,12 @@ function BookingGuestDetailsPanel({ bookingId }: { bookingId: string }) {
               </button>
             </>
           ) : (
-            <p className="text-xs text-muted-foreground">Nessun dato ospite salvato.</p>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              {(bookingFirstName || bookingLastName) && (
+                <p className="font-medium text-foreground">{bookingFirstName} {bookingLastName}</p>
+              )}
+              <p>Nessun altro dato personale salvato. Data di nascita e documento si completano nell’area ospite.</p>
+            </div>
           )}
         </div>
       )}
