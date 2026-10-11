@@ -1,5 +1,5 @@
+import Link from 'next/link'
 import { SiteFooter } from '@/components/site-footer'
-import { SiteHeader } from '@/components/site-header'
 
 const faqs = [
   {
@@ -47,10 +47,12 @@ const faqs = [
 export default function FaqPage() {
   return (
     <>
-      <SiteHeader locale="it" />
-      <main className="min-h-screen bg-background px-5 pb-20 pt-32 md:px-8">
+      <main className="min-h-screen bg-background px-5 pb-20 pt-16 md:px-8">
         <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium uppercase tracking-widest text-accent">Crooked House</p>
+          <Link href="/" className="text-sm underline underline-offset-4">
+            Torna alla home
+          </Link>
+          <p className="mt-8 text-sm font-medium uppercase tracking-widest text-accent">Crooked House</p>
           <h1 className="type-heading mt-3 font-serif text-4xl font-medium text-foreground">
             Domande frequenti
           </h1>
