@@ -30,6 +30,7 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
   { label: t(locale, 'nav.reviews'), href: '#reviews' },
   { label: t(locale, 'nav.location'), href: '#location' },
   { label: t(locale, 'nav.book'), href: '#booking' },
+  { label: 'FAQ', href: '/faq' },
  ]
 
  return (

@@ -668,6 +668,20 @@ function groupByYearMonth<T>(
   })).sort((a, b) => a.year.localeCompare(b.year) || a.month - b.month)
 }
 
+function groupByYear<T>(
+  items: T[],
+  getDate: (item: T) => string,
+): Array<{ year: string; months: Array<{ month: number; items: T[] }> }> {
+  const years = new Map<string, Array<{ month: number; items: T[] }>>()
+  for (const group of groupByYearMonth(items, getDate)) {
+    const months = years.get(group.year) ?? []
+    months.push({ month: group.month, items: group.items })
+    years.set(group.year, months)
+  }
+
+  return Array.from(years, ([year, months]) => ({ year, months }))
+}
+
 function BlockedDatesTab() {
   const [blocked, setBlocked] = useState<BlockedDate[]>([])
   const [bookings, setBookings] = useState<AdminBooking[]>([])
@@ -742,12 +756,12 @@ function BlockedDatesTab() {
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
 
   const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
-  const groupedBlocked = groupByYearMonth(
+  const groupedBlocked = groupByYear(
     [...blocked].sort((a, b) => a.date.localeCompare(b.date)),
     (date) => date.date,
   )
-  const groupedIcal = groupByYearMonth([...icalDates].sort(), (date) => date)
-  const groupedBookings = groupByYearMonth(
+  const groupedIcal = groupByYear([...icalDates].sort(), (date) => date)
+  const groupedBookings = groupByYear(
     [...bookings].sort((a, b) => a.check_in.localeCompare(b.check_in)),
     (booking) => booking.check_in,
   )
@@ -842,71 +856,111 @@ function BlockedDatesTab() {
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-green-500" /> Pagata / Prenotata</span>
       </div>
 
-      {blocked.length > 0 && (
-        <div className="space-y-2">
-          <p className="mb-2 text-sm font-medium text-foreground">Date bloccate ({blocked.length})</p>
-          {groupedBlocked.map((group) => (
-            <details key={`${group.year}-${group.month}`} className="rounded-lg border border-border bg-card">
-              <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
-                {monthNames[group.month]} {group.year} <span className="text-xs font-normal text-muted-foreground">({group.items.length})</span>
-              </summary>
-              <div className="flex flex-wrap gap-2 border-t border-border px-3 py-3">
-                {group.items.map((date) => (
-                  <span key={date.date} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
-                    {formatEU(date.date)}
-                    {date.reason && <span className="text-red-400">· {date.reason}</span>}
-                    <button onClick={() => removeBlockedDate(date.date).then(load)} className="ml-0.5 hover:text-red-800">&times;</button>
-                  </span>
+      {(blocked.length > 0 || icalDates.length > 0) && (
+        <details className="rounded-xl border border-border bg-card">
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground marker:hidden">
+            Date bloccate ({blocked.length + icalDates.length})
+          </summary>
+          <div className="space-y-4 border-t border-border p-3">
+            {groupedBlocked.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Bloccate dall’amministratore</p>
+                {groupedBlocked.map((yearGroup) => (
+                  <details key={yearGroup.year} className="rounded-lg border border-border">
+                    <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
+                      {yearGroup.year} <span className="text-xs font-normal text-muted-foreground">({yearGroup.months.reduce((sum, month) => sum + month.items.length, 0)})</span>
+                    </summary>
+                    <div className="space-y-2 border-t border-border p-2">
+                      {yearGroup.months.map((monthGroup) => (
+                        <details key={monthGroup.month} className="rounded-lg border border-border bg-background">
+                          <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium marker:hidden">
+                            {monthNames[monthGroup.month]} <span className="font-normal text-muted-foreground">({monthGroup.items.length})</span>
+                          </summary>
+                          <div className="flex flex-wrap gap-2 border-t border-border px-3 py-3">
+                            {monthGroup.items.map((date) => (
+                              <span key={date.date} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
+                                {formatEU(date.date)}
+                                {date.reason && <span className="text-red-400">· {date.reason}</span>}
+                                <button onClick={() => removeBlockedDate(date.date).then(load)} className="ml-0.5 hover:text-red-800">&times;</button>
+                              </span>
+                            ))}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </details>
                 ))}
               </div>
-            </details>
-          ))}
-        </div>
-      )}
+            )}
 
-      {icalDates.length > 0 && (
-        <div className="space-y-2">
-          <p className="mb-2 text-sm font-medium text-foreground">Date iCal ({icalDates.length})</p>
-          {groupedIcal.map((group) => (
-            <details key={`${group.year}-${group.month}`} className="rounded-lg border border-border bg-card">
-              <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
-                {monthNames[group.month]} {group.year} <span className="text-xs font-normal text-muted-foreground">({group.items.length})</span>
-              </summary>
-              <div className="flex flex-wrap gap-2 border-t border-border px-3 py-3">
-                {group.items.map((date) => (
-                  <span key={date} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
-                    {formatEU(date)}
-                  </span>
+            {groupedIcal.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Bloccate da iCal</p>
+                {groupedIcal.map((yearGroup) => (
+                  <details key={yearGroup.year} className="rounded-lg border border-border">
+                    <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
+                      {yearGroup.year} <span className="text-xs font-normal text-muted-foreground">({yearGroup.months.reduce((sum, month) => sum + month.items.length, 0)})</span>
+                    </summary>
+                    <div className="space-y-2 border-t border-border p-2">
+                      {yearGroup.months.map((monthGroup) => (
+                        <details key={monthGroup.month} className="rounded-lg border border-border bg-background">
+                          <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium marker:hidden">
+                            {monthNames[monthGroup.month]} <span className="font-normal text-muted-foreground">({monthGroup.items.length})</span>
+                          </summary>
+                          <div className="flex flex-wrap gap-2 border-t border-border px-3 py-3">
+                            {monthGroup.items.map((date) => (
+                              <span key={date} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
+                                {formatEU(date)}
+                              </span>
+                            ))}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </details>
                 ))}
               </div>
-            </details>
-          ))}
-        </div>
+            )}
+          </div>
+        </details>
       )}
 
       {bookings.length > 0 && (
-        <div className="space-y-2">
-          <p className="mb-2 text-sm font-medium text-foreground">Prenotazioni ({bookings.length}) — {bookings.length === 1 ? 'Prenotazione' : 'Prenotazioni'}</p>
-          {groupedBookings.map((group) => (
-            <details key={`${group.year}-${group.month}`} className="rounded-lg border border-border bg-card">
-              <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
-                {monthNames[group.month]} {group.year} <span className="text-xs font-normal text-muted-foreground">({group.items.length})</span>
-              </summary>
-              <div className="space-y-2 border-t border-border px-3 py-3">
-                {group.items.map((booking) => (
-                  <div key={booking.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
-                    booking.status === 'paid'
-                      ? 'border-green-200 bg-green-50 text-green-800'
-                      : 'border-amber-200 bg-amber-50 text-amber-800'
-                  }`}>
-                    <span>{booking.first_name} {booking.last_name} · {formatEU(booking.check_in)} → {formatEU(booking.check_out)} ({booking.nights} {booking.nights === 1 ? 'notte' : 'notti'})</span>
-                    <span className="font-semibold">{booking.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
-                  </div>
-                ))}
-              </div>
-            </details>
-          ))}
-        </div>
+        <details className="rounded-xl border border-border bg-card">
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground marker:hidden">
+            Prenotazioni ({bookings.length})
+          </summary>
+          <div className="space-y-2 border-t border-border p-3">
+            {groupedBookings.map((yearGroup) => (
+              <details key={yearGroup.year} className="rounded-lg border border-border">
+                <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium marker:hidden">
+                  {yearGroup.year} <span className="text-xs font-normal text-muted-foreground">({yearGroup.months.reduce((sum, month) => sum + month.items.length, 0)})</span>
+                </summary>
+                <div className="space-y-2 border-t border-border p-2">
+                  {yearGroup.months.map((monthGroup) => (
+                    <details key={monthGroup.month} className="rounded-lg border border-border bg-background">
+                      <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium marker:hidden">
+                        {monthNames[monthGroup.month]} <span className="font-normal text-muted-foreground">({monthGroup.items.length})</span>
+                      </summary>
+                      <div className="space-y-2 border-t border-border p-2">
+                        {monthGroup.items.map((booking) => (
+                          <div key={booking.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
+                            booking.status === 'paid'
+                              ? 'border-green-200 bg-green-50 text-green-800'
+                              : 'border-amber-200 bg-amber-50 text-amber-800'
+                          }`}>
+                            <span>{booking.first_name} {booking.last_name} · {formatEU(booking.check_in)} → {formatEU(booking.check_out)} ({booking.nights} {booking.nights === 1 ? 'notte' : 'notti'})</span>
+                            <span className="font-semibold">{booking.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </details>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   )
