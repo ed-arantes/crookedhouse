@@ -38,12 +38,12 @@ type GuestDetails = {
 }
 
 const COPY: Record<Locale, Record<string, string>> = {
- it: { title: 'Area ospiti', intro: 'Accedi con il cognome e l’email usati per la prenotazione.', surname: 'Cognome', email: 'Email', access: 'Accedi', bookings: 'Le tue prenotazioni', dates: 'Soggiorno', guests: 'Ospiti', total: 'Totale', status: 'Stato', pending: 'In attesa', paid: 'Confermata', cancelled: 'Annullata', conversation: 'Messaggi e richieste', request: 'Scrivi un messaggio o chiedi una modifica alla prenotazione. L’host ti risponderà qui.', placeholder: 'Il tuo messaggio...', send: 'Invia', logout: 'Esci', home: 'Torna alla home', empty: 'Non risultano prenotazioni con questi dati.', signInError: 'Accesso non riuscito. Controlla i dati e riprova.', loadError: 'Impossibile caricare i dati. Riprova.', guest: 'Tu', host: 'Host' },
- en: { title: 'Guest area', intro: 'Sign in with the surname and email used for your booking.', surname: 'Surname', email: 'Email', access: 'Sign in', bookings: 'Your bookings', dates: 'Stay', guests: 'Guests', total: 'Total', status: 'Status', pending: 'Pending', paid: 'Confirmed', cancelled: 'Cancelled', conversation: 'Messages and requests', request: 'Send a message or ask to change your booking. Your host will reply here.', placeholder: 'Your message...', send: 'Send', logout: 'Sign out', home: 'Back home', empty: 'No bookings found for these details.', signInError: 'Sign in failed. Check your details and try again.', loadError: 'Unable to load your information. Please retry.', guest: 'You', host: 'Host' },
- fr: { title: 'Espace voyageurs', intro: 'Connectez-vous avec le nom et l’e-mail de la réservation.', surname: 'Nom', email: 'E-mail', access: 'Connexion', bookings: 'Vos réservations', dates: 'Séjour', guests: 'Voyageurs', total: 'Total', status: 'Statut', pending: 'En attente', paid: 'Confirmée', cancelled: 'Annulée', conversation: 'Messages et demandes', request: 'Envoyez un message ou demandez une modification. L’hôte vous répondra ici.', placeholder: 'Votre message...', send: 'Envoyer', logout: 'Déconnexion', home: 'Retour à l’accueil', empty: 'Aucune réservation trouvée.', signInError: 'Connexion impossible. Vérifiez vos informations.', loadError: 'Impossible de charger vos informations.', guest: 'Vous', host: 'Hôte' },
- de: { title: 'Gästebereich', intro: 'Melden Sie sich mit dem Nachnamen und der E-Mail der Buchung an.', surname: 'Nachname', email: 'E-Mail', access: 'Anmelden', bookings: 'Ihre Buchungen', dates: 'Aufenthalt', guests: 'Gäste', total: 'Gesamt', status: 'Status', pending: 'Ausstehend', paid: 'Bestätigt', cancelled: 'Storniert', conversation: 'Nachrichten und Anfragen', request: 'Senden Sie eine Nachricht oder bitten Sie um eine Änderung. Der Gastgeber antwortet hier.', placeholder: 'Ihre Nachricht...', send: 'Senden', logout: 'Abmelden', home: 'Zur Startseite', empty: 'Keine Buchungen gefunden.', signInError: 'Anmeldung fehlgeschlagen. Bitte prüfen Sie Ihre Angaben.', loadError: 'Informationen konnten nicht geladen werden.', guest: 'Sie', host: 'Gastgeber' },
- es: { title: 'Área de huéspedes', intro: 'Accede con el apellido y el correo de la reserva.', surname: 'Apellido', email: 'Correo electrónico', access: 'Acceder', bookings: 'Tus reservas', dates: 'Estancia', guests: 'Huéspedes', total: 'Total', status: 'Estado', pending: 'Pendiente', paid: 'Confirmada', cancelled: 'Cancelada', conversation: 'Mensajes y solicitudes', request: 'Envía un mensaje o solicita un cambio. El anfitrión te responderá aquí.', placeholder: 'Tu mensaje...', send: 'Enviar', logout: 'Salir', home: 'Volver al inicio', empty: 'No se encontraron reservas.', signInError: 'No se pudo acceder. Comprueba tus datos.', loadError: 'No se pudo cargar la información.', guest: 'Tú', host: 'Anfitrión' },
- ru: { title: 'Кабинет гостя', intro: 'Войдите, используя фамилию и электронную почту из бронирования.', surname: 'Фамилия', email: 'Электронная почта', access: 'Войти', bookings: 'Ваши бронирования', dates: 'Проживание', guests: 'Гости', total: 'Итого', status: 'Статус', pending: 'Ожидается', paid: 'Подтверждено', cancelled: 'Отменено', conversation: 'Сообщения и запросы', request: 'Напишите сообщение или запросите изменение бронирования. Хозяин ответит здесь.', placeholder: 'Ваше сообщение...', send: 'Отправить', logout: 'Выйти', home: 'На главную', empty: 'Бронирования не найдены.', signInError: 'Не удалось войти. Проверьте данные.', loadError: 'Не удалось загрузить данные.', guest: 'Вы', host: 'Хозяин' },
+ it: { title: 'Area ospiti', intro: 'Accedi con il cognome e l’email usati per la prenotazione.', surname: 'Cognome', email: 'Email', access: 'Accedi', bookings: 'Le tue prenotazioni', dates: 'Soggiorno', guests: 'Ospiti', guestNumber: 'Ospite', total: 'Totale', status: 'Stato', pending: 'In attesa', paid: 'Confermata', cancelled: 'Annullata', conversation: 'Messaggi e richieste', request: 'Scrivi un messaggio o chiedi una modifica alla prenotazione. L’host ti risponderà qui.', placeholder: 'Il tuo messaggio...', send: 'Invia', logout: 'Esci', home: 'Torna alla home', empty: 'Non risultano prenotazioni con questi dati.', signInError: 'Accesso non riuscito. Controlla i dati e riprova.', loadError: 'Impossibile caricare i dati. Riprova.', guest: 'Tu', host: 'Host' },
+ en: { title: 'Guest area', intro: 'Sign in with the surname and email used for your booking.', surname: 'Surname', email: 'Email', access: 'Sign in', bookings: 'Your bookings', dates: 'Stay', guests: 'Guests', guestNumber: 'Guest', total: 'Total', status: 'Status', pending: 'Pending', paid: 'Confirmed', cancelled: 'Cancelled', conversation: 'Messages and requests', request: 'Send a message or ask to change your booking. Your host will reply here.', placeholder: 'Your message...', send: 'Send', logout: 'Sign out', home: 'Back home', empty: 'No bookings found for these details.', signInError: 'Sign in failed. Check your details and try again.', loadError: 'Unable to load your information. Please retry.', guest: 'You', host: 'Host' },
+ fr: { title: 'Espace voyageurs', intro: 'Connectez-vous avec le nom et l’e-mail de la réservation.', surname: 'Nom', email: 'E-mail', access: 'Connexion', bookings: 'Vos réservations', dates: 'Séjour', guests: 'Voyageurs', guestNumber: 'Voyageur', total: 'Total', status: 'Statut', pending: 'En attente', paid: 'Confirmée', cancelled: 'Annulée', conversation: 'Messages et demandes', request: 'Envoyez un message ou demandez une modification. L’hôte vous répondra ici.', placeholder: 'Votre message...', send: 'Envoyer', logout: 'Déconnexion', home: 'Retour à l’accueil', empty: 'Aucune réservation trouvée.', signInError: 'Connexion impossible. Vérifiez vos informations.', loadError: 'Impossible de charger vos informations.', guest: 'Vous', host: 'Hôte' },
+ de: { title: 'Gästebereich', intro: 'Melden Sie sich mit dem Nachnamen und der E-Mail der Buchung an.', surname: 'Nachname', email: 'E-Mail', access: 'Anmelden', bookings: 'Ihre Buchungen', dates: 'Aufenthalt', guests: 'Gäste', guestNumber: 'Gast', total: 'Gesamt', status: 'Status', pending: 'Ausstehend', paid: 'Bestätigt', cancelled: 'Storniert', conversation: 'Nachrichten und Anfragen', request: 'Senden Sie eine Nachricht oder bitten Sie um eine Änderung. Der Gastgeber antwortet hier.', placeholder: 'Ihre Nachricht...', send: 'Senden', logout: 'Abmelden', home: 'Zur Startseite', empty: 'Keine Buchungen gefunden.', signInError: 'Anmeldung fehlgeschlagen. Bitte prüfen Sie Ihre Angaben.', loadError: 'Informationen konnten nicht geladen werden.', guest: 'Sie', host: 'Gastgeber' },
+ es: { title: 'Área de huéspedes', intro: 'Accede con el apellido y el correo de la reserva.', surname: 'Apellido', email: 'Correo electrónico', access: 'Acceder', bookings: 'Tus reservas', dates: 'Estancia', guests: 'Huéspedes', guestNumber: 'Huésped', total: 'Total', status: 'Estado', pending: 'Pendiente', paid: 'Confirmada', cancelled: 'Cancelada', conversation: 'Mensajes y solicitudes', request: 'Envía un mensaje o solicita un cambio. El anfitrión te responderá aquí.', placeholder: 'Tu mensaje...', send: 'Enviar', logout: 'Salir', home: 'Volver al inicio', empty: 'No se encontraron reservas.', signInError: 'No se pudo acceder. Comprueba tus datos.', loadError: 'No se pudo cargar la información.', guest: 'Tú', host: 'Anfitrión' },
+ ru: { title: 'Кабинет гостя', intro: 'Войдите, используя фамилию и электронную почту из бронирования.', surname: 'Фамилия', email: 'Электронная почта', access: 'Войти', bookings: 'Ваши бронирования', dates: 'Проживание', guests: 'Гости', guestNumber: 'Гость', total: 'Итого', status: 'Статус', pending: 'Ожидается', paid: 'Подтверждено', cancelled: 'Отменено', conversation: 'Сообщения и запросы', request: 'Напишите сообщение или запросите изменение бронирования. Хозяин ответит здесь.', placeholder: 'Ваше сообщение...', send: 'Отправить', logout: 'Выйти', home: 'На главную', empty: 'Бронирования не найдены.', signInError: 'Не удалось войти. Проверьте данные.', loadError: 'Не удалось загрузить данные.', guest: 'Вы', host: 'Хозяин' },
 }
 
 const DETAILS_COPY: Record<Locale, {
@@ -269,8 +269,8 @@ export function GuestAccount({ locale }: { locale: Locale }) {
      document_number?: string
     }> : []
     setGuestDetails(Array.from({ length: guestCount }, (_, index) => ({
-     first_name: savedGuests[index]?.first_name ?? '',
-     last_name: savedGuests[index]?.last_name ?? '',
+     first_name: savedGuests[index]?.first_name || (index === 0 ? booking.first_name : ''),
+     last_name: savedGuests[index]?.last_name || (index === 0 ? booking.last_name : ''),
      date_of_birth: savedGuests[index]?.date_of_birth
       ? formatEU(savedGuests[index].date_of_birth)
       : '',
@@ -388,9 +388,13 @@ export function GuestAccount({ locale }: { locale: Locale }) {
     { method: 'DELETE' },
    )
    if (!response.ok) throw new Error(copy.detailsError)
-   setGuestDetails(emptyGuestDetails(
-    selectedBooking ? selectedBooking.adults + selectedBooking.children : 0,
-   ))
+   setGuestDetails(selectedBooking
+    ? emptyGuestDetails(selectedBooking.adults + selectedBooking.children).map((guest, index) => ({
+      ...guest,
+      first_name: index === 0 ? selectedBooking.first_name : '',
+      last_name: index === 0 ? selectedBooking.last_name : '',
+     }))
+    : [])
    setDetailsStatus(copy.detailsDeleted)
   } catch {
    setDetailsStatus(copy.detailsError)
@@ -441,7 +445,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
          {guestDetails.map((guest, index) => (
           <fieldset key={`${selected}-${index}`} className="space-y-3 rounded-xl border border-border p-3">
            <legend className="px-1 text-sm font-medium">
-            {copy.guests} {index + 1}{index === 0 ? ` · ${copy.groupLeader}` : ''}
+            {copy.guestNumber} {index + 1}{index === 0 ? ` · ${copy.groupLeader}` : ''}
            </legend>
            <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-medium text-muted-foreground">{copy.firstName}
