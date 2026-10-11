@@ -237,7 +237,7 @@ export function BookingsTab() {
                       type="button"
                       onClick={() => handleRequestPayment(b.id)}
                       disabled={requestingPayment === b.id}
-                      className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 disabled:opacity-60"
+                      className="rounded-lg bg-amber-400 px-2 py-1 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-60"
                     >
                       {requestingPayment === b.id ? 'Salvataggio...' : 'Richiedi pagamento residuo'}
                     </button>
@@ -245,7 +245,7 @@ export function BookingsTab() {
                   {b.status === 'pending' && (
                     <button
                       onClick={() => handleStatusChange(b.id, 'paid')}
-                      className="rounded-lg bg-green-50 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-100"
+                      className="rounded-lg bg-green-500 px-2 py-1 text-xs font-medium text-white hover:bg-green-600"
                     >
                       Segna pagata
                     </button>
@@ -253,7 +253,7 @@ export function BookingsTab() {
                   {b.status !== 'cancelled' && (
                     <button
                       onClick={() => handleStatusChange(b.id, 'cancelled')}
-                      className="rounded-lg bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                      className="rounded-lg bg-red-500 px-2 py-1 text-xs font-medium text-white hover:bg-red-600"
                     >
                       Annulla
                     </button>

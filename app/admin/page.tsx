@@ -946,8 +946,8 @@ function BlockedDatesTab() {
                         {monthGroup.items.map((booking) => (
                           <div key={booking.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
                             booking.status === 'paid'
-                              ? 'border-green-200 bg-green-50 text-green-800'
-                              : 'border-amber-200 bg-amber-50 text-amber-800'
+                              ? 'border-green-500 bg-green-500 text-white'
+                              : 'border-amber-400 bg-amber-400 text-white'
                           }`}>
                             <span>{booking.first_name} {booking.last_name} · {formatEU(booking.check_in)} → {formatEU(booking.check_out)} ({booking.nights} {booking.nights === 1 ? 'notte' : 'notti'})</span>
                             <span className="font-semibold">{booking.status === 'paid' ? 'Pagata' : 'In attesa'}</span>
