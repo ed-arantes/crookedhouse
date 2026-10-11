@@ -36,6 +36,8 @@ Thumbs.db
 .idea/
 comandotraduzione.txt
 commands.txt
+cmds.txt
+fix.txt
 
 # knowledge graph artifacts
 graphify-out/

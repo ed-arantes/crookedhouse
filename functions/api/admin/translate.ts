@@ -19,6 +19,10 @@ interface TranslationPair {
   value: string
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
 function protect(text: string): { clean: string; restore: (s: string) => string } {
   const placeholders: string[] = []
   let clean = text
@@ -67,7 +71,7 @@ async function translateText(
   const targetName = LOCALE_NAMES[targetLocale] || targetLocale
   const { clean, restore } = protect(text)
 
-  const response = await ai.run('@cf/google/gemma-4-26b-a4b-it', {
+  const output = await ai.run('@cf/google/gemma-4-26b-a4b-it', {
     messages: [
       {
         role: 'system',
@@ -75,11 +79,21 @@ async function translateText(
       },
       { role: 'user', content: clean },
     ],
-  }) as { response?: string }
+  })
 
-  console.log(`[Workers AI] Gemma output (${targetLocale}):`, response?.response)
+  const choices = isRecord(output) ? output.choices : undefined
+  const firstChoice = Array.isArray(choices) ? choices[0] : undefined
+  const message = isRecord(firstChoice) ? firstChoice.message : undefined
+  const content = isRecord(message) ? message.content : undefined
 
-  const translated = restore(response?.response?.trim() || clean)
+  if (typeof content !== 'string' || !content.trim()) {
+    console.error(`[Workers AI] Unexpected Gemma output (${targetLocale}):`, output)
+    throw new Error('Gemma returned no translation content')
+  }
+
+  console.log(`[Workers AI] Gemma output (${targetLocale}):`, content)
+
+  const translated = restore(content.trim())
   return preserveCase(text, translated)
 }
 
