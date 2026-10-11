@@ -970,6 +970,23 @@ function ContentTab() {
         }),
       )
     : activeLocale === 'it' ? DEFAULT_FAQ_ITEMS : []
+  const storedServiceTitles = current['servicesPage.sectionTitles']
+  const storedServiceBodies = current['servicesPage.sectionBodies']
+  const serviceSections: FaqItem[] = Array.isArray(storedServiceTitles) || Array.isArray(storedServiceBodies)
+    ? Array.from(
+        { length: Math.max(
+          Array.isArray(storedServiceTitles) ? storedServiceTitles.length : 0,
+          Array.isArray(storedServiceBodies) ? storedServiceBodies.length : 0,
+        ) },
+        (_, index) => ({
+          question: Array.isArray(storedServiceTitles) ? String(storedServiceTitles[index] ?? '') : '',
+          answer: Array.isArray(storedServiceBodies) ? String(storedServiceBodies[index] ?? '') : '',
+        }),
+      )
+    : [{
+        question: String(current['servicesPage.title'] ?? (activeLocale === 'it' ? 'Colazioni e pasti' : '')),
+        answer: String(current['servicesPage.body'] ?? ''),
+      }]
 
   function updateOverride(key: string, value: string) {
     setContent((prev) => {
@@ -991,6 +1008,19 @@ function ContentTab() {
         ...previous[activeLocale],
         'faq.questions': items.map((item) => item.question),
         'faq.answers': items.map((item) => item.answer),
+      },
+    }))
+    setDirty(true)
+    setStatus('')
+  }
+
+  function updateServiceSections(sections: FaqItem[]) {
+    setContent((previous) => ({
+      ...previous,
+      [activeLocale]: {
+        ...previous[activeLocale],
+        'servicesPage.sectionTitles': sections.map((section) => section.question),
+        'servicesPage.sectionBodies': sections.map((section) => section.answer),
       },
     }))
     setDirty(true)
@@ -1035,7 +1065,11 @@ function ContentTab() {
         ...(item.question.trim() ? [{ key: `faq.questions.${index}`, value: item.question }] : []),
         ...(item.answer.trim() ? [{ key: `faq.answers.${index}`, value: item.answer }] : []),
       ])
-      pairs.push(...faqPairs)
+      const servicePairs = serviceSections.flatMap((section, index) => [
+        ...(section.question.trim() ? [{ key: `servicesPage.sectionTitles.${index}`, value: section.question }] : []),
+        ...(section.answer.trim() ? [{ key: `servicesPage.sectionBodies.${index}`, value: section.answer }] : []),
+      ])
+      pairs.push(...faqPairs, ...servicePairs)
 
       const targetLocales = ['en', 'fr', 'de', 'es', 'ru']
       setTranslateProgress({
@@ -1059,6 +1093,8 @@ function ContentTab() {
         const localeTranslations: Record<string, string> = {}
         const translatedQuestions = Array.from({ length: faqItems.length }, () => '')
         const translatedAnswers = Array.from({ length: faqItems.length }, () => '')
+        const translatedServiceTitles = Array.from({ length: serviceSections.length }, () => '')
+        const translatedServiceBodies = Array.from({ length: serviceSections.length }, () => '')
         for (let itemIndex = 0; itemIndex < pairs.length; itemIndex++) {
           const pair = pairs[itemIndex]
           setTranslateProgress((progress) => ({ ...progress, currentKey: pair.key }))
@@ -1069,10 +1105,16 @@ function ContentTab() {
           }
           const questionMatch = pair.key.match(/^faq\.questions\.(\d+)$/)
           const answerMatch = pair.key.match(/^faq\.answers\.(\d+)$/)
+          const serviceTitleMatch = pair.key.match(/^servicesPage\.sectionTitles\.(\d+)$/)
+          const serviceBodyMatch = pair.key.match(/^servicesPage\.sectionBodies\.(\d+)$/)
           if (questionMatch) {
             translatedQuestions[Number(questionMatch[1])] = translatedText
           } else if (answerMatch) {
             translatedAnswers[Number(answerMatch[1])] = translatedText
+          } else if (serviceTitleMatch) {
+            translatedServiceTitles[Number(serviceTitleMatch[1])] = translatedText
+          } else if (serviceBodyMatch) {
+            translatedServiceBodies[Number(serviceBodyMatch[1])] = translatedText
           } else {
             localeTranslations[pair.key] = translatedText
           }
@@ -1087,6 +1129,8 @@ function ContentTab() {
           ...localeTranslations,
           'faq.questions': translatedQuestions,
           'faq.answers': translatedAnswers,
+          'servicesPage.sectionTitles': translatedServiceTitles,
+          'servicesPage.sectionBodies': translatedServiceBodies,
         })
       }
       setTranslateProgress((progress) => ({
@@ -1157,22 +1201,45 @@ function ContentTab() {
         </button>
         {openSections.has('Pagina servizi') && (
           <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
-            <div className="rounded-lg border border-border bg-background/50 p-3">
-              <span className="text-xs font-medium text-muted-foreground">Titolo</span>
-              <BoldTextarea
-                value={String(current['servicesPage.title'] ?? (activeLocale === 'it' ? 'Colazioni e pasti' : ''))}
-                onChange={(value) => updateOverride('servicesPage.title', value)}
-                rows={2}
-              />
-            </div>
-            <div className="rounded-lg border border-border bg-background/50 p-3">
-              <span className="text-xs font-medium text-muted-foreground">Testo</span>
-              <BoldTextarea
-                value={String(current['servicesPage.body'] ?? '')}
-                onChange={(value) => updateOverride('servicesPage.body', value)}
-                rows={6}
-              />
-            </div>
+            {serviceSections.map((section, index) => (
+              <div key={index} className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Sezione {index + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => updateServiceSections(serviceSections.filter((_, itemIndex) => itemIndex !== index))}
+                    className="flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Rimuovi
+                  </button>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">Titolo</span>
+                  <BoldTextarea
+                    value={section.question}
+                    onChange={(value) => updateServiceSections(serviceSections.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, question: value } : item))}
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">Testo</span>
+                  <BoldTextarea
+                    value={section.answer}
+                    onChange={(value) => updateServiceSections(serviceSections.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, answer: value } : item))}
+                    rows={6}
+                  />
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => updateServiceSections([...serviceSections, { question: '', answer: '' }])}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted/50"
+            >
+              <Plus className="h-4 w-4" /> Aggiungi sezione
+            </button>
           </div>
         )}
       </div>
