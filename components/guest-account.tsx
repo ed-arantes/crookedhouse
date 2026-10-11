@@ -377,6 +377,20 @@ export function GuestAccount({ locale }: { locale: Locale }) {
  }
 
  const selectedBooking = bookings.find((booking) => booking.id === selected)
+ const bookingCardColors: Record<string, { idle: string; selected: string }> = {
+  paid: {
+   idle: 'border-green-200 bg-green-50',
+   selected: 'border-green-500 bg-green-50 ring-2 ring-green-500/20',
+  },
+  pending: {
+   idle: 'border-amber-200 bg-amber-50',
+   selected: 'border-amber-500 bg-amber-50 ring-2 ring-amber-500/20',
+  },
+  cancelled: {
+   idle: 'border-red-200 bg-red-50',
+   selected: 'border-red-500 bg-red-50 ring-2 ring-red-500/20',
+  },
+ }
 
  return (
   <main className="min-h-screen bg-background px-5 py-16 text-foreground md:px-8">
@@ -403,7 +417,14 @@ export function GuestAccount({ locale }: { locale: Locale }) {
       <section className="space-y-3">
        <h2 className="font-medium">{copy.bookings}</h2>
        {bookings.map((booking) => (
-        <button key={booking.id} type="button" onClick={() => setSelected(booking.id)} className={`w-full rounded-2xl border p-4 text-left transition-colors ${booking.id === selected ? 'border-accent bg-accent/10' : 'border-border bg-card'}`}>
+        <button
+         key={booking.id}
+         type="button"
+         onClick={() => setSelected(booking.id)}
+         className={`w-full rounded-2xl border p-4 text-left transition-colors ${
+          bookingCardColors[booking.status]?.[booking.id === selected ? 'selected' : 'idle'] ?? 'border-border bg-card'
+         }`}
+        >
          <span className="block font-medium">{formatEU(booking.check_in)} – {formatEU(booking.check_out)}</span>
          <span className="mt-1 block text-sm text-muted-foreground">{copy.status}: {copy[booking.status] || booking.status}</span>
          <span className="mt-1 block text-sm text-muted-foreground">{copy.guests}: {booking.adults + booking.children} · {copy.total}: €{booking.total_price}</span>
