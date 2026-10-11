@@ -1278,6 +1278,9 @@ function ContentTab() {
                 </div>
                 <div>
                   <span className="text-xs font-medium text-muted-foreground">Risposta</span>
+                  <p className="mt-1 text-[10px] text-muted-foreground/70">
+                    Per aggiungere un link usa [testo](https://esempio.com).
+                  </p>
                   <BoldTextarea
                     value={item.answer}
                     onChange={(value) => updateFaqItems(faqItems.map((faq, itemIndex) =>

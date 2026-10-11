@@ -52,16 +52,16 @@ export function ServicesDetailsPage({ locale }: { locale: Locale }) {
  }, [locale])
 
  return (
-  <main className="flex min-h-screen items-center bg-accent py-20 text-accent-foreground">
-   <div className="mx-auto w-full max-w-7xl px-5 md:px-8">
+  <main className="min-h-screen bg-accent px-5 py-16 text-accent-foreground md:px-8">
+   <div className="mx-auto w-full max-w-7xl">
     <Link
      href={`/${locale}`}
-     className="text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-80"
+     className="text-sm underline underline-offset-4 transition-opacity hover:opacity-80"
     >
      Torna alla pagina principale
     </Link>
     {sections.map((section, index) => (
-     <section key={`${index}-${section.title}`} className={index === 0 ? 'mt-10' : 'mt-12'}>
+     <section key={`${index}-${section.title}`} className={index === 0 ? 'mt-8' : 'mt-12'}>
       {index === 0 ? (
        <h1 className="type-heading font-serif font-medium">
         <RichText text={section.title} />

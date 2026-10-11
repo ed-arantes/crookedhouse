@@ -1,5 +1,16 @@
 import { type ReactNode } from 'react'
 
+function isSafeHref(href: string): boolean {
+  if ((href.startsWith('/') && !href.startsWith('//')) || href.startsWith('#')) return true
+
+  try {
+    const protocol = new URL(href).protocol
+    return protocol === 'http:' || protocol === 'https:' || protocol === 'mailto:'
+  } catch {
+    return false
+  }
+}
+
 export function RichText({
   text,
   className = 'font-semibold',
@@ -7,7 +18,7 @@ export function RichText({
   text: string
   className?: string
 }): ReactNode {
-  const regex = /\*\*(.+?)\*\*/g
+  const regex = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
   const parts: ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null
@@ -16,11 +27,29 @@ export function RichText({
     if (match.index > lastIndex) {
       parts.push(<span key={`t${lastIndex}`}>{text.slice(lastIndex, match.index)}</span>)
     }
-    parts.push(
-      <strong key={`b${match.index}`} className={className}>
-        {match[1]}
-      </strong>,
-    )
+    if (match[1] !== undefined) {
+      parts.push(
+        <strong key={`b${match.index}`} className={className}>
+          {match[1]}
+        </strong>,
+      )
+    } else {
+      const label = match[2]
+      const href = match[3].trim()
+
+      parts.push(isSafeHref(href)
+        ? (
+          <a
+            key={`l${match.index}`}
+            href={href}
+            className="underline underline-offset-2"
+            {...(/^https?:\/\//i.test(href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          >
+            {label}
+          </a>
+        )
+        : <span key={`t${match.index}`}>{match[0]}</span>)
+    }
     lastIndex = regex.lastIndex
   }
 
