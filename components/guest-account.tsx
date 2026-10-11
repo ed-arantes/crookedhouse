@@ -269,8 +269,8 @@ export function GuestAccount({ locale }: { locale: Locale }) {
      document_number?: string
     }> : []
     setGuestDetails(Array.from({ length: guestCount }, (_, index) => ({
-     first_name: savedGuests[index]?.first_name ?? '',
-     last_name: savedGuests[index]?.last_name ?? '',
+     first_name: savedGuests[index]?.first_name || (index === 0 ? booking.first_name : ''),
+     last_name: savedGuests[index]?.last_name || (index === 0 ? booking.last_name : ''),
      date_of_birth: savedGuests[index]?.date_of_birth
       ? formatEU(savedGuests[index].date_of_birth)
       : '',
@@ -388,9 +388,13 @@ export function GuestAccount({ locale }: { locale: Locale }) {
     { method: 'DELETE' },
    )
    if (!response.ok) throw new Error(copy.detailsError)
-   setGuestDetails(emptyGuestDetails(
-    selectedBooking ? selectedBooking.adults + selectedBooking.children : 0,
-   ))
+   setGuestDetails(selectedBooking
+    ? emptyGuestDetails(selectedBooking.adults + selectedBooking.children).map((guest, index) => ({
+      ...guest,
+      first_name: index === 0 ? selectedBooking.first_name : '',
+      last_name: index === 0 ? selectedBooking.last_name : '',
+     }))
+    : [])
    setDetailsStatus(copy.detailsDeleted)
   } catch {
    setDetailsStatus(copy.detailsError)
