@@ -970,6 +970,8 @@ function ContentTab() {
   const [loading, setLoading] = useState(true)
   const [activeLocale, setActiveLocale] = useState('it')
   const [saving, setSaving] = useState(false)
+  const [savingFooterLinks, setSavingFooterLinks] = useState(false)
+  const [footerLinksDirty, setFooterLinksDirty] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState('')
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['Hero']))
@@ -1006,6 +1008,8 @@ function ContentTab() {
   }, [translateLog])
 
   const current: Record<string, string | string[]> = content[activeLocale] ?? {}
+  const italianContent = content.it ?? {}
+  const footerLinkKeys = ['footer.bookingUrl', 'footer.airbnbUrl', 'footer.googleUrl'] as const
   const storedQuestions = current['faq.questions']
   const storedAnswers = current['faq.answers']
   const faqItems: FaqItem[] = Array.isArray(storedQuestions) || Array.isArray(storedAnswers)
@@ -1051,6 +1055,32 @@ function ContentTab() {
     setStatus('')
   }
 
+  function updateFooterLink(key: (typeof footerLinkKeys)[number], value: string) {
+    setContent((previous) => ({
+      ...previous,
+      it: { ...previous.it, [key]: value },
+    }))
+    setFooterLinksDirty(true)
+    setStatus('')
+  }
+
+  async function handleSaveFooterLinks() {
+    setSavingFooterLinks(true)
+    setStatus('')
+    try {
+      const links = Object.fromEntries(
+        footerLinkKeys.map((key) => [key, String(italianContent[key] ?? '')]),
+      )
+      await saveContent('it', links)
+      setFooterLinksDirty(false)
+      setStatus('Link del footer salvati.')
+    } catch {
+      setStatus('Salvataggio dei link non riuscito. Riprova.')
+    } finally {
+      setSavingFooterLinks(false)
+    }
+  }
+
   function updateFaqItems(items: FaqItem[]) {
     setContent((previous) => ({
       ...previous,
@@ -1092,6 +1122,7 @@ function ContentTab() {
     try {
       await saveContent(activeLocale, current)
       setDirty(false)
+      if (activeLocale === 'it') setFooterLinksDirty(false)
       setStatus(`Contenuti ${LOCALE_LABELS[activeLocale]} salvati.`)
       setContent(await fetchAllContent())
     } catch {
@@ -1106,7 +1137,11 @@ function ContentTab() {
     setTranslateLog([])
     try {
       const pairs = Object.entries(current)
-        .filter(([, v]) => typeof v === 'string' && v.trim())
+        .filter(([key, value]) =>
+          !footerLinkKeys.includes(key as (typeof footerLinkKeys)[number]) &&
+          typeof value === 'string' &&
+          value.trim(),
+        )
         .map(([key, value]) => ({ key, value: value as string }))
       if (activeLocale === 'it' && !pairs.some(({ key }) => key === 'servicesPage.title')) {
         pairs.push({ key: 'servicesPage.title', value: 'Colazioni e pasti' })
@@ -1218,7 +1253,7 @@ function ContentTab() {
         <div className="flex-1" />
         <button
           onClick={handleSave}
-          disabled={!dirty || saving || translating}
+          disabled={!dirty || saving || translating || (footerLinksDirty && activeLocale !== 'it')}
           className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
         >
           <Save className="h-4 w-4" /> {saving ? 'Salvataggio...' : 'Salva'}
@@ -1396,6 +1431,41 @@ function ContentTab() {
                       </div>
                     )
                   })}
+                  {section.label === 'Footer' && (
+                    <div className="space-y-3 rounded-lg border border-accent/30 bg-background/50 p-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Link pulsanti footer</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Impostazioni globali: questi link sono condivisi da tutte le lingue.
+                        </p>
+                      </div>
+                      {([
+                        ['footer.bookingUrl', 'Booking'],
+                        ['footer.airbnbUrl', 'Airbnb'],
+                        ['footer.googleUrl', 'Google'],
+                      ] as const).map(([key, label]) => (
+                        <label key={key} className="block text-xs font-medium text-muted-foreground">
+                          {label}
+                          <input
+                            type="url"
+                            value={String(italianContent[key] ?? '')}
+                            onChange={(event) => updateFooterLink(key, event.target.value)}
+                            placeholder="https://..."
+                            className="mt-1.5 block w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
+                          />
+                        </label>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={handleSaveFooterLinks}
+                        disabled={!footerLinksDirty || savingFooterLinks || translating}
+                        className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                      >
+                        <Save className="h-4 w-4" />
+                        {savingFooterLinks ? 'Salvataggio...' : 'Salva link footer'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

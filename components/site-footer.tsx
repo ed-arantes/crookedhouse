@@ -3,11 +3,26 @@ import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 
 const SOCIALS = [
- { label: 'Instagram', href: '#' },
- { label: 'Journal', href: '#' },
+ { label: 'Booking', key: 'footer.bookingUrl' },
+ { label: 'Airbnb', key: 'footer.airbnbUrl' },
+ { label: 'Google', key: 'footer.googleUrl' },
 ]
 
+function isExternalUrl(value: string): boolean {
+ try {
+  const url = new URL(value)
+  return url.protocol === 'https:' || url.protocol === 'http:'
+ } catch {
+  return false
+ }
+}
+
 export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
+ const socialLinks = SOCIALS.flatMap(({ label, key }) => {
+  const href = t(locale, key)
+  return isExternalUrl(href) ? [{ label, href }] : []
+ })
+
  const LINKS = [
   { label: t(locale, 'nav.apartment'), href: '#about' },
   { label: t(locale, 'nav.gallery'), href: '#gallery' },
@@ -26,17 +41,21 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
       <p className="type-body mt-4 max-w-xs text-pretty text-primary-foreground/70">
         <RichText text={t(locale, 'footer.description')} />
        </p>
-      <div className="mt-6 flex gap-3">
-       {SOCIALS.map((social) => (
-        <a
+      {socialLinks.length > 0 && (
+      <div className="mt-6 flex flex-wrap gap-3">
+      {socialLinks.map((social) => (
+       <a
          key={social.label}
          href={social.href}
+         target="_blank"
+         rel="noopener noreferrer"
          className="rounded-full border border-primary-foreground/20 px-4 py-2 text-xs font-medium text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
-        >
-         {social.label}
-        </a>
-       ))}
+       >
+        {social.label}
+       </a>
+      ))}
       </div>
+      )}
      </div>
 
      <nav aria-label="Footer">

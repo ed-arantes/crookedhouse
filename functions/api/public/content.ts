@@ -17,6 +17,14 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   }
 
   const translations = await d1GetTranslations(env.DB, locale)
+  if (locale !== 'it') {
+    const italianContent = await d1GetTranslations(env.DB, 'it')
+    for (const key of ['footer.bookingUrl', 'footer.airbnbUrl', 'footer.googleUrl']) {
+      if (translations[key] === undefined && typeof italianContent[key] === 'string') {
+        translations[key] = italianContent[key]
+      }
+    }
+  }
   const missing = REQUIRED_CONTENT_KEYS.filter((key) => translations[key] === undefined)
   if (missing.length > 0) {
     return json({ error: 'Italian content is incomplete', missing }, 503)
