@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { Locale } from '@/lib/i18n'
 import { apiUrl } from '@/lib/api-url'
 import { formatEU, parseEUDate } from '@/lib/format-date'
+import { guestDetailsFormValues, type GuestDetailsFormValue } from '@/lib/guest-details-form'
 
 type Booking = {
  id: string
@@ -30,12 +31,7 @@ type Message = {
  created_at: string
 }
 
-type GuestDetails = {
- first_name: string
- last_name: string
- date_of_birth: string
- document_number: string
-}
+type GuestDetails = GuestDetailsFormValue
 
 const COPY: Record<Locale, Record<string, string>> = {
  it: { title: 'Area ospiti', intro: 'Accedi con il cognome e l’email usati per la prenotazione.', surname: 'Cognome', email: 'Email', access: 'Accedi', bookings: 'Le tue prenotazioni', dates: 'Soggiorno', guests: 'Ospiti', total: 'Totale', status: 'Stato', pending: 'In attesa', paid: 'Confermata', cancelled: 'Annullata', conversation: 'Messaggi e richieste', request: 'Scrivi un messaggio o chiedi una modifica alla prenotazione. L’host ti risponderà qui.', placeholder: 'Il tuo messaggio...', send: 'Invia', logout: 'Esci', home: 'Torna alla home', empty: 'Non risultano prenotazioni con questi dati.', signInError: 'Accesso non riuscito. Controlla i dati e riprova.', loadError: 'Impossibile caricare i dati. Riprova.', guest: 'Tu', host: 'Host' },
@@ -181,15 +177,6 @@ const DETAILS_COPY: Record<Locale, {
  },
 }
 
-function emptyGuestDetails(count: number): GuestDetails[] {
- return Array.from({ length: count }, () => ({
-  first_name: '',
-  last_name: '',
-  date_of_birth: '',
-  document_number: '',
- }))
-}
-
 export function GuestAccount({ locale }: { locale: Locale }) {
  const router = useRouter()
  const copy: Record<string, string> = { ...COPY[locale], ...DETAILS_COPY[locale] }
@@ -256,7 +243,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
   const guestCount = booking.adults + booking.children
   setDetailsLoading(true)
   setDetailsStatus('')
-  setGuestDetails(emptyGuestDetails(guestCount))
+  setGuestDetails(guestDetailsFormValues(booking))
   fetch(apiUrl(`/api/guest/details?booking_id=${encodeURIComponent(booking.id)}`), { cache: 'no-store' })
    .then(async (response) => {
     const data = await response.json()
@@ -268,14 +255,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
      date_of_birth: string
      document_number?: string
     }> : []
-    setGuestDetails(Array.from({ length: guestCount }, (_, index) => ({
-     first_name: savedGuests[index]?.first_name || (index === 0 ? booking.first_name : ''),
-     last_name: savedGuests[index]?.last_name || (index === 0 ? booking.last_name : ''),
-     date_of_birth: savedGuests[index]?.date_of_birth
-      ? formatEU(savedGuests[index].date_of_birth)
-      : '',
-     document_number: index === 0 ? savedGuests[0]?.document_number ?? '' : '',
-    })))
+    setGuestDetails(guestDetailsFormValues(booking, savedGuests))
    })
    .catch(() => {
     if (active) setDetailsStatus(copy.detailsError)
@@ -388,13 +368,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
     { method: 'DELETE' },
    )
    if (!response.ok) throw new Error(copy.detailsError)
-   setGuestDetails(selectedBooking
-    ? emptyGuestDetails(selectedBooking.adults + selectedBooking.children).map((guest, index) => ({
-      ...guest,
-      first_name: index === 0 ? selectedBooking.first_name : '',
-      last_name: index === 0 ? selectedBooking.last_name : '',
-     }))
-    : [])
+   setGuestDetails(selectedBooking ? guestDetailsFormValues(selectedBooking) : [])
    setDetailsStatus(copy.detailsDeleted)
   } catch {
    setDetailsStatus(copy.detailsError)
@@ -475,7 +449,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
               required
               inputMode="numeric"
               maxLength={10}
-              placeholder="GG/MM/AAAA"
+              placeholder="gg/mm/aaaa"
               value={guest.date_of_birth}
               onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
                itemIndex === index ? { ...item, date_of_birth: event.target.value } : item))}
