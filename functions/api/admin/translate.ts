@@ -77,6 +77,8 @@ async function translateText(
     ],
   }) as { response?: string }
 
+  console.log(`[Workers AI] Gemma output (${targetLocale}):`, response?.response)
+
   const translated = restore(response?.response?.trim() || clean)
   return preserveCase(text, translated)
 }
