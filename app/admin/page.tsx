@@ -1042,12 +1042,12 @@ function ContentTab() {
   const translateLogRef = useRef<HTMLDivElement>(null)
 
   const LOCALE_LABELS: Record<string, string> = {
-    it: '🇮🇹 Italiano',
-    en: '🇬🇧 English',
-    fr: '🇫🇷 Français',
-    de: '🇩🇪 Deutsch',
-    es: '🇪🇸 Español',
-    ru: '🇷🇺 Русский',
+    it: 'Italiano',
+    en: 'English',
+    fr: 'Français',
+    de: 'Deutsch',
+    es: 'Español',
+    ru: 'Русский',
   }
 
   useEffect(() => {
