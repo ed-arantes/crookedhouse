@@ -68,7 +68,7 @@ const DETAILS_COPY: Record<Locale, {
   firstName: 'Nome',
   lastName: 'Cognome',
   dateOfBirth: 'Data di nascita',
-  documentNumber: 'Numero carta d’identità o passaporto',
+  documentNumber: 'Carta d’identità/Passaporto',
   documentHint: 'Richiesto solo per il capogruppo.',
   saveDetails: 'Salva i dati',
   savingDetails: 'Salvataggio...',
