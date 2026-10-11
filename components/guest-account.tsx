@@ -477,7 +477,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
         </button>
        ))}
        {selectedBooking && (
-        <form onSubmit={saveGuestDetails} className="mt-5 space-y-4 rounded-2xl border border-border bg-card p-4">
+        <form onSubmit={saveGuestDetails} className="space-y-4 rounded-2xl border border-border bg-card p-5">
          <div>
           <h2 className="font-medium">{copy.detailsTitle}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{copy.detailsIntro}</p>
