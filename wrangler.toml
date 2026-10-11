@@ -12,6 +12,3 @@ binding = "DB"
 database_name = "crookedhouse-translations"
 database_id = "a3b9127b-ee7a-450c-84a6-97c162453803"
 remote = true
-
-[ai]
-binding = "AI"
