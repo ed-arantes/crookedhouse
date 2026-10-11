@@ -3,27 +3,60 @@ import test from 'node:test'
 import { saveBookingGuestDetails, readBookingGuestDetails, validateGuestDetails } from '../functions/_lib/booking-guest-details'
 import type { AdminEnv } from '../functions/_lib/admin'
 import { onRequestPost } from '../functions/api/checkout'
+import { formatGuestDate, parseGuestDate } from './guest-details-form'
+import type { Locale } from './i18n'
 
 const validGuests = [
   {
     first_name: 'Maria',
     last_name: 'Rossi',
     date_of_birth: '1990-02-15',
+    place_of_birth: 'Roma',
+    document_type: 'identity_card',
     document_number: 'ID-12345',
   },
   {
     first_name: 'Luca',
     last_name: 'Rossi',
     date_of_birth: '2015-06-20',
+    place_of_birth: 'Milano',
   },
 ]
 
+test('formats and parses dates with each supported locale', () => {
+  const expectedDates: Array<[Locale, string]> = [
+    ['it', '15/02/1990'],
+    ['en', '02/15/1990'],
+    ['fr', '15/02/1990'],
+    ['de', '15.02.1990'],
+    ['es', '15/02/1990'],
+    ['ru', '15.02.1990'],
+  ]
+
+  for (const [locale, expected] of expectedDates) {
+    assert.equal(formatGuestDate('1990-02-15', locale), expected)
+    assert.equal(parseGuestDate(expected, locale), '1990-02-15')
+  }
+})
+
 test('requires complete details for every guest and an ID for the group leader only', () => {
   assert.equal(validateGuestDetails(validGuests, 2), true)
+  assert.equal(validateGuestDetails([
+    { ...validGuests[0], place_of_birth: '' },
+    validGuests[1],
+  ], 2), false)
+  assert.equal(validateGuestDetails([
+    { ...validGuests[0], document_type: '' },
+    validGuests[1],
+  ], 2), false)
   assert.equal(validateGuestDetails(validGuests.slice(0, 1), 2), false)
   assert.equal(validateGuestDetails([{ ...validGuests[0], document_number: '' }, validGuests[1]], 2), false)
   assert.equal(validateGuestDetails([validGuests[0], { ...validGuests[1], document_number: 'ID-2' }], 2), false)
   assert.equal(validateGuestDetails([{ ...validGuests[0], date_of_birth: '2999-01-01' }, validGuests[1]], 2), false)
+  assert.equal(validateGuestDetails([
+    { ...validGuests[0], document_type: '', place_of_birth: '' },
+    { ...validGuests[1], place_of_birth: '' },
+  ], 2, true), true)
 })
 
 test('encrypts saved personal details before storing them in D1', async () => {

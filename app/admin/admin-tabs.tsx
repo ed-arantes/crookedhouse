@@ -116,9 +116,9 @@ export function BookingsTab() {
   }
 
   const statusColors: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-800',
-    paid: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
+    pending: 'bg-amber-400 text-white',
+    paid: 'bg-green-500 text-white',
+    cancelled: 'bg-red-500 text-white',
   }
 
   const statusLabels: Record<string, string> = {
@@ -292,6 +292,12 @@ export function BookingsTab() {
   )
 }
 
+const documentTypeLabels: Record<string, string> = {
+  identity_card: 'Carta d’identità',
+  passport: 'Passaporto',
+  other: 'Altro',
+}
+
 function BookingGuestDetailsPanel({
   bookingId,
   bookingFirstName,
@@ -368,6 +374,8 @@ function BookingGuestDetailsPanel({
                       {index === 0 && <span className="ml-2 text-accent">Capogruppo</span>}
                     </p>
                     <p>Data di nascita: {formatEU(guest.date_of_birth)}</p>
+                    {guest.place_of_birth && <p>Luogo di nascita: {guest.place_of_birth}</p>}
+                    {guest.document_type && <p>Tipo di documento: {documentTypeLabels[guest.document_type] || guest.document_type}</p>}
                     {guest.document_number && <p>Numero documento: {guest.document_number}</p>}
                   </div>
                 ))}

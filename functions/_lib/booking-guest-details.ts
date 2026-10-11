@@ -4,6 +4,8 @@ export type BookingGuestDetails = {
   first_name: string
   last_name: string
   date_of_birth: string
+  place_of_birth?: string
+  document_type?: string
   document_number?: string
 }
 
@@ -24,7 +26,13 @@ function getEncryptionKey(env: AdminEnv): string | Response {
   return key
 }
 
-export function validateGuestDetails(value: unknown, expectedCount: number): value is BookingGuestDetails[] {
+const DOCUMENT_TYPES = new Set(['identity_card', 'passport', 'other'])
+
+export function validateGuestDetails(
+  value: unknown,
+  expectedCount: number,
+  allowLegacyDetails = false,
+): value is BookingGuestDetails[] {
   if (!Array.isArray(value) || value.length !== expectedCount) return false
   const today = new Date().toISOString().slice(0, 10)
 
@@ -34,6 +42,8 @@ export function validateGuestDetails(value: unknown, expectedCount: number): val
     const firstName = typeof details.first_name === 'string' ? details.first_name.trim() : ''
     const lastName = typeof details.last_name === 'string' ? details.last_name.trim() : ''
     const dateOfBirth = typeof details.date_of_birth === 'string' ? details.date_of_birth : ''
+    const placeOfBirth = typeof details.place_of_birth === 'string' ? details.place_of_birth.trim() : ''
+    const documentType = typeof details.document_type === 'string' ? details.document_type.trim() : ''
     const documentNumber = typeof details.document_number === 'string' ? details.document_number.trim() : ''
 
     if (!firstName || firstName.length > 120 || !lastName || lastName.length > 120) return false
@@ -41,8 +51,11 @@ export function validateGuestDetails(value: unknown, expectedCount: number): val
       Number.isNaN(Date.parse(`${dateOfBirth}T00:00:00.000Z`)) ||
       new Date(`${dateOfBirth}T00:00:00.000Z`).toISOString().slice(0, 10) !== dateOfBirth ||
       dateOfBirth > today) return false
-    if (index === 0 && (!documentNumber || documentNumber.length > 100)) return false
-    if (index > 0 && documentNumber) return false
+    if ((!placeOfBirth && !allowLegacyDetails) || placeOfBirth.length > 120) return false
+    if (index === 0 &&
+      ((!documentType && !allowLegacyDetails) || (documentType && !DOCUMENT_TYPES.has(documentType)) ||
+        !documentNumber || documentNumber.length > 100)) return false
+    if (index > 0 && (documentType || documentNumber)) return false
     return true
   })
 }
@@ -71,7 +84,7 @@ export async function readBookingGuestDetails(
 
   const details: unknown = JSON.parse(await decrypt(row.details_encrypted, key))
   const guestCount = await getBookingGuestCount(env, bookingId)
-  if (guestCount === null || !validateGuestDetails(details, guestCount)) {
+  if (guestCount === null || !validateGuestDetails(details, guestCount, true)) {
     throw new Error('Stored guest details are invalid')
   }
   return details
@@ -88,7 +101,7 @@ export async function saveBookingGuestDetails(
   const guestCount = await getBookingGuestCount(env, bookingId)
   if (guestCount === null) return json({ error: 'Booking not found' }, 404)
   if (!validateGuestDetails(value, guestCount)) {
-    return json({ error: 'Enter valid details for each guest and a document number for the group leader' }, 400)
+    return json({ error: 'Enter valid details for each guest and document details for the group leader' }, 400)
   }
 
   const details = value.map((guest) => {
@@ -97,6 +110,8 @@ export async function saveBookingGuestDetails(
       first_name: guest.first_name.trim(),
       last_name: guest.last_name.trim(),
       date_of_birth: guest.date_of_birth,
+      place_of_birth: guest.place_of_birth?.trim() ?? '',
+      ...(guest.document_type?.trim() ? { document_type: guest.document_type.trim() } : {}),
       ...(documentNumber ? { document_number: documentNumber } : {}),
     }
   })

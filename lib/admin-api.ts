@@ -325,6 +325,8 @@ export type BookingGuestDetails = {
   first_name: string
   last_name: string
   date_of_birth: string
+  place_of_birth?: string
+  document_type?: string
   document_number?: string
 }
 
