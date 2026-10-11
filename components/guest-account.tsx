@@ -240,7 +240,6 @@ export function GuestAccount({ locale }: { locale: Locale }) {
   const booking = bookings.find((item) => item.id === selected)
   if (!authenticated || !booking) return
   let active = true
-  const guestCount = booking.adults + booking.children
   setDetailsLoading(true)
   setDetailsStatus('')
   setGuestDetails(guestDetailsFormValues(booking))

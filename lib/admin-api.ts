@@ -74,7 +74,7 @@ const ADMIN_ERROR_TRANSLATIONS: Record<string, string> = {
   'Unable to load guest details': 'Impossibile caricare i dati degli ospiti.',
   'Unable to save guest details': 'Impossibile salvare i dati degli ospiti.',
   'Unable to delete guest details': 'Impossibile eliminare i dati degli ospiti.',
-  'Enter valid details for each guest and a document number for the group leader': 'Inserisci i dati validi di ogni ospite e il numero del documento del capogruppo.',
+  'Enter valid details for each guest and a document number for the group leader': 'Inserisci i dati validi di ogni ospite e il  del documento del capogruppo.',
 }
 
 function translateAdminError(message: string, status: number): string {
