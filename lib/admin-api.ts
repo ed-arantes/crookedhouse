@@ -69,6 +69,12 @@ const ADMIN_ERROR_TRANSLATIONS: Record<string, string> = {
   'Invalid night discount condition': 'Sconto per durata non valido.',
   'Invalid council tax amount': 'Importo della tassa di soggiorno non valido.',
   'Invalid base fare': 'Tariffa base non valida.',
+  'Guest details encryption is not configured': 'La cifratura dei dati degli ospiti non è configurata.',
+  'Missing booking id': 'Identificativo della prenotazione mancante.',
+  'Unable to load guest details': 'Impossibile caricare i dati degli ospiti.',
+  'Unable to save guest details': 'Impossibile salvare i dati degli ospiti.',
+  'Unable to delete guest details': 'Impossibile eliminare i dati degli ospiti.',
+  'Enter valid details for each guest and a document number for the group leader': 'Inserisci i dati validi di ogni ospite e il numero del documento del capogruppo.',
 }
 
 function translateAdminError(message: string, status: number): string {
@@ -313,6 +319,36 @@ export type AdminBooking = {
   payment_requested_at: string | null
   status: string
   created_at: string
+}
+
+export type BookingGuestDetails = {
+  first_name: string
+  last_name: string
+  date_of_birth: string
+  document_number?: string
+}
+
+export function fetchBookingGuestDetails(
+  bookingId: string,
+): Promise<{ guests: BookingGuestDetails[] | null }> {
+  return adminFetch(`/api/admin/guest-details?booking_id=${encodeURIComponent(bookingId)}`)
+}
+
+export function saveBookingGuestDetails(
+  bookingId: string,
+  guests: BookingGuestDetails[],
+): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/guest-details', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ booking_id: bookingId, guests }),
+  })
+}
+
+export function deleteBookingGuestDetails(bookingId: string): Promise<{ ok: boolean; deleted: boolean }> {
+  return adminFetch(`/api/admin/guest-details?booking_id=${encodeURIComponent(bookingId)}`, {
+    method: 'DELETE',
+  })
 }
 
 export type AdminMessage = {

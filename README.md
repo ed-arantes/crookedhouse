@@ -16,6 +16,27 @@ Set `STRIPE_SECRET_KEY` as a Pages secret. Do not commit `.dev.vars`; `.dev.vars
 
 The Pages Functions return `Cache-Control: no-store`, and this project does not use Next.js ISR, OpenNext, an R2 incremental cache, or custom long-lived asset cache headers.
 
+## Guest personal details
+
+Guest names, dates of birth, and the group leader's ID/passport number are
+encrypted with AES-GCM before being stored in D1. The encryption key is the
+existing `BOOKING_ENCRYPTION_KEY` secret and must be a stable 64-character
+hexadecimal value in local `.dev.vars` and the Cloudflare Pages environment.
+Do not commit the key or rotate it without first re-encrypting existing booking
+data. Requests fail rather than saving guest details in plaintext if the key is
+missing or invalid.
+
+Apply the guest-details table migration to the configured D1 database before
+deploying this feature:
+
+```text
+npx wrangler d1 migrations apply crookedhouse-translations --remote
+```
+
+Guests can view, update, or delete the details for their bookings. Admins can
+view or delete them from the bookings panel. Deleting a booking also deletes its
+guest details.
+
 ## Local checks
 
 ```text

@@ -49,3 +49,4 @@ graphify-out/
 *.spec.ts
 *.spec.tsx
 !lib/locale-detection.test.ts
+!lib/booking-guest-details.test.ts

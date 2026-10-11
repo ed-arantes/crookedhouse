@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Locale } from '@/lib/i18n'
 import { apiUrl } from '@/lib/api-url'
-import { formatEU } from '@/lib/format-date'
+import { formatEU, parseEUDate } from '@/lib/format-date'
 
 type Booking = {
  id: string
@@ -30,6 +30,13 @@ type Message = {
  created_at: string
 }
 
+type GuestDetails = {
+ first_name: string
+ last_name: string
+ date_of_birth: string
+ document_number: string
+}
+
 const COPY: Record<Locale, Record<string, string>> = {
  it: { title: 'Area ospiti', intro: 'Accedi con il cognome e l’email usati per la prenotazione.', surname: 'Cognome', email: 'Email', access: 'Accedi', bookings: 'Le tue prenotazioni', dates: 'Soggiorno', guests: 'Ospiti', total: 'Totale', status: 'Stato', pending: 'In attesa', paid: 'Confermata', cancelled: 'Annullata', conversation: 'Messaggi e richieste', request: 'Scrivi un messaggio o chiedi una modifica alla prenotazione. L’host ti risponderà qui.', placeholder: 'Il tuo messaggio...', send: 'Invia', logout: 'Esci', home: 'Torna alla home', empty: 'Non risultano prenotazioni con questi dati.', signInError: 'Accesso non riuscito. Controlla i dati e riprova.', loadError: 'Impossibile caricare i dati. Riprova.', guest: 'Tu', host: 'Host' },
  en: { title: 'Guest area', intro: 'Sign in with the surname and email used for your booking.', surname: 'Surname', email: 'Email', access: 'Sign in', bookings: 'Your bookings', dates: 'Stay', guests: 'Guests', total: 'Total', status: 'Status', pending: 'Pending', paid: 'Confirmed', cancelled: 'Cancelled', conversation: 'Messages and requests', request: 'Send a message or ask to change your booking. Your host will reply here.', placeholder: 'Your message...', send: 'Send', logout: 'Sign out', home: 'Back home', empty: 'No bookings found for these details.', signInError: 'Sign in failed. Check your details and try again.', loadError: 'Unable to load your information. Please retry.', guest: 'You', host: 'Host' },
@@ -39,15 +46,163 @@ const COPY: Record<Locale, Record<string, string>> = {
  ru: { title: 'Кабинет гостя', intro: 'Войдите, используя фамилию и электронную почту из бронирования.', surname: 'Фамилия', email: 'Электронная почта', access: 'Войти', bookings: 'Ваши бронирования', dates: 'Проживание', guests: 'Гости', total: 'Итого', status: 'Статус', pending: 'Ожидается', paid: 'Подтверждено', cancelled: 'Отменено', conversation: 'Сообщения и запросы', request: 'Напишите сообщение или запросите изменение бронирования. Хозяин ответит здесь.', placeholder: 'Ваше сообщение...', send: 'Отправить', logout: 'Выйти', home: 'На главную', empty: 'Бронирования не найдены.', signInError: 'Не удалось войти. Проверьте данные.', loadError: 'Не удалось загрузить данные.', guest: 'Вы', host: 'Хозяин' },
 }
 
+const DETAILS_COPY: Record<Locale, {
+ detailsTitle: string
+ detailsIntro: string
+ groupLeader: string
+ firstName: string
+ lastName: string
+ dateOfBirth: string
+ documentNumber: string
+ documentHint: string
+ saveDetails: string
+ savingDetails: string
+ detailsSaved: string
+ detailsError: string
+ invalidDetailsDate: string
+ privacyNotice: string
+ deleteDetails: string
+ confirmDeleteDetails: string
+ detailsDeleted: string
+}> = {
+ it: {
+  detailsTitle: 'Dati personali degli ospiti',
+  detailsIntro: 'Inserisci i dati di ogni ospite della prenotazione.',
+  groupLeader: 'Capogruppo',
+  firstName: 'Nome',
+  lastName: 'Cognome',
+  dateOfBirth: 'Data di nascita',
+  documentNumber: 'Numero carta d’identità o passaporto',
+  documentHint: 'Richiesto solo per il capogruppo.',
+  saveDetails: 'Salva i dati',
+  savingDetails: 'Salvataggio...',
+  detailsSaved: 'Dati salvati.',
+  detailsError: 'Impossibile caricare o salvare i dati. Riprova.',
+  invalidDetailsDate: 'Inserisci tutte le date di nascita nel formato GG/MM/AAAA.',
+  privacyNotice: 'I dati sono cifrati nel database e sono visibili a te e all’host della struttura.',
+  deleteDetails: 'Elimina i dati personali',
+  confirmDeleteDetails: 'Vuoi eliminare definitivamente i dati personali di questa prenotazione?',
+  detailsDeleted: 'Dati personali eliminati.',
+ },
+ en: {
+  detailsTitle: 'Guest personal details',
+  detailsIntro: 'Enter the personal details for each guest on this booking.',
+  groupLeader: 'Group leader',
+  firstName: 'First name',
+  lastName: 'Last name',
+  dateOfBirth: 'Date of birth',
+  documentNumber: 'ID card or passport number',
+  documentHint: 'Required for the group leader only.',
+  saveDetails: 'Save details',
+  savingDetails: 'Saving...',
+  detailsSaved: 'Details saved.',
+  detailsError: 'Unable to load or save details. Please try again.',
+  invalidDetailsDate: 'Enter every date of birth in DD/MM/YYYY format.',
+  privacyNotice: 'Details are encrypted in the database and visible to you and the property host.',
+  deleteDetails: 'Delete personal details',
+  confirmDeleteDetails: 'Permanently delete the personal details for this booking?',
+  detailsDeleted: 'Personal details deleted.',
+ },
+ fr: {
+  detailsTitle: 'Informations personnelles des voyageurs',
+  detailsIntro: 'Saisissez les informations de chaque voyageur de cette réservation.',
+  groupLeader: 'Responsable du groupe',
+  firstName: 'Prénom',
+  lastName: 'Nom',
+  dateOfBirth: 'Date de naissance',
+  documentNumber: 'Numéro de carte d’identité ou de passeport',
+  documentHint: 'Demandé uniquement pour le responsable du groupe.',
+  saveDetails: 'Enregistrer',
+  savingDetails: 'Enregistrement...',
+  detailsSaved: 'Informations enregistrées.',
+  detailsError: 'Impossible de charger ou d’enregistrer les informations. Réessayez.',
+  invalidDetailsDate: 'Saisissez toutes les dates de naissance au format JJ/MM/AAAA.',
+  privacyNotice: 'Les informations sont chiffrées dans la base de données et visibles par vous et l’hôte.',
+  deleteDetails: 'Supprimer les informations personnelles',
+  confirmDeleteDetails: 'Supprimer définitivement les informations personnelles de cette réservation ?',
+  detailsDeleted: 'Informations personnelles supprimées.',
+ },
+ de: {
+  detailsTitle: 'Persönliche Daten der Gäste',
+  detailsIntro: 'Geben Sie die persönlichen Daten aller Gäste dieser Buchung ein.',
+  groupLeader: 'Gruppenleitung',
+  firstName: 'Vorname',
+  lastName: 'Nachname',
+  dateOfBirth: 'Geburtsdatum',
+  documentNumber: 'Personalausweis- oder Reisepassnummer',
+  documentHint: 'Nur für die Gruppenleitung erforderlich.',
+  saveDetails: 'Daten speichern',
+  savingDetails: 'Wird gespeichert...',
+  detailsSaved: 'Daten gespeichert.',
+  detailsError: 'Daten konnten nicht geladen oder gespeichert werden. Bitte erneut versuchen.',
+  invalidDetailsDate: 'Geben Sie alle Geburtsdaten im Format TT/MM/JJJJ ein.',
+  privacyNotice: 'Die Daten werden in der Datenbank verschlüsselt und sind für Sie und den Gastgeber sichtbar.',
+  deleteDetails: 'Persönliche Daten löschen',
+  confirmDeleteDetails: 'Persönliche Daten für diese Buchung endgültig löschen?',
+  detailsDeleted: 'Persönliche Daten gelöscht.',
+ },
+ es: {
+  detailsTitle: 'Datos personales de los huéspedes',
+  detailsIntro: 'Introduce los datos personales de cada huésped de esta reserva.',
+  groupLeader: 'Responsable del grupo',
+  firstName: 'Nombre',
+  lastName: 'Apellido',
+  dateOfBirth: 'Fecha de nacimiento',
+  documentNumber: 'Número de documento de identidad o pasaporte',
+  documentHint: 'Solo es obligatorio para el responsable del grupo.',
+  saveDetails: 'Guardar datos',
+  savingDetails: 'Guardando...',
+  detailsSaved: 'Datos guardados.',
+  detailsError: 'No se pudieron cargar o guardar los datos. Inténtalo de nuevo.',
+  invalidDetailsDate: 'Introduce todas las fechas de nacimiento en formato DD/MM/AAAA.',
+  privacyNotice: 'Los datos están cifrados en la base de datos y son visibles para ti y el anfitrión.',
+  deleteDetails: 'Eliminar datos personales',
+  confirmDeleteDetails: '¿Eliminar definitivamente los datos personales de esta reserva?',
+  detailsDeleted: 'Datos personales eliminados.',
+ },
+ ru: {
+  detailsTitle: 'Личные данные гостей',
+  detailsIntro: 'Укажите личные данные каждого гостя в бронировании.',
+  groupLeader: 'Руководитель группы',
+  firstName: 'Имя',
+  lastName: 'Фамилия',
+  dateOfBirth: 'Дата рождения',
+  documentNumber: 'Номер удостоверения личности или паспорта',
+  documentHint: 'Требуется только для руководителя группы.',
+  saveDetails: 'Сохранить данные',
+  savingDetails: 'Сохранение...',
+  detailsSaved: 'Данные сохранены.',
+  detailsError: 'Не удалось загрузить или сохранить данные. Попробуйте ещё раз.',
+  invalidDetailsDate: 'Введите все даты рождения в формате ДД/ММ/ГГГГ.',
+  privacyNotice: 'Данные зашифрованы в базе данных и доступны вам и хозяину жилья.',
+  deleteDetails: 'Удалить личные данные',
+  confirmDeleteDetails: 'Безвозвратно удалить личные данные этого бронирования?',
+  detailsDeleted: 'Личные данные удалены.',
+ },
+}
+
+function emptyGuestDetails(count: number): GuestDetails[] {
+ return Array.from({ length: count }, () => ({
+  first_name: '',
+  last_name: '',
+  date_of_birth: '',
+  document_number: '',
+ }))
+}
+
 export function GuestAccount({ locale }: { locale: Locale }) {
  const router = useRouter()
- const copy = COPY[locale]
+ const copy: Record<string, string> = { ...COPY[locale], ...DETAILS_COPY[locale] }
  const [bookings, setBookings] = useState<Booking[]>([])
  const [selected, setSelected] = useState('')
  const [messages, setMessages] = useState<Message[]>([])
  const [surname, setSurname] = useState('')
  const [email, setEmail] = useState('')
  const [draft, setDraft] = useState('')
+ const [guestDetails, setGuestDetails] = useState<GuestDetails[]>([])
+ const [detailsLoading, setDetailsLoading] = useState(false)
+ const [detailsSaving, setDetailsSaving] = useState(false)
+ const [detailsStatus, setDetailsStatus] = useState('')
  const [authenticated, setAuthenticated] = useState(false)
  const [loading, setLoading] = useState(true)
  const [sending, setSending] = useState(false)
@@ -58,6 +213,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
   if (response.status === 401) {
    setAuthenticated(false)
    setBookings([])
+   setGuestDetails([])
    setLoading(false)
    return
   }
@@ -93,6 +249,43 @@ export function GuestAccount({ locale }: { locale: Locale }) {
   return () => window.clearInterval(interval)
  }, [authenticated, selected, loadMessages, copy.loadError])
 
+ useEffect(() => {
+  const booking = bookings.find((item) => item.id === selected)
+  if (!authenticated || !booking) return
+  let active = true
+  const guestCount = booking.adults + booking.children
+  setDetailsLoading(true)
+  setDetailsStatus('')
+  setGuestDetails(emptyGuestDetails(guestCount))
+  fetch(apiUrl(`/api/guest/details?booking_id=${encodeURIComponent(booking.id)}`), { cache: 'no-store' })
+   .then(async (response) => {
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || copy.detailsError)
+    if (!active) return
+    const savedGuests = Array.isArray(data.guests) ? data.guests as Array<{
+     first_name: string
+     last_name: string
+     date_of_birth: string
+     document_number?: string
+    }> : []
+    setGuestDetails(Array.from({ length: guestCount }, (_, index) => ({
+     first_name: savedGuests[index]?.first_name ?? '',
+     last_name: savedGuests[index]?.last_name ?? '',
+     date_of_birth: savedGuests[index]?.date_of_birth
+      ? formatEU(savedGuests[index].date_of_birth)
+      : '',
+     document_number: index === 0 ? savedGuests[0]?.document_number ?? '' : '',
+    })))
+   })
+   .catch(() => {
+    if (active) setDetailsStatus(copy.detailsError)
+   })
+   .finally(() => {
+    if (active) setDetailsLoading(false)
+   })
+  return () => { active = false }
+ }, [authenticated, bookings, selected, copy.detailsError])
+
  async function signIn(event: React.FormEvent<HTMLFormElement>) {
   event.preventDefault()
   if (surname.trim().toLocaleLowerCase() === 'admin') {
@@ -126,6 +319,7 @@ export function GuestAccount({ locale }: { locale: Locale }) {
   setBookings([])
   setMessages([])
   setSelected('')
+  setGuestDetails([])
  }
 
  async function sendMessage(event: React.FormEvent<HTMLFormElement>) {
@@ -149,6 +343,63 @@ export function GuestAccount({ locale }: { locale: Locale }) {
    setSending(false)
   }
  }
+
+ async function saveGuestDetails(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault()
+  if (!selected) return
+  const guests = guestDetails.map((guest) => {
+   const dateOfBirth = parseEUDate(guest.date_of_birth)
+   return {
+    first_name: guest.first_name.trim(),
+    last_name: guest.last_name.trim(),
+    date_of_birth: dateOfBirth ?? '',
+    ...(guest.document_number.trim() ? { document_number: guest.document_number.trim() } : {}),
+   }
+  })
+  if (guests.some((guest) => !guest.date_of_birth)) {
+   setDetailsStatus(copy.invalidDetailsDate)
+   return
+  }
+  setDetailsSaving(true)
+  setDetailsStatus('')
+  try {
+   const response = await fetch(apiUrl('/api/guest/details'), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ booking_id: selected, guests }),
+   })
+   const data = await response.json()
+   if (!response.ok) throw new Error(data?.error || copy.detailsError)
+   setDetailsStatus(copy.detailsSaved)
+  } catch {
+   setDetailsStatus(copy.detailsError)
+  } finally {
+   setDetailsSaving(false)
+  }
+ }
+
+ async function deleteGuestDetails() {
+  if (!selected || !window.confirm(copy.confirmDeleteDetails)) return
+  setDetailsSaving(true)
+  setDetailsStatus('')
+  try {
+   const response = await fetch(
+    apiUrl(`/api/guest/details?booking_id=${encodeURIComponent(selected)}`),
+    { method: 'DELETE' },
+   )
+   if (!response.ok) throw new Error(copy.detailsError)
+   setGuestDetails(emptyGuestDetails(
+    selectedBooking ? selectedBooking.adults + selectedBooking.children : 0,
+   ))
+   setDetailsStatus(copy.detailsDeleted)
+  } catch {
+   setDetailsStatus(copy.detailsError)
+  } finally {
+   setDetailsSaving(false)
+  }
+ }
+
+ const selectedBooking = bookings.find((booking) => booking.id === selected)
 
  return (
   <main className="min-h-screen bg-background px-5 py-16 text-foreground md:px-8">
@@ -181,6 +432,91 @@ export function GuestAccount({ locale }: { locale: Locale }) {
          <span className="mt-1 block text-sm text-muted-foreground">{copy.guests}: {booking.adults + booking.children} · {copy.total}: €{booking.total_price}</span>
         </button>
        ))}
+       {selectedBooking && (
+        <form onSubmit={saveGuestDetails} className="mt-5 space-y-4 rounded-2xl border border-border bg-card p-4">
+         <div>
+          <h2 className="font-medium">{copy.detailsTitle}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{copy.detailsIntro}</p>
+         </div>
+         {guestDetails.map((guest, index) => (
+          <fieldset key={`${selected}-${index}`} className="space-y-3 rounded-xl border border-border p-3">
+           <legend className="px-1 text-sm font-medium">
+            {copy.guests} {index + 1}{index === 0 ? ` · ${copy.groupLeader}` : ''}
+           </legend>
+           <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-medium text-muted-foreground">{copy.firstName}
+             <input
+              required
+              maxLength={120}
+              autoComplete={index === 0 ? 'given-name' : 'off'}
+              value={guest.first_name}
+              onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+               itemIndex === index ? { ...item, first_name: event.target.value } : item))}
+              className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+             />
+            </label>
+            <label className="text-xs font-medium text-muted-foreground">{copy.lastName}
+             <input
+              required
+              maxLength={120}
+              autoComplete={index === 0 ? 'family-name' : 'off'}
+              value={guest.last_name}
+              onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+               itemIndex === index ? { ...item, last_name: event.target.value } : item))}
+              className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+             />
+            </label>
+            <label className="text-xs font-medium text-muted-foreground">{copy.dateOfBirth}
+             <input
+              required
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="GG/MM/AAAA"
+              value={guest.date_of_birth}
+              onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+               itemIndex === index ? { ...item, date_of_birth: event.target.value } : item))}
+              className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+             />
+            </label>
+            {index === 0 && (
+             <label className="text-xs font-medium text-muted-foreground">{copy.documentNumber}
+              <input
+               required
+               maxLength={100}
+               autoComplete="off"
+               value={guest.document_number}
+               onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+                itemIndex === index ? { ...item, document_number: event.target.value } : item))}
+               className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <span className="mt-1 block font-normal">{copy.documentHint}</span>
+             </label>
+            )}
+           </div>
+          </fieldset>
+         ))}
+         <p className="text-xs text-muted-foreground">{copy.privacyNotice}</p>
+         {detailsStatus && (
+          <p role={detailsStatus === copy.detailsSaved ? 'status' : 'alert'} className="text-sm text-muted-foreground">
+           {detailsStatus}
+          </p>
+         )}
+         <button
+          disabled={detailsLoading || detailsSaving}
+          className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
+         >
+          {detailsSaving ? copy.savingDetails : copy.saveDetails}
+         </button>
+         <button
+          type="button"
+          onClick={deleteGuestDetails}
+          disabled={detailsLoading || detailsSaving}
+          className="ml-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground disabled:opacity-60"
+         >
+          {copy.deleteDetails}
+         </button>
+        </form>
+       )}
       </section>
       <section className="flex min-h-[28rem] flex-col rounded-2xl border border-border bg-card p-5">
        <h2 className="font-medium">{copy.conversation}</h2>

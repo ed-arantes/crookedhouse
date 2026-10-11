@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   fetchBookings,
+  fetchBookingGuestDetails,
+  deleteBookingGuestDetails,
   updateBookingStatus,
   amendBooking,
   requestBookingPayment,
@@ -18,6 +20,7 @@ import {
   fetchAdminMessages,
   replyToGuest,
   type AdminBooking,
+  type BookingGuestDetails,
   type AdminMessage,
   type AnalyticsData,
   type PricingRule,
@@ -209,6 +212,7 @@ export function BookingsTab() {
                   {b.message && (
                     <p className="mt-2 text-xs text-muted-foreground italic">&ldquo;{b.message}&rdquo;</p>
                   )}
+                  <BookingGuestDetailsPanel bookingId={b.id} />
                 </div>
                 <div className="flex shrink-0 flex-wrap justify-end gap-1">
                   {b.status !== 'pending' ? (
@@ -278,6 +282,96 @@ export function BookingsTab() {
               )}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BookingGuestDetailsPanel({ bookingId }: { bookingId: string }) {
+  const [open, setOpen] = useState(false)
+  const [guests, setGuests] = useState<BookingGuestDetails[] | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState('')
+
+  async function toggleDetails() {
+    if (open) {
+      setOpen(false)
+      return
+    }
+    setOpen(true)
+    if (loaded) return
+    setLoading(true)
+    setError('')
+    try {
+      const data = await fetchBookingGuestDetails(bookingId)
+      setGuests(data.guests)
+      setLoaded(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Impossibile caricare i dati degli ospiti.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function deleteDetails() {
+    if (!confirm('Eliminare definitivamente i dati personali inseriti per questa prenotazione?')) return
+    setDeleting(true)
+    setError('')
+    try {
+      await deleteBookingGuestDetails(bookingId)
+      setGuests(null)
+      setLoaded(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Impossibile eliminare i dati degli ospiti.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <div className="mt-3">
+      <button
+        type="button"
+        onClick={toggleDetails}
+        className="rounded-lg border border-border px-2 py-1 text-xs font-medium hover:bg-muted"
+      >
+        {open ? 'Nascondi dati ospiti' : 'Dati ospiti'}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-lg border border-border bg-background p-3">
+          {loading ? (
+            <p className="text-xs text-muted-foreground">Caricamento...</p>
+          ) : error ? (
+            <p role="alert" className="text-xs text-destructive">{error}</p>
+          ) : guests?.length ? (
+            <>
+              <div className="space-y-2">
+                {guests.map((guest, index) => (
+                  <div key={index} className="text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground">
+                      {guest.first_name} {guest.last_name}
+                      {index === 0 && <span className="ml-2 text-accent">Capogruppo</span>}
+                    </p>
+                    <p>Data di nascita: {formatEU(guest.date_of_birth)}</p>
+                    {guest.document_number && <p>Numero documento: {guest.document_number}</p>}
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={deleteDetails}
+                disabled={deleting}
+                className="mt-3 rounded-lg bg-red-50 px-2 py-1 text-xs font-medium text-red-700 disabled:opacity-60"
+              >
+                {deleting ? 'Eliminazione...' : 'Elimina dati personali'}
+              </button>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">Nessun dato ospite salvato.</p>
+          )}
         </div>
       )}
     </div>
