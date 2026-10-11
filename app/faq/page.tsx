@@ -1,50 +1,39 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { SiteFooter } from '@/components/site-footer'
-
-const faqs = [
-  {
-    question: 'Quali sono gli orari di check-in e check-out a Crooked House?',
-    answer: (
-      <p>
-        Il check-in a Crooked House è disponibile dalle 15:30; il check-out è previsto entro le 10:00.
-      </p>
-    ),
-  },
-  {
-    question: 'Quanto costa soggiornare a Crooked House?',
-    answer: (
-      <p>
-        Il prezzo può variare in base al soggiorno, ad esempio alle date e alle condizioni applicabili.
-        Per conoscere il prezzo, inserisci le date del soggiorno.
-      </p>
-    ),
-  },
-  {
-    question: 'Quali attività si possono praticare a Crooked House?',
-    answer: (
-      <>
-        <p>A Crooked House sono disponibili le seguenti attività e servizi (alcuni potrebbero essere a pagamento):</p>
-        <ul className="mt-3 list-disc space-y-1 pl-5">
-          <li>Ciclismo</li>
-          <li>Escursionismo</li>
-          <li>Campo da tennis</li>
-          <li>Windsurf</li>
-          <li>Campo da golf (entro 2 miglia)</li>
-        </ul>
-      </>
-    ),
-  },
-  {
-    question: 'Quanto dista Crooked House dal centro di Grandola ed Uniti?',
-    answer: <p>Crooked House dista 1,9 km dal centro di Grandola ed Uniti.</p>,
-  },
-  {
-    question: 'Crooked House è una struttura adatta alle famiglie?',
-    answer: <p>Sì, Crooked House è apprezzata dagli ospiti che prenotano soggiorni in famiglia.</p>,
-  },
-]
+import { RichText } from '@/components/rich-text'
+import { apiUrl } from '@/lib/api-url'
+import { DEFAULT_FAQ_ITEMS, type FaqItem } from '@/lib/faq-content'
 
 export default function FaqPage() {
+  const [faqs, setFaqs] = useState(DEFAULT_FAQ_ITEMS)
+
+  useEffect(() => {
+    let active = true
+    fetch(apiUrl('/api/public/content?locale=it'))
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unable to load FAQ content')
+        return response.json() as Promise<Record<string, unknown>>
+      })
+      .then((content) => {
+        const questions = content['faq.questions']
+        const answers = content['faq.answers']
+        if (!active || !Array.isArray(questions) || !Array.isArray(answers)) return
+        setFaqs(questions.flatMap((question, index): FaqItem[] => {
+          const answer = answers[index]
+          return typeof question === 'string' && typeof answer === 'string'
+            ? [{ question, answer }]
+            : []
+        }))
+      })
+      .catch((error: unknown) => {
+        console.error('FAQ content could not be loaded', error)
+      })
+    return () => { active = false }
+  }, [])
+
   return (
     <>
       <main className="min-h-screen bg-background px-5 pb-20 pt-16 md:px-8">
@@ -67,8 +56,8 @@ export default function FaqPage() {
                     </span>
                   </span>
                 </summary>
-                <div className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
-                  {answer}
+                <div className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                  <RichText text={answer} />
                 </div>
               </details>
             ))}

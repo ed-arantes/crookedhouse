@@ -35,6 +35,7 @@ import {
 import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
+import { DEFAULT_FAQ_ITEMS, type FaqItem } from '@/lib/faq-content'
 import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
 import { BookingsTab, AnalyticsTab, PricingTab, MessagesTab } from './admin-tabs'
@@ -955,6 +956,20 @@ function ContentTab() {
   }, [translateLog])
 
   const current: Record<string, string | string[]> = content[activeLocale] ?? {}
+  const storedQuestions = current['faq.questions']
+  const storedAnswers = current['faq.answers']
+  const faqItems: FaqItem[] = Array.isArray(storedQuestions) || Array.isArray(storedAnswers)
+    ? Array.from(
+        { length: Math.max(
+          Array.isArray(storedQuestions) ? storedQuestions.length : 0,
+          Array.isArray(storedAnswers) ? storedAnswers.length : 0,
+        ) },
+        (_, index) => ({
+          question: Array.isArray(storedQuestions) ? String(storedQuestions[index] ?? '') : '',
+          answer: Array.isArray(storedAnswers) ? String(storedAnswers[index] ?? '') : '',
+        }),
+      )
+    : activeLocale === 'it' ? DEFAULT_FAQ_ITEMS : []
 
   function updateOverride(key: string, value: string) {
     setContent((prev) => {
@@ -965,6 +980,19 @@ function ContentTab() {
       }
       return copy
     })
+    setDirty(true)
+    setStatus('')
+  }
+
+  function updateFaqItems(items: FaqItem[]) {
+    setContent((previous) => ({
+      ...previous,
+      [activeLocale]: {
+        ...previous[activeLocale],
+        'faq.questions': items.map((item) => item.question),
+        'faq.answers': items.map((item) => item.answer),
+      },
+    }))
     setDirty(true)
     setStatus('')
   }
@@ -1000,6 +1028,14 @@ function ContentTab() {
       const pairs = Object.entries(current)
         .filter(([, v]) => typeof v === 'string' && v.trim())
         .map(([key, value]) => ({ key, value: value as string }))
+      if (activeLocale === 'it' && !pairs.some(({ key }) => key === 'servicesPage.title')) {
+        pairs.push({ key: 'servicesPage.title', value: 'Colazioni e pasti' })
+      }
+      const faqPairs = faqItems.flatMap((item, index) => [
+        ...(item.question.trim() ? [{ key: `faq.questions.${index}`, value: item.question }] : []),
+        ...(item.answer.trim() ? [{ key: `faq.answers.${index}`, value: item.answer }] : []),
+      ])
+      pairs.push(...faqPairs)
 
       const targetLocales = ['en', 'fr', 'de', 'es', 'ru']
       setTranslateProgress({
@@ -1021,6 +1057,8 @@ function ContentTab() {
           currentKey: '',
         }))
         const localeTranslations: Record<string, string> = {}
+        const translatedQuestions = Array.from({ length: faqItems.length }, () => '')
+        const translatedAnswers = Array.from({ length: faqItems.length }, () => '')
         for (let itemIndex = 0; itemIndex < pairs.length; itemIndex++) {
           const pair = pairs[itemIndex]
           setTranslateProgress((progress) => ({ ...progress, currentKey: pair.key }))
@@ -1029,7 +1067,15 @@ function ContentTab() {
           if (typeof translatedText !== 'string') {
             throw new Error(`Missing translation for ${pair.key} (${locale})`)
           }
-          localeTranslations[pair.key] = translatedText
+          const questionMatch = pair.key.match(/^faq\.questions\.(\d+)$/)
+          const answerMatch = pair.key.match(/^faq\.answers\.(\d+)$/)
+          if (questionMatch) {
+            translatedQuestions[Number(questionMatch[1])] = translatedText
+          } else if (answerMatch) {
+            translatedAnswers[Number(answerMatch[1])] = translatedText
+          } else {
+            localeTranslations[pair.key] = translatedText
+          }
           setTranslateLog((previous) => [...previous, { key: pair.key, text: translatedText, locale }])
           setTranslateProgress((progress) => ({
             ...progress,
@@ -1037,9 +1083,11 @@ function ContentTab() {
             currentKey: '',
           }))
         }
-        if (Object.keys(localeTranslations).length > 0) {
-          await saveContent(locale, localeTranslations)
-        }
+        await saveContent(locale, {
+          ...localeTranslations,
+          'faq.questions': translatedQuestions,
+          'faq.answers': translatedAnswers,
+        })
       }
       setTranslateProgress((progress) => ({
         ...progress,
@@ -1097,6 +1145,91 @@ function ContentTab() {
           Le modifiche vanno salvate singolarmente per ogni lingua. Usa &quot;Traduci in 5 lingue&quot; dall'italiano per tradurre automaticamente.
         </p>
       )}
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <button
+          type="button"
+          onClick={() => toggleSection('Pagina servizi')}
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+        >
+          <span>Pagina servizi</span>
+          <span className="text-muted-foreground text-xs">{openSections.has('Pagina servizi') ? '−' : '+'}</span>
+        </button>
+        {openSections.has('Pagina servizi') && (
+          <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
+            <label className="block rounded-lg border border-border bg-background/50 p-3 text-xs font-medium text-muted-foreground">
+              Titolo
+              <BoldTextarea
+                value={String(current['servicesPage.title'] ?? (activeLocale === 'it' ? 'Colazioni e pasti' : ''))}
+                onChange={(value) => updateOverride('servicesPage.title', value)}
+                rows={2}
+              />
+            </label>
+            <label className="block rounded-lg border border-border bg-background/50 p-3 text-xs font-medium text-muted-foreground">
+              Testo
+              <BoldTextarea
+                value={String(current['servicesPage.body'] ?? '')}
+                onChange={(value) => updateOverride('servicesPage.body', value)}
+                rows={6}
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <button
+          type="button"
+          onClick={() => toggleSection('FAQ')}
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+        >
+          <span>FAQ</span>
+          <span className="text-muted-foreground text-xs">{openSections.has('FAQ') ? '−' : '+'}</span>
+        </button>
+        {openSections.has('FAQ') && (
+          <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
+            {faqItems.map((item, index) => (
+              <div key={index} className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">FAQ {index + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => updateFaqItems(faqItems.filter((_, itemIndex) => itemIndex !== index))}
+                    className="flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Rimuovi
+                  </button>
+                </div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Domanda
+                  <BoldTextarea
+                    value={item.question}
+                    onChange={(value) => updateFaqItems(faqItems.map((faq, itemIndex) =>
+                      itemIndex === index ? { ...faq, question: value } : faq))}
+                    rows={2}
+                  />
+                </label>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Risposta
+                  <BoldTextarea
+                    value={item.answer}
+                    onChange={(value) => updateFaqItems(faqItems.map((faq, itemIndex) =>
+                      itemIndex === index ? { ...faq, answer: value } : faq))}
+                    rows={4}
+                  />
+                </label>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => updateFaqItems([...faqItems, { question: '', answer: '' }])}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted/50"
+            >
+              <Plus className="h-4 w-4" /> Aggiungi FAQ
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="space-y-2">
         {CONTENT_SECTIONS.map((section) => {

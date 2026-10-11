@@ -15,5 +15,8 @@ export const CONTENT_SECTIONS = [
 ] as const
 
 export const REQUIRED_CONTENT_KEYS = CONTENT_SECTIONS.flatMap((section) => [...section.keys])
-export const ARRAY_CONTENT_KEYS = new Set<string>(['amenities.list'])
-
+export const ARRAY_CONTENT_KEYS = new Set<string>([
+  'amenities.list',
+  'faq.questions',
+  'faq.answers',
+])
