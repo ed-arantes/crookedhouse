@@ -18,7 +18,7 @@ export function RichText({
   text: string
   className?: string
 }): ReactNode {
-  const regex = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
+  const regex = /\*\*\[([^\]]+)\]\(([^)]+)\)\*\*|\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
   const parts: ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null
@@ -28,14 +28,29 @@ export function RichText({
       parts.push(<span key={`t${lastIndex}`}>{text.slice(lastIndex, match.index)}</span>)
     }
     if (match[1] !== undefined) {
+      const href = match[2].trim()
+      parts.push(isSafeHref(href)
+        ? (
+          <strong key={`b${match.index}`} className={className}>
+            <a
+              href={href}
+              className="underline underline-offset-2"
+              {...(/^https?:\/\//i.test(href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              {match[1]}
+            </a>
+          </strong>
+        )
+        : <strong key={`b${match.index}`} className={className}>{match[0].slice(2, -2)}</strong>)
+    } else if (match[3] !== undefined) {
       parts.push(
         <strong key={`b${match.index}`} className={className}>
-          {match[1]}
+          {match[3]}
         </strong>,
       )
     } else {
-      const label = match[2]
-      const href = match[3].trim()
+      const label = match[4]
+      const href = match[5].trim()
 
       parts.push(isSafeHref(href)
         ? (
