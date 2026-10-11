@@ -1157,22 +1157,22 @@ function ContentTab() {
         </button>
         {openSections.has('Pagina servizi') && (
           <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
-            <label className="block rounded-lg border border-border bg-background/50 p-3 text-xs font-medium text-muted-foreground">
-              Titolo
+            <div className="rounded-lg border border-border bg-background/50 p-3">
+              <span className="text-xs font-medium text-muted-foreground">Titolo</span>
               <BoldTextarea
                 value={String(current['servicesPage.title'] ?? (activeLocale === 'it' ? 'Colazioni e pasti' : ''))}
                 onChange={(value) => updateOverride('servicesPage.title', value)}
                 rows={2}
               />
-            </label>
-            <label className="block rounded-lg border border-border bg-background/50 p-3 text-xs font-medium text-muted-foreground">
-              Testo
+            </div>
+            <div className="rounded-lg border border-border bg-background/50 p-3">
+              <span className="text-xs font-medium text-muted-foreground">Testo</span>
               <BoldTextarea
                 value={String(current['servicesPage.body'] ?? '')}
                 onChange={(value) => updateOverride('servicesPage.body', value)}
                 rows={6}
               />
-            </label>
+            </div>
           </div>
         )}
       </div>
@@ -1200,24 +1200,24 @@ function ContentTab() {
                     <Trash2 className="h-3.5 w-3.5" /> Rimuovi
                   </button>
                 </div>
-                <label className="block text-xs font-medium text-muted-foreground">
-                  Domanda
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">Domanda</span>
                   <BoldTextarea
                     value={item.question}
                     onChange={(value) => updateFaqItems(faqItems.map((faq, itemIndex) =>
                       itemIndex === index ? { ...faq, question: value } : faq))}
                     rows={2}
                   />
-                </label>
-                <label className="block text-xs font-medium text-muted-foreground">
-                  Risposta
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">Risposta</span>
                   <BoldTextarea
                     value={item.answer}
                     onChange={(value) => updateFaqItems(faqItems.map((faq, itemIndex) =>
                       itemIndex === index ? { ...faq, answer: value } : faq))}
                     rows={4}
                   />
-                </label>
+                </div>
               </div>
             ))}
             <button
