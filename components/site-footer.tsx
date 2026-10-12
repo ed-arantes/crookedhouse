@@ -91,11 +91,11 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
        </li>
        <li className="flex items-center gap-3">
         <Phone className="h-4 w-4 shrink-0" />
-        (Struttura) +39 0344 536 041
+        ({t(locale, 'footer.property')}) +39 0344 536 041
        </li>
        <li className="flex items-center gap-3">
         <Smartphone className="h-4 w-4 shrink-0" />
-        (Mara) +39 346 686 2295 (incluso WhatsApp)
+        (Mara) +39 346 686 2295 {t(locale, 'footer.whatsappIncluded')}
        </li>
        <li className="flex items-center gap-3">
         <Mail className="h-4 w-4 shrink-0" />

@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { MapPin, Plane, Wine, Landmark } from 'lucide-react'
+import { MapPin, Plane, Wine, Landmark, LocateFixed } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { useSiteData } from '@/components/site-data-provider'
 import { RichText } from '@/components/rich-text'
@@ -43,12 +43,16 @@ export function Location({ locale = 'en' }: { locale?: Locale }) {
      <MapPin className="h-4 w-4 text-primary" />
      <RichText text={t(locale, 'location.address')} />
     </p>
+    <p className="type-body mt-2 flex items-center gap-2 text-muted-foreground">
+     <LocateFixed className="h-4 w-4 text-primary" />
+     46.0411° N, 9.20166° E
+    </p>
    </div>
 
    <div className="mt-10 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
     <div className="h-full min-h-[300px] overflow-hidden rounded-2xl border border-border md:min-h-[440px]">
      <iframe
-      title="Map showing Naggio, Italy"
+      title={t(locale, 'aria.map')}
       src="https://www.openstreetmap.org/export/embed.html?bbox=9.1818080%2C46.0211577%2C9.2218080%2C46.0611577&layer=mapnik&marker=46.0411577%2C9.2018080"
       className="pointer-events-none block h-full min-h-[300px] w-full rounded-2xl border-0 md:min-h-[440px]"
       loading="lazy"

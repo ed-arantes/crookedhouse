@@ -138,7 +138,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
       </label>
       <select
        id="language-switcher"
-       aria-label="Select language"
+       aria-label={t(locale, 'aria.selectLanguage')}
        value={locale}
        onChange={(event) => {
         const nextLocale = event.target.value as Locale
@@ -210,7 +210,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
      <button
       type="button"
       onClick={() => setOpen((v) => !v)}
-      aria-label="Toggle menu"
+      aria-label={t(locale, 'aria.toggleMenu')}
       className="flex h-10 w-10 items-center justify-center rounded-full text-foreground md:hidden"
      >
       {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -237,7 +237,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
        </label>
        <select
         id="language-switcher-mobile"
-        aria-label="Select language"
+        aria-label={t(locale, 'aria.selectLanguage')}
         value={locale}
         onChange={(event) => {
          const nextLocale = event.target.value as Locale

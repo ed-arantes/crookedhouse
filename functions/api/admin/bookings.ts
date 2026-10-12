@@ -8,7 +8,7 @@ import {
   type AdminEnv,
 } from '../../_lib/admin'
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../../lib/booking'
-import { calculateBookingPrice, parseBaseFare, type PricingRule } from '../../../lib/pricing'
+import { calculateAnimalSurcharge, calculateBookingPrice, parseAnimalSurcharge, parseBaseFare, type PricingRule } from '../../../lib/pricing'
 import { parseICalDates } from '../../../lib/ical-parser'
 
 type PagesContext = {
@@ -156,12 +156,13 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const db = env.DB as any
       const booking = await db.prepare(
-        'SELECT id, status, adults, children, paid_amount FROM bookings WHERE id = ?',
+        'SELECT id, status, adults, children, pets, paid_amount FROM bookings WHERE id = ?',
       ).bind(body.id).first() as {
         id: string
         status: string
         adults: number
         children: number
+        pets: number
         paid_amount: number
       } | null
       if (!booking) return json({ error: 'Booking not found' }, 404)
@@ -211,8 +212,15 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
         'council_tax_per_person_per_night',
         String(COUNCIL_TAX_PER_PERSON_PER_NIGHT),
       ), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
+      const animalSurchargeAmount = parseAnimalSurcharge(await d1GetSetting(env.DB, 'animal_surcharge', '0'))
+      const animalSurchargeActive = (await d1GetSetting(env.DB, 'animal_surcharge_active', 'false')) === 'true'
+      const animalSurcharge = calculateAnimalSurcharge(
+        animalSurchargeAmount,
+        animalSurchargeActive,
+        Number(booking.pets) > 0,
+      )
       const newTotal = Math.round(
-        (price.subtotal + nights * guestCount * councilTax) * 100,
+        (price.subtotal + nights * guestCount * councilTax + animalSurcharge) * 100,
       ) / 100
       const paidAmount = Number(booking.paid_amount)
       const dueAmount = Math.max(0, newTotal - paidAmount)

@@ -57,7 +57,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
    window.location.href = data.url
   } catch (error) {
    console.error('Booking checkout failed', error)
-   setCheckoutError(error instanceof Error ? error.message : 'Errore sconosciuto')
+   setCheckoutError(t(locale, 'errors.checkout'))
    setIsLoadingPayment(false)
   }
  }
@@ -249,6 +249,12 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
              {formatCurrency(price.councilTax)}
             </dd>
            </div>
+           {price.animalSurcharge > 0 && (
+            <div className="flex justify-between">
+             <dt className="text-muted-foreground">{t(locale, 'widgets.animalSurcharge')}</dt>
+             <dd className="text-foreground">{formatCurrency(price.animalSurcharge)}</dd>
+            </div>
+           )}
            <div className="flex justify-between border-t border-border pt-3 text-base font-medium text-foreground">
             <dt>{t(locale, 'widgets.total')}</dt>
             <dd>{formatCurrency(price.total)}</dd>

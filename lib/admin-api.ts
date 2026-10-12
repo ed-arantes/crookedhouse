@@ -68,6 +68,7 @@ const ADMIN_ERROR_TRANSLATIONS: Record<string, string> = {
   'Invalid recurring date adjustment condition': 'Variazione ricorrente annuale non valida.',
   'Invalid night discount condition': 'Sconto per durata non valido.',
   'Invalid council tax amount': 'Importo della tassa di soggiorno non valido.',
+  'Invalid animal surcharge': 'Importo del supplemento animali non valido.',
   'Invalid base fare': 'Tariffa base non valida.',
   'Guest details encryption is not configured': 'La cifratura dei dati degli ospiti non è configurata.',
   'Missing booking id': 'Identificativo della prenotazione mancante.',
@@ -461,6 +462,8 @@ export type PricingData = {
   rules: PricingRule[]
   council_tax_per_person_per_night: number
   base_fare_per_night: number | null
+  animal_surcharge: number
+  animal_surcharge_active: boolean
 }
 
 export function fetchPricingData(): Promise<PricingData> {
@@ -496,6 +499,14 @@ export function updateBaseFare(baseFare: number): Promise<{ ok: boolean }> {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ base_fare: baseFare }),
+  })
+}
+
+export function updateAnimalSurcharge(amount: number, active: boolean): Promise<{ ok: boolean }> {
+  return adminFetch('/api/admin/pricing', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ animal_surcharge: amount, animal_surcharge_active: active }),
   })
 }
 

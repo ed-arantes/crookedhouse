@@ -1,9 +1,11 @@
 import { json, requireAdmin, d1GetSetting, d1SetSetting, type AdminEnv } from '../../_lib/admin'
-import { parseBaseFare, type PricingRule } from '../../../lib/pricing'
+import { parseAnimalSurcharge, parseBaseFare, type PricingRule } from '../../../lib/pricing'
 
 const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
 const COUNCIL_TAX_DEFAULT = '2'
 const BASE_FARE_KEY = 'base_fare_per_night'
+const ANIMAL_SURCHARGE_KEY = 'animal_surcharge'
+const ANIMAL_SURCHARGE_ACTIVE_KEY = 'animal_surcharge_active'
 
 type PagesContext = {
   request: Request
@@ -43,8 +45,16 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
 
   const councilTax = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, COUNCIL_TAX_DEFAULT), 10) || 2
   const baseFare = parseBaseFare(await d1GetSetting(env.DB, BASE_FARE_KEY, ''))
+  const animalSurcharge = parseAnimalSurcharge(await d1GetSetting(env.DB, ANIMAL_SURCHARGE_KEY, '0'))
+  const animalSurchargeActive = (await d1GetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false')) === 'true'
 
-  return json({ rules, council_tax_per_person_per_night: councilTax, base_fare_per_night: baseFare })
+  return json({
+    rules,
+    council_tax_per_person_per_night: councilTax,
+    base_fare_per_night: baseFare,
+    animal_surcharge: animalSurcharge,
+    animal_surcharge_active: animalSurchargeActive,
+  })
 }
 
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -100,6 +110,8 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
     id?: string
     council_tax?: number
     base_fare?: number
+    animal_surcharge?: number
+    animal_surcharge_active?: boolean
     name?: string
     type?: PricingRule['type']
     start_date?: string
@@ -123,6 +135,23 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
       return json({ error: 'Invalid base fare' }, 400)
     }
     await d1SetSetting(env.DB, BASE_FARE_KEY, String(body.base_fare))
+    return json({ ok: true })
+  }
+
+  if (body?.animal_surcharge !== undefined || body?.animal_surcharge_active !== undefined) {
+    if (body.animal_surcharge === undefined || typeof body.animal_surcharge_active !== 'boolean' ||
+      !Number.isFinite(body.animal_surcharge) || body.animal_surcharge < 0 ||
+      body.animal_surcharge > 100000) {
+      return json({ error: 'Invalid animal surcharge' }, 400)
+    }
+    const amount = Math.round(body.animal_surcharge * 100) / 100
+    if (body.animal_surcharge_active) {
+      await d1SetSetting(env.DB, ANIMAL_SURCHARGE_KEY, String(amount))
+      await d1SetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'true')
+    } else {
+      await d1SetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false')
+      await d1SetSetting(env.DB, ANIMAL_SURCHARGE_KEY, String(amount))
+    }
     return json({ ok: true })
   }
 

@@ -49,7 +49,7 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
       <h1 className="type-display mt-5 whitespace-pre-line font-serif font-medium text-background">
        <RichText text={t(locale, 'hero.title')} />
       </h1>
-      <p className="type-body mx-auto mt-4 max-w-none text-justify text-pretty text-background/90">
+      <p className="type-body mx-auto mt-4 max-w-none text-center text-pretty text-background/90">
        <RichText text={t(locale, 'hero.description')} />
       </p>
     </div>

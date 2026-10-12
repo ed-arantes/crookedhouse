@@ -19,6 +19,22 @@ export type BookingPrice = {
   nightly_prices: Array<{ date: string; price: number }>
 }
 
+export function parseAnimalSurcharge(value: string): number {
+  const amount = Number(value)
+  if (!value.trim() || !Number.isFinite(amount) || amount < 0) {
+    throw new Error('Configured animal surcharge is invalid')
+  }
+  return Math.round(amount * 100) / 100
+}
+
+export function calculateAnimalSurcharge(
+  amount: number,
+  active: boolean,
+  hasAnimals: boolean,
+): number {
+  return active && hasAnimals ? Math.round(amount * 100) / 100 : 0
+}
+
 function monthDayValue(value: string): number | null {
   const match = /^(\d{2})-(\d{2})$/.exec(value)
   if (!match) return null

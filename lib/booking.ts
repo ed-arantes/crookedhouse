@@ -105,6 +105,7 @@ export type PriceBreakdown = {
  nights: number
  subtotal: number
  councilTax: number
+ animalSurcharge: number
  total: number
 }
 

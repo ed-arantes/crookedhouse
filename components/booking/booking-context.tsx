@@ -58,26 +58,38 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut])
   const guestCount = guests.adults + guests.children
 
-  const [price, setPrice] = useState<PriceBreakdown>({ nights: 0, subtotal: 0, councilTax: 0, total: 0 })
+  const [price, setPrice] = useState<PriceBreakdown>({
+    nights: 0,
+    subtotal: 0,
+    councilTax: 0,
+    animalSurcharge: 0,
+    total: 0,
+  })
 
   useEffect(() => {
     if (nights <= 0) {
-      setPrice({ nights: 0, subtotal: 0, councilTax: 0, total: 0 })
+      setPrice({ nights: 0, subtotal: 0, councilTax: 0, animalSurcharge: 0, total: 0 })
       return
     }
     const ci = checkIn ? formatDateLocal(checkIn) : undefined
     const co = checkOut ? formatDateLocal(checkOut) : undefined
     if (!ci || !co) return
 
-    fetch(apiUrl(`/api/public/price?check_in=${ci}&check_out=${co}&guests=${guestCount}`))
+    fetch(apiUrl(`/api/public/price?check_in=${ci}&check_out=${co}&guests=${guestCount}&pets=${guests.pets}`))
       .then((r) => r.ok ? r.json() : null)
-      .then((data: { nights: number; subtotal: number; councilTax: number; total: number } | null) => {
+      .then((data: { nights: number; subtotal: number; councilTax: number; animalSurcharge: number; total: number } | null) => {
         if (data) {
-          setPrice({ nights: data.nights, subtotal: data.subtotal, councilTax: data.councilTax, total: data.total })
+          setPrice({
+            nights: data.nights,
+            subtotal: data.subtotal,
+            councilTax: data.councilTax,
+            animalSurcharge: data.animalSurcharge,
+            total: data.total,
+          })
         }
       })
       .catch(() => {})
-  }, [checkIn, checkOut, nights, guestCount])
+  }, [checkIn, checkOut, nights, guestCount, guests.pets])
 
   const value = useMemo<BookingState>(
     () => ({

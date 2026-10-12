@@ -1,8 +1,10 @@
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../../lib/booking'
-import { calculateBookingPrice, parseBaseFare, type PricingRule } from '../../../lib/pricing'
+import { calculateAnimalSurcharge, calculateBookingPrice, parseAnimalSurcharge, parseBaseFare, type PricingRule } from '../../../lib/pricing'
 import { json, d1GetSetting, type AdminEnv } from '../../_lib/admin'
 
 const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
+const ANIMAL_SURCHARGE_KEY = 'animal_surcharge'
+const ANIMAL_SURCHARGE_ACTIVE_KEY = 'animal_surcharge_active'
 
 type PagesContext = {
   request: Request
@@ -14,6 +16,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const checkIn = url.searchParams.get('check_in')
   const checkOut = url.searchParams.get('check_out')
   const guests = parseInt(url.searchParams.get('guests') || '2', 10)
+  const hasAnimals = url.searchParams.get('pets') === 'true'
 
   if (!checkIn || !checkOut || !/^\d{4}-\d{2}-\d{2}$/.test(checkIn) || !/^\d{4}-\d{2}-\d{2}$/.test(checkOut)) {
     return json({ error: 'Invalid dates' }, 400)
@@ -38,6 +41,9 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const price = calculateBookingPrice(checkIn, checkOut, baseFare, rules)
   const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
   const councilTax = nights * guests * councilTaxRate
+  const animalSurchargeAmount = parseAnimalSurcharge(await d1GetSetting(env.DB, ANIMAL_SURCHARGE_KEY, '0'))
+  const animalSurchargeActive = (await d1GetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false')) === 'true'
+  const animalSurcharge = calculateAnimalSurcharge(animalSurchargeAmount, animalSurchargeActive, hasAnimals)
 
   return json({
     nights,
@@ -46,7 +52,8 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     discountPercent: price.discount_percent,
     discountAmount: price.discount_amount,
     councilTax,
-    total: price.subtotal + councilTax,
+    animalSurcharge,
+    total: price.subtotal + councilTax + animalSurcharge,
     nightlyPrices: price.nightly_prices,
     averagePerNight: price.subtotal / nights,
   })

@@ -15,6 +15,7 @@ import {
   updatePricingRule,
   updateCouncilTax,
   updateBaseFare,
+  updateAnimalSurcharge,
   deletePricingRule,
   fetchUsage,
   fetchAdminMessages,
@@ -745,6 +746,8 @@ export function PricingTab() {
   const [rules, setRules] = useState<PricingRule[]>([])
   const [councilTax, setCouncilTax] = useState('2')
   const [baseFare, setBaseFare] = useState('')
+  const [animalSurcharge, setAnimalSurcharge] = useState('0')
+  const [animalSurchargeActive, setAnimalSurchargeActive] = useState(false)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<PricingRule | null>(null)
   const [isAdding, setIsAdding] = useState(false)
@@ -753,6 +756,8 @@ export function PricingTab() {
   const [taxStatus, setTaxStatus] = useState('')
   const [fareSaving, setFareSaving] = useState(false)
   const [fareStatus, setFareStatus] = useState('')
+  const [animalSurchargeSaving, setAnimalSurchargeSaving] = useState(false)
+  const [animalSurchargeStatus, setAnimalSurchargeStatus] = useState('')
   const [loadError, setLoadError] = useState('')
 
   const load = useCallback(async () => {
@@ -762,6 +767,8 @@ export function PricingTab() {
       setRules(data.rules)
       setCouncilTax(String(data.council_tax_per_person_per_night))
       setBaseFare(data.base_fare_per_night === null ? '' : String(data.base_fare_per_night))
+      setAnimalSurcharge(String(data.animal_surcharge))
+      setAnimalSurchargeActive(data.animal_surcharge_active)
       setLoadError('')
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Impossibile caricare i prezzi.')
@@ -829,6 +836,24 @@ export function PricingTab() {
     }
   }
 
+  async function handleSaveAnimalSurcharge() {
+    const amount = Number(animalSurcharge)
+    if (!animalSurcharge.trim() || !Number.isFinite(amount) || amount < 0) {
+      setAnimalSurchargeStatus('Inserisci un importo valido (zero o superiore).')
+      return
+    }
+    setAnimalSurchargeSaving(true)
+    setAnimalSurchargeStatus('')
+    try {
+      await updateAnimalSurcharge(amount, animalSurchargeActive)
+      setAnimalSurchargeStatus('Supplemento animali salvato.')
+    } catch (error) {
+      setAnimalSurchargeStatus(error instanceof Error ? error.message : 'Errore nel salvataggio.')
+    } finally {
+      setAnimalSurchargeSaving(false)
+    }
+  }
+
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
 
   return (
@@ -886,6 +911,43 @@ export function PricingTab() {
             <Save className="h-4 w-4" /> {taxSaving ? '...' : 'Salva'}
           </button>
           {taxStatus && <span className="text-xs text-muted-foreground">{taxStatus}</span>}
+        </div>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h3 className="mb-3 text-sm font-medium text-foreground">Supplemento animali</h3>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Importo fisso una tantum per prenotazione, applicato solo quando il supplemento è attivo e sono selezionati animali.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              checked={animalSurchargeActive}
+              onChange={(event) => setAnimalSurchargeActive(event.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            Attivo
+          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">€</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={animalSurcharge}
+              onChange={(event) => setAnimalSurcharge(event.target.value)}
+              aria-label="Importo del supplemento animali"
+              className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <button
+            onClick={handleSaveAnimalSurcharge}
+            disabled={animalSurchargeSaving}
+            className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" /> {animalSurchargeSaving ? '...' : 'Salva'}
+          </button>
+          {animalSurchargeStatus && <span role="status" className="text-xs text-muted-foreground">{animalSurchargeStatus}</span>}
         </div>
       </div>
 

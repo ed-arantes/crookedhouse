@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { setContentOverrides, type Locale } from '@/lib/i18n'
+import { setContentOverrides, t, type Locale } from '@/lib/i18n'
 import { useContentVersion } from '@/hooks/use-content-version'
 import type { Review } from '@/lib/reviews'
 import type { ImageItem, ImageSection } from '@/lib/images'
@@ -71,12 +71,12 @@ export function SiteDataProvider({ locale, children }: { locale: Locale; childre
       <div className="flex min-h-screen items-center justify-center bg-background p-6 text-center">
         {contentError ? (
           <div className="space-y-4">
-            <p className="text-foreground">I contenuti non sono disponibili al momento.</p>
+            <p className="text-foreground">{t(locale, 'errors.contentUnavailable')}</p>
             <button className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground" onClick={() => setAttempt((value) => value + 1)}>
-              Riprova
+              {t(locale, 'actions.retry')}
             </button>
           </div>
-        ) : <p className="text-sm text-muted-foreground">Caricamento...</p>}
+        ) : <p className="text-sm text-muted-foreground">{t(locale, 'status.loading')}</p>}
       </div>
     )
   }

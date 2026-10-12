@@ -1,5 +1,5 @@
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../lib/booking'
-import { calculateBookingPrice, parseBaseFare, type PricingRule } from '../../lib/pricing'
+import { calculateAnimalSurcharge, calculateBookingPrice, parseAnimalSurcharge, parseBaseFare, type PricingRule } from '../../lib/pricing'
 import {
   json,
   stripeRequest,
@@ -33,6 +33,8 @@ async function getPricingRules(db: Record<string, unknown>): Promise<PricingRule
 }
 
 const COUNCIL_TAX_KEY = 'council_tax_per_person_per_night'
+const ANIMAL_SURCHARGE_KEY = 'animal_surcharge'
+const ANIMAL_SURCHARGE_ACTIVE_KEY = 'animal_surcharge_active'
 
 type PagesContext = {
   request: Request
@@ -60,7 +62,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const end = parseDate(body?.checkOut)
     const adults = Number(body?.guests?.adults)
     const children = Number(body?.guests?.children)
-    const pets = body?.guests?.pets ? 1 : 0
+    const pets = body?.guests?.pets === true ? 1 : 0
     const guestCount = adults + children
 
     const firstName = typeof body?.firstName === 'string' ? body.firstName.trim() : ''
@@ -124,13 +126,16 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const subtotal = price.subtotal
     const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
     const councilTax = nights * guestCount * councilTaxRate
-    const total = subtotal + councilTax
+    const animalSurchargeAmount = parseAnimalSurcharge(await d1GetSetting(env.DB, ANIMAL_SURCHARGE_KEY, '0'))
+    const animalSurchargeActive = (await d1GetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false')) === 'true'
+    const animalSurcharge = calculateAnimalSurcharge(animalSurchargeAmount, animalSurchargeActive, pets === 1)
+    const total = subtotal + councilTax + animalSurcharge
     const origin = new URL(request.url).origin
     const form = new URLSearchParams({
       mode: 'payment',
       'line_items[0][quantity]': '1',
       'line_items[0][price_data][currency]': 'eur',
-      'line_items[0][price_data][unit_amount]': String(Math.round(total * 100)),
+      'line_items[0][price_data][unit_amount]': String(Math.round((subtotal + councilTax) * 100)),
       'line_items[0][price_data][product_data][name]': 'Crooked House Booking',
       'line_items[0][price_data][product_data][description]': `${nights} night${nights > 1 ? 's' : ''} \u00b7 ${guestCount} guest${guestCount > 1 ? 's' : ''}`,
       customer_email: email,
@@ -140,10 +145,18 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       'metadata[check_out]': String(body.checkOut),
       'metadata[nights]': String(nights),
       'metadata[guests]': String(guestCount),
+      'metadata[pets]': String(pets),
+      'metadata[animal_surcharge]': String(animalSurcharge),
       'metadata[first_name]': firstName,
       'metadata[last_name]': lastName,
       'metadata[email]': email,
     })
+    if (animalSurcharge > 0) {
+      form.set('line_items[1][quantity]', '1')
+      form.set('line_items[1][price_data][currency]', 'eur')
+      form.set('line_items[1][price_data][unit_amount]', String(Math.round(animalSurcharge * 100)))
+      form.set('line_items[1][price_data][product_data][name]', 'Pet surcharge')
+    }
 
     const result = await stripeRequest<StripeCheckoutSession>(env, '/checkout/sessions', {
       method: 'POST',

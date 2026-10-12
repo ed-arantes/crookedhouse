@@ -61,6 +61,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
            key={photo.id}
            type="button"
            onClick={() => setActive(globalIndex)}
+           aria-label={t(locale, 'gallery.openPhoto', { index: globalIndex + 1 })}
            className="group relative aspect-[3/4] overflow-hidden rounded-2xl md:aspect-auto md:h-[220px]"
           >
            <Image
@@ -68,7 +69,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
             alt={photo.alt}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
            />
            <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
           </button>
@@ -102,7 +103,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
      <button
       type="button"
       onClick={close}
-      aria-label="Close gallery"
+      aria-label={t(locale, 'gallery.closePhoto')}
       className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-background/10 text-background transition-colors hover:bg-background/20"
      >
       <X className="h-6 w-6" />
@@ -113,7 +114,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
        e.stopPropagation()
        prev()
       }}
-      aria-label="Previous photo"
+      aria-label={t(locale, 'gallery.previousPhoto')}
       className="absolute left-4 flex h-11 w-11 items-center justify-center rounded-full bg-background/10 text-background transition-colors hover:bg-background/20"
      >
       <ChevronLeft className="h-6 w-6" />
@@ -136,7 +137,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
        e.stopPropagation()
        next()
       }}
-      aria-label="Next photo"
+      aria-label={t(locale, 'gallery.nextPhoto')}
       className="absolute right-4 flex h-11 w-11 items-center justify-center rounded-full bg-background/10 text-background transition-colors hover:bg-background/20"
      >
       <ChevronRight className="h-6 w-6" />
