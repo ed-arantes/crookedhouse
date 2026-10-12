@@ -24,7 +24,6 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
  const actionPillClass = 'w-[7rem] justify-center'
  const NAV = [
   { label: t(locale, 'nav.apartment'), href: isHomePage ? '#about' : `/${locale}#about` },
-  { label: t(locale, 'nav.gallery'), href: isHomePage ? '#gallery' : `/${locale}#gallery` },
   { label: t(locale, 'nav.amenities'), href: isHomePage ? '#amenities' : `/${locale}#amenities` },
   { label: t(locale, 'nav.reviews'), href: isHomePage ? '#reviews' : `/${locale}#reviews` },
   { label: t(locale, 'nav.location'), href: isHomePage ? '#location' : `/${locale}#location` },
@@ -109,13 +108,12 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   >
    <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
     <a
-     href={isHomePage ? '#top' : `/${locale}#top`}
+     href="#top"
      onClick={(e) => {
       e.preventDefault()
       window.scrollTo({ top: 0, behavior: 'smooth' })
      }}
-     className="type-heading font-serif font-semibold tracking-tight transition-colors"
-     style={{ color: 'var(--accent)' }}
+     className="type-heading font-serif font-semibold tracking-tight text-foreground transition-colors"
     >
      Crooked House
     </a>

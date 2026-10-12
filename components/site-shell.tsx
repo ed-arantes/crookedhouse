@@ -6,7 +6,6 @@ import { Apartment } from '@/components/apartment'
 import { Layout } from '@/components/layout'
 import { Amenities } from '@/components/amenities'
 import { Explore } from '@/components/explore'
-import { Gallery } from '@/components/gallery'
 import { Services } from '@/components/services'
 import { Reviews } from '@/components/reviews'
 import { Location } from '@/components/location'
@@ -24,7 +23,6 @@ function SiteContent({ locale }: { locale: Locale }) {
         <Hero locale={locale} />
         <Apartment locale={locale} />
         <Layout locale={locale} />
-        <Gallery locale={locale} />
         <Services locale={locale} />
         <Amenities locale={locale} />
         <Explore locale={locale} />
@@ -45,4 +43,3 @@ export function SiteShell({ locale }: { locale: Locale }) {
     </SiteDataProvider>
   )
 }
-

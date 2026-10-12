@@ -165,10 +165,8 @@ export default function AdminPage() {
 
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Intestazione',
-  gallery: 'Galleria',
   apartment: 'Appartamento',
   layout: 'Disposizione',
-  services: 'Servizi',
   location: 'Posizione',
   explore: 'Esplora',
 }
@@ -193,7 +191,7 @@ function ImagesTab() {
   const [dragIdx, setDragIdx] = useState<{ section: string; index: number } | null>(null)
   const [overIdx, setOverIdx] = useState<{ section: string; index: number } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [pendingSection, setPendingSection] = useState('gallery')
+  const [pendingSection, setPendingSection] = useState('layout')
   const [pendingAlt, setPendingAlt] = useState('')
   const [pendingSpan, setPendingSpan] = useState('')
   const [editingAlt, setEditingAlt] = useState<string | null>(null)

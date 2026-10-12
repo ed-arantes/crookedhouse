@@ -22,6 +22,11 @@ const NEARBY = [
   labelKey: 'location.nearby.airport',
   detailKey: 'location.nearby.airportDetail',
  },
+ {
+  icon: Plane,
+  labelKey: 'location.nearby.malpensa',
+  detailKey: 'location.nearby.malpensaDetail',
+ },
 ]
 
 export function Location({ locale = 'en' }: { locale?: Locale }) {

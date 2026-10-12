@@ -15,7 +15,7 @@ type SiteData = {
 
 const SiteDataContext = createContext<SiteData>({
   reviews: [],
-  images: { hero: [], gallery: [], apartment: [], layout: [], services: [], location: [], explore: [] },
+  images: { hero: [], apartment: [], layout: [], location: [], explore: [] },
   loaded: false,
 })
 
@@ -29,7 +29,7 @@ function ContentSync({ children }: { children: ReactNode }) {
 }
 
 const EMPTY_IMAGES: Record<ImageSection, ImageItem[]> = {
-  hero: [], gallery: [], apartment: [], layout: [], services: [], location: [], explore: [],
+  hero: [], apartment: [], layout: [], location: [], explore: [],
 }
 
 export function SiteDataProvider({ locale, children }: { locale: Locale; children: ReactNode }) {

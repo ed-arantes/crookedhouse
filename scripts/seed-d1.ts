@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
 
-const locales = ['it', 'en', 'fr', 'de', 'es'] as const
+const locales = ['it', 'en', 'fr', 'de', 'es', 'ru'] as const
 const italianOnly = process.argv.includes('--italian-only')
 const selectedLocales: readonly (typeof locales)[number][] = italianOnly ? ['it'] : locales
 

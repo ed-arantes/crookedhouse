@@ -25,7 +25,6 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
 
  const LINKS = [
   { label: t(locale, 'nav.apartment'), href: '#about' },
-  { label: t(locale, 'nav.gallery'), href: '#gallery' },
   { label: t(locale, 'nav.amenities'), href: '#amenities' },
   { label: t(locale, 'nav.reviews'), href: '#reviews' },
   { label: t(locale, 'nav.location'), href: '#location' },

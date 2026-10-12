@@ -37,7 +37,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
  }, [active, close, prev, next])
 
  return (
-  <section id="gallery" className="bg-secondary/60 py-20 md:py-28">
+  <section id="layout" className="bg-secondary/60 py-20 md:py-28">
    <div className="mx-auto max-w-7xl px-5 md:px-8">
     <div className="mb-8 flex flex-col gap-3 md:mb-10">
      <div>
