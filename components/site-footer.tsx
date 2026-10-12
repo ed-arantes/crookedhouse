@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin, Smartphone, LocateFixed } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 
@@ -83,11 +83,19 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
       <ul className="mt-4 space-y-3 text-sm text-primary-foreground/80">
        <li className="flex items-center gap-3">
         <MapPin className="h-4 w-4 shrink-0" />
-        Via Dante Alighieri 2, Grandola ed Uniti, Como, 22010
+        Via Dante Alighieri 2, Frazione Naggio, Grandola ed Uniti, Como, 22010
+       </li>
+       <li className="flex items-center gap-3">
+        <LocateFixed className="h-4 w-4 shrink-0" />
+        46.0411° N, 9.20166° E
        </li>
        <li className="flex items-center gap-3">
         <Phone className="h-4 w-4 shrink-0" />
-        +39 0123 000 000
+        (Struttura) +39 0344 536 041
+       </li>
+       <li className="flex items-center gap-3">
+        <Smartphone className="h-4 w-4 shrink-0" />
+        (Mara) +39 346 686 2295 (incluso WhatsApp)
        </li>
        <li className="flex items-center gap-3">
         <Mail className="h-4 w-4 shrink-0" />

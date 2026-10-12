@@ -27,7 +27,7 @@ INSERT INTO translations (locale, key, value) VALUES ('it', 'services.body', 'Og
 INSERT INTO translations (locale, key, value) VALUES ('it', 'reviews.headline', 'Valutato eccezionale da ogni ospite') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('it', 'reviews.count', '{count} recensioni') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('it', 'location.headline', 'Nelle colline sopra Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
-INSERT INTO translations (locale, key, value) VALUES ('it', 'location.address', 'Via Dante Alighieri 2, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
+INSERT INTO translations (locale, key, value) VALUES ('it', 'location.address', 'Via Dante Alighieri 2, Frazione Naggio, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('it', 'location.gettingAround', 'Come muoversi') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('it', 'location.nearby.lakefront', 'Lungolago di Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('it', 'location.nearby.lakefrontDetail', '5 min in auto') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
@@ -109,7 +109,7 @@ INSERT INTO translations (locale, key, value) VALUES ('en', 'services.body', 'Ev
 INSERT INTO translations (locale, key, value) VALUES ('en', 'reviews.headline', 'Rated exceptional by every guest') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('en', 'reviews.count', '{count} reviews') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('en', 'location.headline', 'In the hills above Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
-INSERT INTO translations (locale, key, value) VALUES ('en', 'location.address', 'Via Dante Alighieri 2, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
+INSERT INTO translations (locale, key, value) VALUES ('en', 'location.address', 'Via Dante Alighieri 2, Frazione Naggio, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('en', 'location.gettingAround', 'Getting around') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('en', 'location.nearby.lakefront', 'Menaggio lakefront') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('en', 'location.nearby.lakefrontDetail', '5 min drive') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
@@ -191,7 +191,7 @@ INSERT INTO translations (locale, key, value) VALUES ('fr', 'services.body', 'Ch
 INSERT INTO translations (locale, key, value) VALUES ('fr', 'reviews.headline', 'Évalué comme exceptionnel par chaque invité') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('fr', 'reviews.count', '{count} avis') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('fr', 'location.headline', 'Dans les collines au-dessus de Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
-INSERT INTO translations (locale, key, value) VALUES ('fr', 'location.address', 'Via Dante Alighieri 2, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
+INSERT INTO translations (locale, key, value) VALUES ('fr', 'location.address', 'Via Dante Alighieri 2, Frazione Naggio, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('fr', 'location.gettingAround', 'Se déplacer') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('fr', 'location.nearby.lakefront', 'Front de lac de Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('fr', 'location.nearby.lakefrontDetail', '5 min en voiture') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
@@ -273,7 +273,7 @@ INSERT INTO translations (locale, key, value) VALUES ('de', 'services.body', 'Je
 INSERT INTO translations (locale, key, value) VALUES ('de', 'reviews.headline', 'Von jedem Gast als außergewöhnlich bewertet') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('de', 'reviews.count', '{count} Bewertungen') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('de', 'location.headline', 'In den Hügeln über Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
-INSERT INTO translations (locale, key, value) VALUES ('de', 'location.address', 'Via Dante Alighieri 2, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
+INSERT INTO translations (locale, key, value) VALUES ('de', 'location.address', 'Via Dante Alighieri 2, Frazione Naggio, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('de', 'location.gettingAround', 'Anreise') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('de', 'location.nearby.lakefront', 'Menaggio Uferpromenade') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('de', 'location.nearby.lakefrontDetail', '5 Min. Fahrt') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
@@ -355,7 +355,7 @@ INSERT INTO translations (locale, key, value) VALUES ('es', 'services.body', 'Ca
 INSERT INTO translations (locale, key, value) VALUES ('es', 'reviews.headline', 'Valorado como excepcional por cada huésped') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('es', 'reviews.count', '{count} reseñas') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('es', 'location.headline', 'En las colinas sobre Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
-INSERT INTO translations (locale, key, value) VALUES ('es', 'location.address', 'Via Dante Alighieri 2, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
+INSERT INTO translations (locale, key, value) VALUES ('es', 'location.address', 'Via Dante Alighieri 2, Frazione Naggio, Grandola ed Uniti, Como, 22010') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('es', 'location.gettingAround', 'Cómo moverse') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('es', 'location.nearby.lakefront', 'Malecón de Menaggio') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
 INSERT INTO translations (locale, key, value) VALUES ('es', 'location.nearby.lakefrontDetail', '5 min en coche') ON CONFLICT(locale, key) DO UPDATE SET value = excluded.value;
