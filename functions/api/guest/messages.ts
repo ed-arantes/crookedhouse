@@ -21,7 +21,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { results } = await (env.DB as any).prepare(
-      'SELECT id, booking_id, sender, message_encrypted, created_at FROM booking_messages WHERE booking_id = ? ORDER BY created_at, id',
+      'SELECT id, booking_id, sender, message_encrypted, created_at FROM booking_messages WHERE booking_id = ? ORDER BY created_at, rowid',
     ).bind(bookingId).all()
     const key = env.BOOKING_ENCRYPTION_KEY || ''
     const messages = await Promise.all((results as MessageRow[]).map(async (row) => ({

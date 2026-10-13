@@ -191,11 +191,12 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
       }
 
       const { results: pricingRows } = await db.prepare(
-        'SELECT id, name, type, start_date, end_date, adjustment_percent, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date',
+        'SELECT id, name, type, start_date, end_date, price_per_night, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date',
       ).all()
       const rules = (pricingRows as Array<Omit<PricingRule, 'type'> & { type: string }>).map((rule) => ({
         ...rule,
         type: (rule.type === 'date_range' ? 'date_adjustment' : rule.type) as PricingRule['type'],
+        price_per_night: Number(rule.price_per_night ?? 0) / 100,
       }))
       const baseFare = parseBaseFare(await d1GetSetting(env.DB, 'base_fare_per_night', ''))
       if (baseFare === null) return json({ error: 'Base fare is not configured' }, 503)
@@ -206,7 +207,7 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
         dateCursor.setUTCDate(dateCursor.getUTCDate() + 1)
       }
       const price = calculateBookingPrice(body.check_in, body.check_out, baseFare, rules)
-      const guestCount = Number(booking.adults) + Number(booking.children)
+      const adults = Number(booking.adults)
       const councilTax = parseInt(await d1GetSetting(
         env.DB,
         'council_tax_per_person_per_night',
@@ -220,7 +221,7 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
         Number(booking.pets) > 0,
       )
       const newTotal = Math.round(
-        (price.subtotal + nights * guestCount * councilTax + animalSurcharge) * 100,
+        (price.subtotal + nights * adults * councilTax + animalSurcharge) * 100,
       ) / 100
       const paidAmount = Number(booking.paid_amount)
       const dueAmount = Math.max(0, newTotal - paidAmount)

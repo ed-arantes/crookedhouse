@@ -452,7 +452,7 @@ export type PricingRule = {
   type: 'date_adjustment' | 'annual_adjustment' | 'nights_discount'
   start_date: string
   end_date: string
-  adjustment_percent: number
+  price_per_night: number
   min_nights: number
   discount_percent: number
   priority: number

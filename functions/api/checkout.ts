@@ -17,7 +17,7 @@ const ICAL_URL_KEY = 'ical_url'
 async function getPricingRules(db: Record<string, unknown>): Promise<PricingRule[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { results } = await (db as any)
-    .prepare('SELECT id, name, type, start_date, end_date, adjustment_percent, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date')
+    .prepare('SELECT id, name, type, start_date, end_date, price_per_night, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date')
     .all()
   return (results ?? []).map((row: Record<string, unknown>) => ({
     id: String(row.id ?? ''),
@@ -25,7 +25,7 @@ async function getPricingRules(db: Record<string, unknown>): Promise<PricingRule
     type: (row.type === 'date_range' ? 'date_adjustment' : row.type ?? 'date_adjustment') as PricingRule['type'],
     start_date: String(row.start_date ?? ''),
     end_date: String(row.end_date ?? ''),
-    adjustment_percent: Number(row.adjustment_percent ?? 0),
+    price_per_night: Number(row.price_per_night ?? 0) / 100,
     min_nights: Number(row.min_nights ?? 1),
     discount_percent: Number(row.discount_percent ?? 0),
     priority: Number(row.priority ?? 0),
@@ -68,9 +68,13 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const firstName = typeof body?.firstName === 'string' ? body.firstName.trim() : ''
     const lastName = typeof body?.lastName === 'string' ? body.lastName.trim() : ''
     const email = typeof body?.email === 'string' ? body.email.trim() : ''
+    const initialMessage = typeof body?.message === 'string' ? body.message.trim() : ''
     if (!firstName || firstName.length > 120 || !lastName || lastName.length > 120 ||
       !email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return json({ error: 'Invalid booking contact details' }, 400)
+    }
+    if (initialMessage.length > 2000) {
+      return json({ error: 'Message must be between 1 and 2000 characters' }, 400)
     }
 
     if (!start || !end || end <= start || !Number.isInteger(adults) || adults < 1 ||
@@ -125,7 +129,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const price = calculateBookingPrice(String(body.checkIn), String(body.checkOut), baseFare, pricingRules)
     const subtotal = price.subtotal
     const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
-    const councilTax = nights * guestCount * councilTaxRate
+    const councilTax = nights * adults * councilTaxRate
     const animalSurchargeAmount = parseAnimalSurcharge(await d1GetSetting(env.DB, ANIMAL_SURCHARGE_KEY, '0'))
     const animalSurchargeActive = (await d1GetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false')) === 'true'
     const animalSurcharge = calculateAnimalSurcharge(animalSurchargeAmount, animalSurchargeActive, pets === 1)
@@ -171,58 +175,48 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     console.log('BOOKING_ENCRYPTION_KEY present:', !!encKey, 'length:', encKey?.length)
 
     const bookingId = crypto.randomUUID()
-    const message = typeof body.message === 'string' ? body.message : ''
-
+    const message = initialMessage
+    const bookingMessageId = initialMessage ? crypto.randomUUID() : ''
+    let [storedFirstName, storedLastName, storedEmail, storedMessage] = [firstName, lastName, email, message]
     if (encKey) {
-      const [encFirst, encLast, encEmail, encMsg] = await Promise.all([
+      [storedFirstName, storedLastName, storedEmail, storedMessage] = await Promise.all([
         encrypt(firstName, encKey),
         encrypt(lastName, encKey),
         encrypt(email, encKey),
         encrypt(message, encKey),
       ])
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (env.DB as any).prepare(
-        'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(
-        bookingId,
-        result.id || '',
-        encFirst,
-        encLast,
-        encEmail,
-        String(body.checkIn),
-        String(body.checkOut),
-        nights,
-        adults,
-        children,
-        pets,
-        encMsg,
-        total,
-        'pending',
-      ).run()
     } else {
       // Fallback: save without encryption
       console.warn('BOOKING_ENCRYPTION_KEY not set — saving without encryption')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (env.DB as any).prepare(
-        'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(
-        bookingId,
-        result.id || '',
-        firstName,
-        lastName,
-        email,
-        String(body.checkIn),
-        String(body.checkOut),
-        nights,
-        adults,
-        children,
-        pets,
-        message,
-        total,
-        'pending',
-      ).run()
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = env.DB as any
+    const bookingStatement = db.prepare(
+      'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      bookingId,
+      result.id || '',
+      storedFirstName,
+      storedLastName,
+      storedEmail,
+      String(body.checkIn),
+      String(body.checkOut),
+      nights,
+      adults,
+      children,
+      pets,
+      storedMessage,
+      total,
+      'pending',
+    )
+    const statements = [bookingStatement]
+    if (initialMessage) {
+      statements.push(db.prepare(
+        "INSERT INTO booking_messages (id, booking_id, sender, message_encrypted) VALUES (?, ?, 'guest', ?)",
+      ).bind(bookingMessageId, bookingId, storedMessage))
+    }
+    await db.batch(statements)
 
     return json({ url: result.url })
   } catch (error: unknown) {

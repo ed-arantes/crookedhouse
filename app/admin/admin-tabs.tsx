@@ -28,7 +28,7 @@ import {
 } from '@/lib/admin-api'
 import { Plus, Pencil, Trash2, Save } from 'lucide-react'
 import { formatDateTimeEU, formatEU, parseEUDate } from '@/lib/format-date'
-import { formatDateLocal } from '@/lib/booking'
+import { formatCurrency, formatDateLocal } from '@/lib/booking'
 
 export function BookingsTab() {
   const [bookings, setBookings] = useState<AdminBooking[]>([])
@@ -889,7 +889,7 @@ export function PricingTab() {
       <div className="rounded-xl border border-border bg-card p-4">
         <h3 className="mb-3 text-sm font-medium text-foreground">Tassa di soggiorno</h3>
         <p className="mb-3 text-xs text-muted-foreground">
-          Tassa per persona, bambini esclusi.
+          Tassa per adulto, per notte. I bambini sono esclusi.
         </p>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -984,16 +984,16 @@ export function PricingTab() {
                       {rule.type === 'nights_discount'
                         ? 'Sconto durata'
                         : rule.type === 'annual_adjustment'
-                          ? 'Variazione ricorrente annuale'
-                          : 'Variazione date'}
+                          ? 'Prezzo ricorrente annuale'
+                          : 'Prezzo per date'}
                     </span>
                   </div>
                   {rule.type === 'date_adjustment' || rule.type === 'annual_adjustment' ? (
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
                       <span>Dal: <span className="text-foreground">{rule.type === 'annual_adjustment' ? formatMonthDay(rule.start_date) : formatEU(rule.start_date)}</span></span>
                       <span>Al: <span className="text-foreground">{rule.type === 'annual_adjustment' ? formatMonthDay(rule.end_date) : formatEU(rule.end_date)}</span></span>
-                      <span>Variazione: <span className={`font-medium ${rule.adjustment_percent < 0 ? 'text-green-700' : 'text-foreground'}`}>{rule.adjustment_percent > 0 ? '+' : ''}{rule.adjustment_percent}%</span></span>
-                      <span>Applicata insieme alle altre variazioni sulle stesse date</span>
+                      <span>Prezzo per notte: <span className="font-medium text-foreground">{formatCurrency(rule.price_per_night)}</span></span>
+                      <span>Se i periodi si sovrappongono, prevale quello più breve</span>
                     </div>
                   ) : (
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
@@ -1069,7 +1069,7 @@ function PricingRuleForm({
     end_date: rule?.type === 'annual_adjustment'
       ? formatMonthDay(rule.end_date)
       : rule ? formatEU(rule.end_date) : formatEU(formatDateLocal(followingWeek)),
-    adjustment_percent: rule ? String(rule.adjustment_percent) : '',
+    price_per_night: rule ? String(rule.price_per_night) : '',
     min_nights: String(rule?.min_nights ?? 1),
     discount_percent: rule ? String(rule.discount_percent) : '',
     priority: rule?.priority ?? 0,
@@ -1081,12 +1081,12 @@ function PricingRuleForm({
   }
 
   function handleSave() {
-    const adjustmentPercent = Number(form.adjustment_percent)
+    const pricePerNight = Number(form.price_per_night)
     const minNights = Number(form.min_nights)
     const discountPercent = Number(form.discount_percent)
     if ((form.type === 'date_adjustment' || form.type === 'annual_adjustment') &&
-      (!form.adjustment_percent.trim() || !Number.isFinite(adjustmentPercent) || adjustmentPercent < -100 || adjustmentPercent > 1000)) {
-      setValidationError('Inserisci una variazione percentuale tra -100 e 1000.')
+      (!form.price_per_night.trim() || !Number.isInteger(pricePerNight) || pricePerNight < 0 || pricePerNight > 100000)) {
+      setValidationError('Inserisci un prezzo intero per notte compreso tra €0 e €100.000.')
       return
     }
     if (form.type === 'annual_adjustment' &&
@@ -1112,7 +1112,7 @@ function PricingRuleForm({
       ...form,
       start_date: form.type === 'annual_adjustment' ? toMonthDay(form.start_date) : parseEUDate(form.start_date)!,
       end_date: form.type === 'annual_adjustment' ? toMonthDay(form.end_date) : parseEUDate(form.end_date)!,
-      adjustment_percent: form.type !== 'nights_discount' ? adjustmentPercent : 0,
+      price_per_night: form.type !== 'nights_discount' ? pricePerNight : 0,
       min_nights: minNights,
       discount_percent: form.type === 'nights_discount' ? discountPercent : 0,
     })
@@ -1144,8 +1144,8 @@ function PricingRuleForm({
           }}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
         >
-          <option value="date_adjustment">Aumento / diminuzione per date</option>
-          <option value="annual_adjustment">Aumento / diminuzione ricorrente ogni anno</option>
+          <option value="date_adjustment">Prezzo fisso per date</option>
+          <option value="annual_adjustment">Prezzo fisso ricorrente ogni anno</option>
           <option value="nights_discount">Sconto per notti</option>
         </select>
       </div>
@@ -1182,20 +1182,20 @@ function PricingRuleForm({
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Aumento / diminuzione percentuale</label>
-            <div className="relative">
+            <label className="mb-1 block text-xs text-muted-foreground">Prezzo fisso per notte</label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">€</span>
               <input
                 type="number"
-                min="-100"
-                max="1000"
-                step="0.1"
-                value={form.adjustment_percent}
-                onChange={(e) => update('adjustment_percent', e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-8 text-sm outline-none focus:border-primary"
+                min="0"
+                max="100000"
+                step="1"
+                value={form.price_per_night}
+                onChange={(e) => update('price_per_night', e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Usa valori positivi per aumentare o negativi per diminuire. Le condizioni sovrapposte si sommano.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Il prezzo del periodo più breve prevale sulle date sovrapposte. Lo sconto per durata viene applicato dopo.</p>
           </div>
         </>
       ) : (

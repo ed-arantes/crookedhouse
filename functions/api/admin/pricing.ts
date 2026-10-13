@@ -37,7 +37,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     type: (row.type === 'date_range' ? 'date_adjustment' : row.type ?? 'date_adjustment') as PricingRule['type'],
     start_date: String(row.start_date ?? ''),
     end_date: String(row.end_date ?? ''),
-    adjustment_percent: Number(row.adjustment_percent ?? 0),
+    price_per_night: Number(row.price_per_night ?? 0) / 100,
     min_nights: Number(row.min_nights ?? 1),
     discount_percent: Number(row.discount_percent ?? 0),
     priority: Number(row.priority ?? 0),
@@ -67,14 +67,14 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
   }
   if (body.type === 'date_adjustment' &&
     (!/^\d{4}-\d{2}-\d{2}$/.test(body.start_date) || !/^\d{4}-\d{2}-\d{2}$/.test(body.end_date) ||
-      body.end_date < body.start_date || !Number.isFinite(body.adjustment_percent) ||
-      body.adjustment_percent < -100 || body.adjustment_percent > 1000)) {
+      body.end_date < body.start_date || !Number.isInteger(body.price_per_night) ||
+      body.price_per_night < 0 || body.price_per_night > 100000)) {
     return json({ error: 'Invalid date adjustment condition' }, 400)
   }
   if (body.type === 'annual_adjustment' &&
     (!isValidMonthDay(body.start_date) || !isValidMonthDay(body.end_date) ||
-      !Number.isFinite(body.adjustment_percent) || body.adjustment_percent < -100 ||
-      body.adjustment_percent > 1000)) {
+      !Number.isInteger(body.price_per_night) || body.price_per_night < 0 ||
+      body.price_per_night > 100000)) {
     return json({ error: 'Invalid recurring date adjustment condition' }, 400)
   }
   if (body.type === 'nights_discount' &&
@@ -92,8 +92,8 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     body.type,
     body.start_date || '',
     body.end_date || '',
+    Math.round((body.price_per_night || 0) * 100),
     0,
-    body.adjustment_percent || 0,
     body.min_nights || 1,
     body.discount_percent || 0,
     body.priority || 0,
@@ -116,7 +116,7 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
     type?: PricingRule['type']
     start_date?: string
     end_date?: string
-    adjustment_percent?: number
+    price_per_night?: number
     min_nights?: number
     discount_percent?: number
     priority?: number
@@ -165,14 +165,14 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
   if (body.type === 'date_adjustment' &&
     (!body.start_date || !body.end_date || !/^\d{4}-\d{2}-\d{2}$/.test(body.start_date) ||
       !/^\d{4}-\d{2}-\d{2}$/.test(body.end_date) || body.end_date < body.start_date ||
-      !Number.isFinite(body.adjustment_percent) || body.adjustment_percent! < -100 ||
-      body.adjustment_percent! > 1000)) {
+      !Number.isInteger(body.price_per_night) || body.price_per_night! < 0 ||
+      body.price_per_night! > 100000)) {
     return json({ error: 'Invalid date adjustment condition' }, 400)
   }
   if (body.type === 'annual_adjustment' &&
     (!body.start_date || !body.end_date || !isValidMonthDay(body.start_date) ||
-      !isValidMonthDay(body.end_date) || !Number.isFinite(body.adjustment_percent) ||
-      body.adjustment_percent! < -100 || body.adjustment_percent! > 1000)) {
+      !isValidMonthDay(body.end_date) || !Number.isInteger(body.price_per_night) ||
+      body.price_per_night! < 0 || body.price_per_night! > 100000)) {
     return json({ error: 'Invalid recurring date adjustment condition' }, 400)
   }
   if (body.type === 'nights_discount' &&
@@ -183,13 +183,13 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
   }
 
   await database(env).prepare(
-    'UPDATE pricing_rules SET name = ?, type = ?, start_date = ?, end_date = ?, price_per_night = 0, adjustment_percent = ?, min_nights = ?, discount_percent = ?, priority = ? WHERE id = ?'
+    'UPDATE pricing_rules SET name = ?, type = ?, start_date = ?, end_date = ?, price_per_night = ?, adjustment_percent = 0, min_nights = ?, discount_percent = ?, priority = ? WHERE id = ?'
   ).bind(
     body.name || '',
     body.type,
     body.start_date || '',
     body.end_date || '',
-    body.adjustment_percent || 0,
+    Math.round((body.price_per_night || 0) * 100),
     body.min_nights || 1,
     body.discount_percent || 0,
     body.priority || 0,

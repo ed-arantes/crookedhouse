@@ -192,6 +192,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
           id="message"
           name="message"
           rows={3}
+          maxLength={2000}
           placeholder={t(locale, 'booking.messagePlaceholder')}
           className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:ring-2 focus:ring-ring/30"
          />

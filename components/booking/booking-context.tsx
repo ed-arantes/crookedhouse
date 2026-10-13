@@ -75,7 +75,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     const co = checkOut ? formatDateLocal(checkOut) : undefined
     if (!ci || !co) return
 
-    fetch(apiUrl(`/api/public/price?check_in=${ci}&check_out=${co}&guests=${guestCount}&pets=${guests.pets}`))
+    fetch(apiUrl(`/api/public/price?check_in=${ci}&check_out=${co}&adults=${guests.adults}&pets=${guests.pets}`))
       .then((r) => r.ok ? r.json() : null)
       .then((data: { nights: number; subtotal: number; councilTax: number; animalSurcharge: number; total: number } | null) => {
         if (data) {

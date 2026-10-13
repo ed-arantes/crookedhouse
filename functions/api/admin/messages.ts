@@ -32,7 +32,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
       `SELECT m.id, m.booking_id, m.sender, m.message_encrypted, m.created_at,
         b.first_name_encrypted, b.last_name_encrypted, b.email_encrypted, b.check_in, b.check_out
        FROM booking_messages m JOIN bookings b ON b.id = m.booking_id
-       ORDER BY m.created_at DESC, m.id DESC`,
+       ORDER BY m.created_at DESC, m.rowid DESC`,
     ).all()
     const key = env.BOOKING_ENCRYPTION_KEY || ''
     const messages = await Promise.all((results as MessageRow[]).map(async (row) => ({
