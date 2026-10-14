@@ -35,7 +35,7 @@ function ReviewText({ text, locale }: { text: string; locale: Locale }) {
         ref={contentRef}
         className={`text-pretty text-sm leading-relaxed text-primary-foreground/90 ${expanded ? '' : 'max-h-32 overflow-hidden'}`}
       >
-        &ldquo;{text}&rdquo;
+        &ldquo;<RichText text={text} className="font-semibold text-primary-foreground" />&rdquo;
       </blockquote>
       {canExpand && (
         <button
