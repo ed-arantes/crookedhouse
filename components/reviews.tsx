@@ -1,11 +1,56 @@
 'use client'
 
+import { useEffect, useId, useRef, useState } from 'react'
 import { Star } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { plural } from '@/lib/plural'
 import { REVIEW_SOURCES, getReviewAverage } from '@/lib/reviews'
 import { useSiteData } from '@/components/site-data-provider'
 import { RichText } from '@/components/rich-text'
+
+function ReviewText({ text, locale }: { text: string; locale: Locale }) {
+  const contentId = useId()
+  const contentRef = useRef<HTMLQuoteElement>(null)
+  const [expanded, setExpanded] = useState(false)
+  const [canExpand, setCanExpand] = useState(false)
+
+  useEffect(() => {
+    const content = contentRef.current
+    if (!content) return
+
+    const updateOverflow = () => {
+      if (!expanded) setCanExpand(content.scrollHeight > content.clientHeight + 1)
+    }
+
+    updateOverflow()
+    const observer = new ResizeObserver(updateOverflow)
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [expanded, text])
+
+  return (
+    <>
+      <blockquote
+        id={contentId}
+        ref={contentRef}
+        className={`text-pretty text-sm leading-relaxed text-primary-foreground/90 ${expanded ? '' : 'max-h-32 overflow-hidden'}`}
+      >
+        &ldquo;{text}&rdquo;
+      </blockquote>
+      {canExpand && (
+        <button
+          type="button"
+          aria-controls={contentId}
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-2 text-sm font-medium text-primary-foreground underline underline-offset-4"
+        >
+          {t(locale, expanded ? 'reviews.readLess' : 'reviews.readMore')}
+        </button>
+      )}
+    </>
+  )
+}
 
 export function Reviews({ locale = 'en' }: { locale?: Locale }) {
   const { reviews } = useSiteData()
@@ -59,9 +104,7 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
           )
          })}
         </div>
-        <blockquote className="flex-1 text-pretty text-sm leading-relaxed text-primary-foreground/90">
-         &ldquo;{review.text}&rdquo;
-        </blockquote>
+        <ReviewText text={review.text} locale={locale} />
         <div className="mt-4 flex items-center justify-between gap-3 text-sm text-primary-foreground/70">
          {review.source !== 'airbnb' && typeof review.rating === 'number' ? (
           <span>{review.rating.toFixed(1)}</span>

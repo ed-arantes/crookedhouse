@@ -86,6 +86,8 @@
   "nav.surname": "Apellido",
   "reviews.count": "{count} {countLabel}",
   "reviews.headline": "Valorado como excepcional por todos los huéspedes",
+  "reviews.readMore": "Leer más",
+  "reviews.readLess": "Mostrar menos",
   "services.body": "Cada estancia está pensada para ofrecer comodidad, hospitalidad y el placer de sentirse como en casa.\n\nQuienes viajan en moto disponen de aparcamiento específico cerca del alojamiento.\n\nSi lo solicitas, Mara estará encantada de preparar desayunos y comidas con esmero, transformando ingredientes sencillos en momentos agradables para compartir y disfrutar.\n\nSu experiencia se complementa con su formación como pastelera en la Accademia Italiana de Milán, la certificación S.A.B. y la formación H.A.C.C.P. de la Región de Lombardía.\n\nToda la información para utilizar este servicio está disponible directamente en el alojamiento.",
   "services.headline": "Servicios y pequeños detalles",
   "widgets.addDate": "Añadir fecha",

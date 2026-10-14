@@ -86,6 +86,8 @@
   "nav.surname": "Nom",
   "reviews.count": "{count} {countLabel}",
   "reviews.headline": "Noté exceptionnel par tous les voyageurs",
+  "reviews.readMore": "Lire la suite",
+  "reviews.readLess": "Réduire",
   "services.body": "Chaque séjour est pensé pour vous offrir confort, accueil et le plaisir de vous sentir chez vous.\n\nPour les personnes voyageant à moto, un parking dédié est disponible à proximité de l’établissement.\n\nSur demande, Mara se fera un plaisir de préparer des petits-déjeuners et des repas avec soin, en transformant des ingrédients simples en agréables moments à partager et à savourer.\n\nSon expérience est enrichie par sa qualification de pâtissière obtenue auprès de l’Accademia Italiana de Milan, sa certification S.A.B. et sa formation H.A.C.C.P. de la région Lombardie.\n\nToutes les informations pour bénéficier du service sont disponibles directement sur place.",
   "services.headline": "Services et petites attentions",
   "widgets.addDate": "Ajouter une date",

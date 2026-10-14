@@ -7,7 +7,7 @@ export const CONTENT_SECTIONS = [
   { label: 'Servizi', keys: ['services.headline', 'services.body'] },
   { label: 'Comodità', keys: ['amenities.headline', 'amenities.body', 'amenities.list'] },
   { label: 'Esplora il territorio', keys: ['explore.headline', 'explore.body'] },
-  { label: 'Recensioni', keys: ['reviews.headline', 'reviews.count'] },
+  { label: 'Recensioni', keys: ['reviews.headline', 'reviews.count', 'reviews.readMore', 'reviews.readLess'] },
   { label: 'Posizione', keys: ['location.headline', 'location.address', 'location.gettingAround', 'location.nearby.lakefront', 'location.nearby.lakefrontDetail', 'location.nearby.villa', 'location.nearby.villaDetail', 'location.nearby.airport', 'location.nearby.airportDetail', 'location.nearby.malpensa', 'location.nearby.malpensaDetail'] },
   { label: 'Prenotazione', keys: ['booking.headline', 'booking.firstName', 'booking.lastName', 'booking.email', 'booking.dates', 'booking.guests', 'booking.message', 'booking.messagePlaceholder', 'booking.proceedToPayment', 'booking.processingPayment', 'booking.checkIn', 'booking.checkOut', 'booking.selectDates', 'booking.detailsTitle', 'booking.location'] },
   { label: 'Ricerca e calendario', keys: ['widgets.where', 'widgets.location', 'widgets.locationPlaceholder', 'widgets.checkIn', 'widgets.checkOut', 'widgets.guests', 'widgets.guestLabel', 'widgets.guestLabels', 'widgets.addDate', 'widgets.addGuests', 'widgets.reserve', 'widgets.enterDates', 'widgets.adults', 'widgets.adultsHint', 'widgets.children', 'widgets.childrenHint', 'widgets.pets', 'widgets.maxGuests', 'widgets.night', 'widgets.nights', 'widgets.councilTax', 'widgets.animalSurcharge', 'widgets.total', 'widgets.previousMonth', 'widgets.nextMonth', 'widgets.review', 'widgets.reviews'] },

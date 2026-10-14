@@ -86,6 +86,8 @@
   "nav.surname":  "Nachname",
   "reviews.count": "{count} {countLabel}",
   "reviews.headline":  "Von allen Gästen als außergewöhnlich bewertet",
+  "reviews.readMore": "Mehr anzeigen",
+  "reviews.readLess": "Weniger anzeigen",
   "services.body":  "Jeder Aufenthalt ist darauf ausgerichtet, Ihnen Komfort und Gastfreundschaft zu bieten und Ihnen das Gefühl zu geben, zu Hause zu sein.\n\nFür Motorradreisende steht in der Nähe der Unterkunft ein eigener Parkplatz zur Verfügung.\n\nAuf Anfrage bereitet Mara gerne Frühstück und Mahlzeiten mit viel Sorgfalt zu. Aus einfachen Zutaten schafft sie so schöne Momente, die man gemeinsam genießen kann.\n\nMara ist ausgebildete Konditorin (Accademia Italiana in Mailand), verfügt über die S.A.B.-Zertifizierung und hat eine H.A.C.C.P.-Schulung der Region Lombardei absolviert.\n\nAlle Informationen zur Nutzung des Angebots erhalten Sie direkt vor Ort.",
   "services.headline":  "Service und kleine Aufmerksamkeiten",
   "widgets.addDate":  "Datum hinzufügen",
