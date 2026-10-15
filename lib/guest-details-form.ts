@@ -30,17 +30,32 @@ export function formatGuestDate(iso: string, locale: Locale): string {
 }
 
 export function parseGuestDate(value: string, locale: Locale): string | null {
-  const { order, separator } = DATE_FORMATS[locale]
-  const parts = value.trim().split(separator)
+  const input = value.trim()
+  const isoMatch = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(input)
+  const parts = isoMatch
+    ? [isoMatch[3], isoMatch[2], isoMatch[1]]
+    : input.split(/[/.]/)
   if (parts.length !== 3) return null
+
   const [first, second, year] = parts
-  const [day, month] = order === 'mdy' ? [second, first] : [first, second]
-  if (!/^\d{2}$/.test(day) || !/^\d{2}$/.test(month) || !/^\d{4}$/.test(year)) return null
-  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
-  if (date.getUTCDate() !== Number(day) ||
-    date.getUTCMonth() !== Number(month) - 1 ||
-    date.getUTCFullYear() !== Number(year)) return null
-  return `${year}-${month}-${day}`
+  if (!/^\d{1,2}$/.test(first) || !/^\d{1,2}$/.test(second) || !/^\d{4}$/.test(year)) return null
+
+  const { order } = DATE_FORMATS[locale]
+  const candidates = isoMatch
+    ? [[first, second]]
+    : order === 'mdy'
+      ? [[second, first], [first, second]]
+      : [[first, second], [second, first]]
+
+  for (const [day, month] of candidates) {
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
+    if (date.getUTCDate() === Number(day) &&
+      date.getUTCMonth() === Number(month) - 1 &&
+      date.getUTCFullYear() === Number(year)) {
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
+  }
+  return null
 }
 
 export function areGuestDetailsComplete(

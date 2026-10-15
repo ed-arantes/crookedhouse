@@ -42,6 +42,14 @@ const CANCELLATION_COPY: Record<Locale, string> = {
  ru: 'Отмена бронирования возможна не позднее чем за 7 дней до даты заезда.',
 }
 
+const CHECKOUT_ERROR_KEYS: Record<string, string> = {
+ 'Guest details encryption is not configured': 'errors.guestDetailsEncryption',
+ 'Guest details storage is not configured': 'errors.guestDetailsStorageNotConfigured',
+ 'Base fare is not configured': 'errors.baseFareNotConfigured',
+ 'Stripe is not configured': 'errors.stripeNotConfigured',
+ 'Stripe publishable key is not configured': 'errors.stripeNotConfigured',
+}
+
 export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  const { checkIn, checkOut, guests, nights, price, unavailableDates, setRange, setGuests } =
   useBooking()
@@ -113,7 +121,9 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
    setIsLoadingPayment(false)
   } catch (error) {
    console.error('Booking checkout failed', error)
-   setCheckoutError(t(locale, 'errors.checkout'))
+   const message = error instanceof Error ? error.message : ''
+   const translationKey = CHECKOUT_ERROR_KEYS[message]
+   setCheckoutError(translationKey ? t(locale, translationKey) : t(locale, 'errors.checkout'))
    setIsLoadingPayment(false)
   }
  }
