@@ -156,10 +156,12 @@ function PaymentForm({
    return
   }
 
-  const successUrl = `${window.location.origin}/success?payment_intent_id=${encodeURIComponent(paymentIntentId)}`
+  const successUrl = new URL('/success', window.location.origin)
+  successUrl.searchParams.set('payment_intent_id', paymentIntentId)
+  successUrl.searchParams.set('locale', locale)
   const { error: paymentError, paymentIntent } = await stripe.confirmPayment({
    elements,
-   confirmParams: { return_url: successUrl },
+   confirmParams: { return_url: successUrl.toString() },
    redirect: 'if_required',
   })
   if (paymentError) {
@@ -167,7 +169,7 @@ function PaymentForm({
    setSubmitting(false)
    return
   }
-  if (paymentIntent) window.location.assign(successUrl)
+  if (paymentIntent) window.location.assign(successUrl.toString())
   else setSubmitting(false)
  }
 

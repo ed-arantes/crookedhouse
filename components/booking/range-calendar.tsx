@@ -49,6 +49,7 @@ function MonthView({
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
   const cells = buildMonthGrid(year, month)
+  const dayFormatter = new Intl.DateTimeFormat(locale, { dateStyle: 'full' })
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
   const weekdays = Array.from({ length: 7 }, (_, i) =>
     cap(new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2024, 0, i + 8))),
@@ -92,7 +93,7 @@ function MonthView({
                 type="button"
                 disabled={disabled}
                 onClick={() => onSelect(day)}
-                aria-label={day.toDateString()}
+                aria-label={dayFormatter.format(day)}
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors',
                   !isDisabledDate &&

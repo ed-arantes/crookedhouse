@@ -84,12 +84,11 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
      headers: { 'Content-Type': 'application/json' },
      body: JSON.stringify({ surname, email }),
     })
-    const data = await response.json()
-    if (!response.ok) throw new Error(data?.error || t(locale, 'nav.login'))
+    if (!response.ok) throw new Error(t(locale, 'errors.guestLogin'))
     setLoginOpen(false)
     router.push(`/${locale}/account`)
-   } catch (error) {
-    setLoginError(error instanceof Error ? error.message : t(locale, 'nav.login'))
+   } catch {
+    setLoginError(t(locale, 'errors.guestLogin'))
    } finally {
     setLoginLoading(false)
    }
@@ -134,7 +133,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
     <div className="flex items-center gap-2">
      <div className="relative hidden md:block">
       <label className="sr-only" htmlFor="language-switcher">
-       Select language
+       {t(locale, 'aria.selectLanguage')}
       </label>
       <select
        id="language-switcher"
@@ -233,7 +232,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
       ))}
       <div className="border-t border-border/80 py-3">
        <label className="sr-only" htmlFor="language-switcher-mobile">
-        Select language
+        {t(locale, 'aria.selectLanguage')}
        </label>
        <select
         id="language-switcher-mobile"

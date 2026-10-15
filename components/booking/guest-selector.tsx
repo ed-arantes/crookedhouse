@@ -13,6 +13,7 @@ function Stepper({
   hint,
   value,
   min,
+  locale,
   onChange,
   disabledDecrement,
   disabledIncrement,
@@ -21,6 +22,7 @@ function Stepper({
   hint: string
   value: number
   min: number
+  locale: Locale
   onChange: (next: number) => void
   disabledDecrement: boolean
   disabledIncrement: boolean
@@ -36,7 +38,7 @@ function Stepper({
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={disabledDecrement}
-          aria-label={`Decrease ${label}`}
+          aria-label={t(locale, 'widgets.decrease', { label })}
           className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-foreground disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Minus className="h-3.5 w-3.5" />
@@ -48,7 +50,7 @@ function Stepper({
           type="button"
           onClick={() => onChange(value + 1)}
           disabled={disabledIncrement}
-          aria-label={`Increase ${label}`}
+          aria-label={t(locale, 'widgets.increase', { label })}
           className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-foreground disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -74,6 +76,7 @@ export function GuestSelector({
   return (
     <div className={cn('w-72 divide-y divide-border p-4', className)}>
       <Stepper
+        locale={locale}
         label={t(locale, 'widgets.adults')}
         hint={t(locale, 'widgets.adultsHint')}
         value={guests.adults}
@@ -83,6 +86,7 @@ export function GuestSelector({
         disabledIncrement={total >= MAX_GUESTS}
       />
       <Stepper
+        locale={locale}
         label={t(locale, 'widgets.children')}
         hint={t(locale, 'widgets.childrenHint')}
         value={guests.children}

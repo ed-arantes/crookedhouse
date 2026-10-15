@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Manrope, Sora } from 'next/font/google'
 import { BookingProvider } from '@/components/booking/booking-context'
+import { DocumentLanguage } from '@/components/document-language'
 import './globals.css'
 
 const manrope = Manrope({
@@ -51,10 +52,11 @@ export default function RootLayout({
 }>) {
  return (
   <html
-   lang="en"
+   lang="it"
    className={`light bg-background ${manrope.variable} ${sora.variable}`}
   >
    <body className="antialiased font-sans">
+    <DocumentLanguage />
     <BookingProvider>{children}</BookingProvider>
    </body>
   </html>

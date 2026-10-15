@@ -142,7 +142,10 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
    const data = await response.json() as { error?: string; status?: string }
    if (!response.ok) throw new Error(data.error || 'Unable to close payment')
    if (data.status === 'paid' || data.status === 'already_final') {
-    window.location.assign(`/success?payment_intent_id=${encodeURIComponent(paymentIntentId)}`)
+    const successUrl = new URL('/success', window.location.origin)
+    successUrl.searchParams.set('payment_intent_id', paymentIntentId)
+    successUrl.searchParams.set('locale', locale)
+    window.location.assign(successUrl.toString())
     return
    }
    setCheckoutPayment(null)
