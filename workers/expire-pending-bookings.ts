@@ -19,7 +19,7 @@ async function expirePendingBookings(env: ExpirationEnv): Promise<void> {
  const { results = [] } = await env.DB.prepare(
   `SELECT session_id FROM bookings
    WHERE status = 'pending'
-     AND session_id LIKE 'pi_%'
+     AND session_id GLOB 'pi_*'
      AND created_at <= datetime('now', '-15 minutes')
    ORDER BY created_at
    LIMIT ${MAX_BOOKINGS_PER_RUN}`,

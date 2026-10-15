@@ -61,8 +61,9 @@ function annualRangeLength(rule: PricingRule): number {
   if (start === null || end === null) return Number.MAX_SAFE_INTEGER
   const startDate = new Date(Date.UTC(2000, Math.floor(start / 100) - 1, start % 100))
   const endDate = new Date(Date.UTC(2000, Math.floor(end / 100) - 1, end % 100))
-  const days = (endDate.getTime() - startDate.getTime()) / 86400000
-  return days >= 0 ? days + 1 : 366 + days + 1
+  if (start <= end) return (endDate.getTime() - startDate.getTime()) / 86400000 + 1
+  const wrappedEnd = new Date(Date.UTC(2001, Math.floor(end / 100) - 1, end % 100))
+  return (wrappedEnd.getTime() - startDate.getTime()) / 86400000 + 1
 }
 
 function dateRangeLength(rule: PricingRule): number {
@@ -92,7 +93,20 @@ export function calculateBookingPrice(
 ): BookingPrice {
   const start = new Date(`${checkIn}T00:00:00.000Z`)
   const end = new Date(`${checkOut}T00:00:00.000Z`)
-  const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
+  const safeBaseFare = Number.isFinite(baseFare) && baseFare >= 0 ? baseFare : 0
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end.getTime() <= start.getTime()) {
+    return {
+      nights: 0,
+      subtotal_before_discount: 0,
+      discount_percent: 0,
+      discount_amount: 0,
+      subtotal: 0,
+      nightly_prices: [],
+    }
+  }
+
+  const nights = Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000))
   const nightlyPrices: BookingPrice['nightly_prices'] = []
   let subtotalCents = 0
 
@@ -114,7 +128,7 @@ export function calculateBookingPrice(
         b.priority - a.priority ||
         a.id.localeCompare(b.id),
       )[0]
-    const nightlyFare = matchingRule ? Math.round(matchingRule.price_per_night) : baseFare
+    const nightlyFare = matchingRule ? Math.round(matchingRule.price_per_night) : safeBaseFare
     const priceCents = Math.max(0, Math.round(nightlyFare * 100))
     subtotalCents += priceCents
     nightlyPrices.push({ date: dateString, price: priceCents / 100 })
