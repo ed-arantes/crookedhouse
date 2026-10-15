@@ -46,8 +46,8 @@ const CHECKOUT_ERROR_KEYS: Record<string, string> = {
  'Guest details encryption is not configured': 'errors.guestDetailsEncryption',
  'Guest details storage is not configured': 'errors.guestDetailsStorageNotConfigured',
  'Base fare is not configured': 'errors.baseFareNotConfigured',
- 'Stripe is not configured': 'errors.stripeNotConfigured',
- 'Stripe publishable key is not configured': 'errors.stripeNotConfigured',
+ 'Stripe secret key is not configured': 'errors.stripeSecretKeyNotConfigured',
+ 'Stripe publishable key is not configured': 'errors.stripePublishableKeyNotConfigured',
 }
 
 export function BookingForm({ locale = 'en' }: { locale?: Locale }) {

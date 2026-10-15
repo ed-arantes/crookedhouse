@@ -21,8 +21,10 @@ booking is recorded as paid instead.
 - Node.js version: 20 or newer
 
 Set `STRIPE_SECRET_KEY` as a Pages secret and `STRIPE_PUBLISHABLE_KEY` as a
-Pages variable. The publishable key is returned by the checkout API only to
-initialize Stripe Elements. Do not configure `setup_future_usage`; the Payment
+Pages variable. The custom Payment Element checkout requires both: the secret
+key creates the PaymentIntent on the server, and the publishable key initializes
+Stripe Elements in the browser. A previous hosted Stripe Checkout flow may have
+worked with only the secret key. Do not configure `setup_future_usage`; the Payment
 Element keeps Link available according to the Stripe account's payment-method
 settings without requesting that cards be saved for future use. Do not commit
 `.dev.vars`; `.dev.vars.example` is provided for local reference.

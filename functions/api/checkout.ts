@@ -259,9 +259,11 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     console.error('Stripe checkout error', error)
     const statusCode = error instanceof StripeRequestError ? error.status : 500
     const publicError = error instanceof StripeRequestError &&
-      (error.message === 'Stripe is not configured' ||
-        error.message === 'Stripe publishable key is not configured')
-      ? error.message
+      error.message === 'Stripe is not configured'
+      ? 'Stripe secret key is not configured'
+      : error instanceof StripeRequestError &&
+        error.message === 'Stripe publishable key is not configured'
+        ? error.message
       : error instanceof Error && error.message === 'Base fare is not configured'
         ? error.message
         : error instanceof Error && /no such table: booking_guest_details/i.test(error.message)
