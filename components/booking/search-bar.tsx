@@ -69,7 +69,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
 
   return (
   <>
-  <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:grid md:grid-cols-[minmax(0,2fr)_1px_minmax(0,1fr)_auto] md:items-center md:gap-0 md:rounded-full md:p-2">
+  <div className="mx-auto flex w-full max-w-[44rem] flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:grid md:grid-cols-[minmax(0,1.4fr)_1px_minmax(0,1.2fr)_auto] md:items-center md:gap-0 md:rounded-full md:p-2">
    <Popover
     side="top"
     panelClassName="w-[19rem] sm:w-auto"
@@ -137,7 +137,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
    <button
     type="button"
     onClick={handleReserve}
-    className="ml-2 flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 md:ml-0 md:mr-0 md:rounded-full"
+    className="ml-2 mr-1 flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 md:ml-0 md:mr-2 md:rounded-full"
    >
     <Search className="h-4 w-4" />
     <span>{t(locale, 'widgets.reserve')}</span>
