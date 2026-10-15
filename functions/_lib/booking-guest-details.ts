@@ -72,6 +72,26 @@ export function validateGuestDetails(
   })
 }
 
+export function normalizeBookingGuestDetails(
+  value: unknown,
+  expectedCount: number,
+): BookingGuestDetails[] | null {
+  if (!validateGuestDetails(value, expectedCount)) return null
+
+  return value.map((guest) => ({
+    first_name: guest.first_name.trim(),
+    last_name: guest.last_name.trim(),
+    date_of_birth: guest.date_of_birth,
+    place_of_birth: guest.place_of_birth?.trim() ?? '',
+    ...(guest.nationality?.trim() ? { nationality: guest.nationality.trim() } : {}),
+    ...(guest.gender?.trim() ? { gender: guest.gender.trim() } : {}),
+    ...(guest.guest_role?.trim() ? { guest_role: guest.guest_role.trim() } : {}),
+    ...(guest.place_of_issue?.trim() ? { place_of_issue: guest.place_of_issue.trim() } : {}),
+    ...(guest.document_type?.trim() ? { document_type: guest.document_type.trim() } : {}),
+    ...(guest.document_number?.trim() ? { document_number: guest.document_number.trim() } : {}),
+  }))
+}
+
 export async function getBookingGuestCount(
   env: AdminEnv,
   bookingId: string,
@@ -112,25 +132,11 @@ export async function saveBookingGuestDetails(
 
   const guestCount = await getBookingGuestCount(env, bookingId)
   if (guestCount === null) return json({ error: 'Booking not found' }, 404)
-  if (!validateGuestDetails(value, guestCount)) {
+  const details = normalizeBookingGuestDetails(value, guestCount)
+  if (!details) {
     return json({ error: 'Enter valid details for each guest and document details for the group leader' }, 400)
   }
 
-  const details = value.map((guest) => {
-    const documentNumber = guest.document_number?.trim()
-    return {
-      first_name: guest.first_name.trim(),
-      last_name: guest.last_name.trim(),
-      date_of_birth: guest.date_of_birth,
-      place_of_birth: guest.place_of_birth?.trim() ?? '',
-      ...(guest.nationality?.trim() ? { nationality: guest.nationality.trim() } : {}),
-      ...(guest.gender?.trim() ? { gender: guest.gender.trim() } : {}),
-      ...(guest.guest_role?.trim() ? { guest_role: guest.guest_role.trim() } : {}),
-      ...(guest.place_of_issue?.trim() ? { place_of_issue: guest.place_of_issue.trim() } : {}),
-      ...(guest.document_type?.trim() ? { document_type: guest.document_type.trim() } : {}),
-      ...(documentNumber ? { document_number: documentNumber } : {}),
-    }
-  })
   const encrypted = await encrypt(JSON.stringify(details), key)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (env.DB as any).prepare(

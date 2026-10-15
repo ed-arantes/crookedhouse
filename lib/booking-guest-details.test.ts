@@ -187,3 +187,25 @@ test('rejects invalid booking-form contact details before creating checkout', as
     assert.deepEqual(await response.json(), { error: 'Invalid booking contact details' })
   }
 })
+
+test('rejects incomplete guest details before creating a checkout session', async () => {
+  const response = await onRequestPost({
+    request: new Request('https://example.com/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        checkIn: '2026-12-10',
+        checkOut: '2026-12-12',
+        guests: { adults: 1, children: 0, pets: false },
+        firstName: 'Maria',
+        lastName: 'Rossi',
+        email: 'maria@example.com',
+        guestDetails: [{}],
+      }),
+    }),
+    env: {} as Parameters<typeof onRequestPost>[0]['env'],
+  })
+
+  assert.equal(response.status, 400)
+  assert.deepEqual(await response.json(), { error: 'Invalid guest details' })
+})

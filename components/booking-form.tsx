@@ -2,19 +2,43 @@
 
 import { useEffect, useState } from 'react'
 import { CalendarDays, LoaderCircle, Users } from 'lucide-react'
+import { CheckoutGuestDialog } from './booking/checkout-guest-dialog'
 import { useBooking } from './booking/booking-context'
 import { Popover } from './booking/popover'
 import { RangeCalendar } from './booking/range-calendar'
 import { GuestSelector, guestLabel } from './booking/guest-selector'
 import { formatDateLocal, formatLong, formatCurrency } from '@/lib/booking'
+import type { GuestDetailsFormValue } from '@/lib/guest-details-form'
 import { t, type Locale } from '@/lib/i18n'
 import { apiUrl } from '@/lib/api-url'
+
+type CheckoutContact = {
+ firstName: string
+ lastName: string
+ email: string
+ message: string
+}
+
+type CheckoutGuestDetails = Omit<GuestDetailsFormValue, 'date_of_birth'> & {
+ date_of_birth: string
+}
+
+const CANCELLATION_COPY: Record<Locale, string> = {
+ it: 'Le cancellazioni sono consentite solo fino a 7 giorni prima della data di arrivo.',
+ en: 'Cancellations are allowed only up to 7 days before the arrival date.',
+ fr: 'Les annulations sont autorisées uniquement jusqu’à 7 jours avant la date d’arrivée.',
+ de: 'Stornierungen sind nur bis 7 Tage vor dem Anreisedatum möglich.',
+ es: 'Las cancelaciones solo se permiten hasta 7 días antes de la fecha de llegada.',
+ ru: 'Отмена бронирования возможна не позднее чем за 7 дней до даты заезда.',
+}
 
 export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  const { checkIn, checkOut, guests, nights, price, unavailableDates, setRange, setGuests } =
   useBooking()
  const [isLoadingPayment, setIsLoadingPayment] = useState(false)
  const [checkoutError, setCheckoutError] = useState('')
+ const [isGuestDetailsOpen, setIsGuestDetailsOpen] = useState(false)
+ const [checkoutContact, setCheckoutContact] = useState<CheckoutContact | null>(null)
 
  useEffect(() => {
   function resetPaymentState() {
@@ -25,19 +49,26 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
   return () => window.removeEventListener('pageshow', resetPaymentState)
  }, [])
 
- async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+ function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault()
-  if (nights <= 0) return
-  setIsLoadingPayment(true)
+  if (nights <= 0 || !checkIn || !checkOut) return
   setCheckoutError('')
 
   const form = e.currentTarget
   const formData = new FormData(form)
-  const firstName = String(formData.get('firstName') || '')
-  const lastName = String(formData.get('lastName') || '')
-  const email = String(formData.get('email') || '')
-  const message = String(formData.get('message') || '')
+  setCheckoutContact({
+   firstName: String(formData.get('firstName') || ''),
+   lastName: String(formData.get('lastName') || ''),
+   email: String(formData.get('email') || ''),
+   message: String(formData.get('message') || ''),
+  })
+  setIsGuestDetailsOpen(true)
+ }
 
+ async function startCheckout(guestDetails?: CheckoutGuestDetails[]) {
+  if (!checkoutContact || !checkIn || !checkOut || nights <= 0) return
+  setIsLoadingPayment(true)
+  setCheckoutError('')
   try {
    const response = await fetch(apiUrl('/api/checkout'), {
     method: 'POST',
@@ -46,10 +77,8 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
      checkIn: checkIn ? formatDateLocal(checkIn) : undefined,
      checkOut: checkOut ? formatDateLocal(checkOut) : undefined,
      guests,
-     firstName,
-     lastName,
-     email,
-     message,
+     ...checkoutContact,
+     ...(guestDetails ? { guestDetails } : {}),
     }),
    })
    const data = await response.json()
@@ -226,6 +255,9 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
            <dd className="text-foreground">{guestLabel(guests, locale)}</dd>
           </div>
          </dl>
+         <p className="mt-4 rounded-lg border border-border bg-background px-3 py-2.5 text-xs text-muted-foreground">
+          {CANCELLATION_COPY[locale]}
+         </p>
 
          {checkoutError && (
           <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -284,6 +316,24 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
        </div>
       </form>
     </div>
+    {isGuestDetailsOpen && checkoutContact && checkIn && (
+     <CheckoutGuestDialog
+      locale={locale}
+      booking={{
+       first_name: checkoutContact.firstName,
+       last_name: checkoutContact.lastName,
+       adults: guests.adults,
+       children: guests.children,
+       check_in: formatDateLocal(checkIn),
+       nights,
+      }}
+      submitting={isLoadingPayment}
+      error={checkoutError}
+      onSubmit={(guestDetails) => startCheckout(guestDetails)}
+      onSkip={() => startCheckout()}
+      onClose={() => setIsGuestDetailsOpen(false)}
+     />
+    )}
    </div>
   </section>
  )

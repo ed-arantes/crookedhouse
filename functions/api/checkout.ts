@@ -10,6 +10,10 @@ import {
 import { d1ListBlockedDates, d1GetSetting, type AdminEnv } from '../_lib/admin'
 import { parseICalDates } from '../../lib/ical-parser'
 import { encrypt } from '../../lib/encryption'
+import {
+  getGuestDetailsEncryptionKey,
+  normalizeBookingGuestDetails,
+} from '../_lib/booking-guest-details'
 
 const MAX_GUESTS = 4
 const ICAL_URL_KEY = 'ical_url'
@@ -57,6 +61,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       lastName?: unknown
       email?: unknown
       message?: unknown
+      guestDetails?: unknown
     }
     const start = parseDate(body?.checkIn)
     const end = parseDate(body?.checkOut)
@@ -80,6 +85,15 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     if (!start || !end || end <= start || !Number.isInteger(adults) || adults < 1 ||
       !Number.isInteger(children) || children < 0 || guestCount > MAX_GUESTS) {
       return json({ error: 'Invalid booking details' }, 400)
+    }
+
+    let guestDetailsEncrypted: string | null = null
+    if (body.guestDetails !== undefined) {
+      const guestDetails = normalizeBookingGuestDetails(body.guestDetails, guestCount)
+      if (!guestDetails) return json({ error: 'Invalid guest details' }, 400)
+      const key = await getGuestDetailsEncryptionKey(env)
+      if (key instanceof Response) return key
+      guestDetailsEncrypted = await encrypt(JSON.stringify(guestDetails), key)
     }
 
     // Check availability: blocked dates + iCal + confirmed bookings
@@ -215,6 +229,11 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       statements.push(db.prepare(
         "INSERT INTO booking_messages (id, booking_id, sender, message_encrypted) VALUES (?, ?, 'guest', ?)",
       ).bind(bookingMessageId, bookingId, storedMessage))
+    }
+    if (guestDetailsEncrypted) {
+      statements.push(db.prepare(
+        "INSERT INTO booking_guest_details (booking_id, details_encrypted) VALUES (?, ?)",
+      ).bind(bookingId, guestDetailsEncrypted))
     }
     await db.batch(statements)
 
