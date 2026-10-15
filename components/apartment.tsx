@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 import { useSiteData } from '@/components/site-data-provider'
+import { PhotoLightbox } from '@/components/photo-lightbox'
 
 export function Apartment({ locale = 'en' }: { locale?: Locale }) {
  const { images } = useSiteData()
@@ -27,18 +28,26 @@ export function Apartment({ locale = 'en' }: { locale?: Locale }) {
       </p>
     </div>
 
-    <div className="grid grid-cols-2 gap-4">
+    <PhotoLightbox photos={photos.length >= 2 ? photos.slice(0, 2) : []} locale={locale}>
+    {(openPhoto) => <div className="grid grid-cols-2 gap-4">
      {photos.length >= 2 ? (
-      photos.slice(0, 2).map((photo) => (
-       <div key={photo.id} className="relative aspect-[3/4] overflow-hidden rounded-2xl">
+      photos.slice(0, 2).map((photo, index) => (
+       <button
+        key={photo.id}
+        type="button"
+        onClick={() => openPhoto(index)}
+        aria-label={t(locale, 'gallery.openPhoto', { index: index + 1 })}
+        className="group relative aspect-[3/4] overflow-hidden rounded-2xl"
+       >
         <Image
          src={photo.url}
          alt={photo.alt}
          fill
          sizes="(max-width: 768px) 50vw, 25vw"
-         className="object-cover"
+         className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
-       </div>
+        <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
+       </button>
       ))
      ) : (
       <>
@@ -50,7 +59,8 @@ export function Apartment({ locale = 'en' }: { locale?: Locale }) {
        </div>
       </>
      )}
-    </div>
+    </div>}
+    </PhotoLightbox>
    </div>
   </section>
  )

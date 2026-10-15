@@ -1,40 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 import { useSiteData } from '@/components/site-data-provider'
+import { PhotoLightbox } from '@/components/photo-lightbox'
 
 export function Layout({ locale = 'en' }: { locale?: Locale }) {
  const { images } = useSiteData()
  const photos = images.layout
- const [active, setActive] = useState<number | null>(null)
  const leftColumnCount = Math.ceil(photos.length / 2)
  const leftPhotos = photos.slice(0, leftColumnCount)
  const rightPhotos = photos.slice(leftColumnCount)
-
- const close = useCallback(() => setActive(null), [])
- const prev = useCallback(
-  () => setActive((i) => (i === null ? i : (i + photos.length - 1) % photos.length)),
-  [photos.length],
- )
- const next = useCallback(
-  () => setActive((i) => (i === null ? i : (i + 1) % photos.length)),
-  [photos.length],
- )
-
- useEffect(() => {
-  if (active === null) return
-  function onKey(e: KeyboardEvent) {
-   if (e.key === 'Escape') close()
-   if (e.key === 'ArrowLeft') prev()
-   if (e.key === 'ArrowRight') next()
-  }
-  document.addEventListener('keydown', onKey)
-  return () => document.removeEventListener('keydown', onKey)
- }, [active, close, prev, next])
 
  return (
   <section id="layout" className="bg-secondary/60 py-20 md:py-28">
@@ -50,7 +27,8 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
      </p>
     </div>
 
-    {photos.length > 0 ? (
+    <PhotoLightbox photos={photos} locale={locale}>
+    {(openPhoto) => photos.length > 0 ? (
      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
       {[leftPhotos, rightPhotos].map((columnPhotos, columnIndex) => (
        <div key={columnIndex} className="grid grid-cols-2 gap-3 md:gap-4">
@@ -60,7 +38,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
           <button
            key={photo.id}
            type="button"
-           onClick={() => setActive(globalIndex)}
+           onClick={() => openPhoto(globalIndex)}
            aria-label={t(locale, 'gallery.openPhoto', { index: globalIndex + 1 })}
            className="group relative aspect-[3/4] overflow-hidden rounded-2xl md:aspect-auto md:h-[220px]"
           >
@@ -91,59 +69,8 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
       ))}
      </div>
     )}
+    </PhotoLightbox>
    </div>
-
-   {active !== null && (
-    <div
-     className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/90 p-4"
-     role="dialog"
-     aria-modal="true"
-     onClick={close}
-    >
-     <button
-      type="button"
-      onClick={close}
-      aria-label={t(locale, 'gallery.closePhoto')}
-      className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-background/10 text-background transition-colors hover:bg-background/20"
-     >
-      <X className="h-6 w-6" />
-     </button>
-     <button
-      type="button"
-      onClick={(e) => {
-       e.stopPropagation()
-       prev()
-      }}
-      aria-label={t(locale, 'gallery.previousPhoto')}
-      className="absolute left-4 flex h-11 w-11 items-center justify-center rounded-full bg-background/10 text-background transition-colors hover:bg-background/20"
-     >
-      <ChevronLeft className="h-6 w-6" />
-     </button>
-     <div
-      className="relative h-[70vh] w-full max-w-5xl"
-      onClick={(e) => e.stopPropagation()}
-     >
-      <Image
-       src={photos[active].url}
-       alt={photos[active].alt}
-       fill
-       sizes="100vw"
-       className="rounded-2xl object-contain"
-      />
-     </div>
-     <button
-      type="button"
-      onClick={(e) => {
-       e.stopPropagation()
-       next()
-      }}
-      aria-label={t(locale, 'gallery.nextPhoto')}
-      className="absolute right-4 flex h-11 w-11 items-center justify-center rounded-full bg-background/10 text-background transition-colors hover:bg-background/20"
-     >
-      <ChevronRight className="h-6 w-6" />
-     </button>
-    </div>
-   )}
   </section>
  )
 }
