@@ -92,7 +92,6 @@ export type D1Review = {
   id: string
   name: string
   location: string
-  title: string
   text: string
   rating: number | null
   source: string
@@ -101,30 +100,23 @@ export type D1Review = {
 
 export async function d1ListReviews(db: Record<string, unknown>): Promise<D1Review[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { results: columns } = await (db as any)
-    .prepare('PRAGMA table_info(reviews)')
-    .all()
-  const titleColumn = columns?.some((column: { name?: string }) => column.name === 'title')
-    ? 'title'
-    : "'' AS title"
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { results } = await (db as any)
-    .prepare(`SELECT id, name, location, ${titleColumn}, text, rating, source, sort_order FROM reviews ORDER BY sort_order ASC, rowid ASC`)
+    .prepare('SELECT id, name, location, text, rating, source, sort_order FROM reviews ORDER BY sort_order ASC, rowid ASC')
     .all()
   return (results ?? []) as D1Review[]
 }
 
 export async function d1UpsertReview(
   db: Record<string, unknown>,
-  review: { id: string; name: string; location: string; title: string; text: string; rating?: number; source: string; sort_order: number },
+  review: { id: string; name: string; location: string; text: string; rating?: number; source: string; sort_order: number },
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db as any)
     .prepare(
-      'INSERT INTO reviews (id, name, location, title, text, rating, source, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ' +
-        'ON CONFLICT(id) DO UPDATE SET name=excluded.name, location=excluded.location, title=excluded.title, text=excluded.text, rating=excluded.rating, source=excluded.source, sort_order=excluded.sort_order',
+      'INSERT INTO reviews (id, name, location, text, rating, source, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?) ' +
+        'ON CONFLICT(id) DO UPDATE SET name=excluded.name, location=excluded.location, text=excluded.text, rating=excluded.rating, source=excluded.source, sort_order=excluded.sort_order',
     )
-    .bind(review.id, review.name, review.location, review.title, review.text, review.rating ?? null, review.source, review.sort_order)
+    .bind(review.id, review.name, review.location, review.text, review.rating ?? null, review.source, review.sort_order)
     .run()
 }
 

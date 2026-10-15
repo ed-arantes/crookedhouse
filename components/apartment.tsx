@@ -1,9 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 import { useSiteData } from '@/components/site-data-provider'
-import { PhotoZoom } from '@/components/photo-zoom'
 
 export function Apartment({ locale = 'en' }: { locale?: Locale }) {
  const { images } = useSiteData()
@@ -30,27 +30,24 @@ export function Apartment({ locale = 'en' }: { locale?: Locale }) {
     <div className="grid grid-cols-2 gap-4">
      {photos.length >= 2 ? (
       photos.slice(0, 2).map((photo) => (
-       <PhotoZoom
-        key={photo.id}
-        src={photo.url}
-        alt={photo.alt}
-        sizes="(max-width: 768px) 50vw, 25vw"
-        locale={locale}
-        className="aspect-[3/4]"
-       />
+       <div key={photo.id} className="relative aspect-[3/4] overflow-hidden rounded-2xl">
+        <Image
+         src={photo.url}
+         alt={photo.alt}
+         fill
+         sizes="(max-width: 768px) 50vw, 25vw"
+         className="object-cover"
+        />
+       </div>
       ))
      ) : (
       <>
-       {[0, 1].map((index) => (
-        <PhotoZoom
-         key={index}
-         src="/image.webp"
-         alt=""
-         sizes="(max-width: 768px) 50vw, 25vw"
-         locale={locale}
-         className="aspect-[3/4]"
-        />
-       ))}
+       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
+        <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+       </div>
+       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
+        <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+       </div>
       </>
      )}
     </div>
