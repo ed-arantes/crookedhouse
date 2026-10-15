@@ -299,9 +299,9 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
         {nights > 0 && (
          <button
          type="submit"
-          disabled={isLoadingPayment}
+          disabled={isLoadingPayment || isGuestDetailsOpen}
           aria-busy={isLoadingPayment}
-          className="w-full rounded-xl bg-accent px-6 py-3.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+          className="w-full rounded-xl bg-accent px-6 py-3.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
          >
           {isLoadingPayment ? (
            <span className="flex items-center justify-center gap-2">

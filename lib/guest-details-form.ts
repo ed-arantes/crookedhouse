@@ -43,6 +43,33 @@ export function parseGuestDate(value: string, locale: Locale): string | null {
   return `${year}-${month}-${day}`
 }
 
+export function areGuestDetailsComplete(
+  guests: readonly GuestDetailsFormValue[],
+  locale: Locale,
+  today = new Date().toISOString().slice(0, 10),
+): boolean {
+  if (guests.length === 0) return false
+
+  return guests.every((guest, index) => {
+    const dateOfBirth = parseGuestDate(guest.date_of_birth, locale)
+    if (!guest.first_name.trim() || guest.first_name.trim().length > 120 ||
+      !guest.last_name.trim() || guest.last_name.trim().length > 120 ||
+      !dateOfBirth || dateOfBirth > today ||
+      !guest.place_of_birth.trim() || guest.place_of_birth.trim().length > 120 ||
+      !guest.nationality.trim() || guest.nationality.trim().length > 120 ||
+      !guest.gender.trim() || guest.gender.trim().length > 60) return false
+
+    if (index === 0 && (
+      !['head_of_family', 'group_leader', 'single_guest'].includes(guest.guest_role) ||
+      !guest.place_of_issue.trim() || guest.place_of_issue.trim().length > 120 ||
+      !guest.document_type.trim() || guest.document_type.trim().length > 100 ||
+      !guest.document_number.trim() || guest.document_number.trim().length > 100
+    )) return false
+
+    return true
+  })
+}
+
 type BookingName = {
   first_name: string
   last_name: string

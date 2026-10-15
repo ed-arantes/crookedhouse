@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { formatGuestDate, parseGuestDate, guestDetailsFormValues, type GuestDetailsFormValue } from '@/lib/guest-details-form'
+import { areGuestDetailsComplete, formatGuestDate, parseGuestDate, guestDetailsFormValues, type GuestDetailsFormValue } from '@/lib/guest-details-form'
 import type { Locale } from '@/lib/i18n'
 
 type BookingGuestInfo = {
@@ -208,6 +208,7 @@ export function CheckoutGuestDialog({
  const copy = COPY[locale]
  const [guests, setGuests] = useState(() => guestDetailsFormValues(booking, [], locale))
  const [validationError, setValidationError] = useState('')
+ const guestDetailsComplete = areGuestDetailsComplete(guests, locale)
 
  function submit(event: React.FormEvent<HTMLFormElement>) {
   event.preventDefault()
@@ -319,7 +320,7 @@ export function CheckoutGuestDialog({
       <button type="button" onClick={onSkip} disabled={submitting} className="rounded-xl border border-border px-5 py-3 text-sm font-medium disabled:opacity-50">
        {copy.skip}
       </button>
-      <button type="submit" disabled={submitting} className="rounded-xl bg-accent px-5 py-3 text-sm font-medium text-accent-foreground disabled:opacity-50">
+      <button type="submit" disabled={submitting || !guestDetailsComplete} className="rounded-xl bg-accent px-5 py-3 text-sm font-medium text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50">
        {copy.submit}
       </button>
      </div>

@@ -71,9 +71,6 @@ const DETAILS_COPY: Record<Locale, {
  detailsError: string
  invalidDetailsDate: string
  privacyNotice: string
- deleteDetails: string
- confirmDeleteDetails: string
- detailsDeleted: string
 }> = {
  it: {
   detailsTitle: 'Dati personali dell’ospite',
@@ -104,9 +101,6 @@ const DETAILS_COPY: Record<Locale, {
   detailsError: 'Impossibile caricare o salvare i dati. Riprova.',
   invalidDetailsDate: 'Inserisci tutte le date di nascita nel formato gg/mm/aaaa.',
   privacyNotice: 'I dati sono cifrati nel database e sono visibili a te e all’host della struttura.',
-  deleteDetails: 'Elimina i dati personali',
-  confirmDeleteDetails: 'Vuoi eliminare definitivamente i dati personali di questa prenotazione?',
-  detailsDeleted: 'Dati personali eliminati.',
  },
  en: {
   detailsTitle: 'Guest personal details',
@@ -137,9 +131,6 @@ const DETAILS_COPY: Record<Locale, {
   detailsError: 'Unable to load or save details. Please try again.',
   invalidDetailsDate: 'Enter every date of birth in MM/DD/YYYY format.',
   privacyNotice: 'Details are encrypted in the database and visible to you and the property host.',
-  deleteDetails: 'Delete personal details',
-  confirmDeleteDetails: 'Permanently delete the personal details for this booking?',
-  detailsDeleted: 'Personal details deleted.',
  },
  fr: {
   detailsTitle: 'Informations personnelles des voyageurs',
@@ -170,9 +161,6 @@ const DETAILS_COPY: Record<Locale, {
   detailsError: 'Impossible de charger ou d’enregistrer les informations. Réessayez.',
   invalidDetailsDate: 'Saisissez toutes les dates de naissance au format jj/mm/aaaa.',
   privacyNotice: 'Les informations sont chiffrées dans la base de données et visibles par vous et l’hôte.',
-  deleteDetails: 'Supprimer les informations personnelles',
-  confirmDeleteDetails: 'Supprimer définitivement les informations personnelles de cette réservation ?',
-  detailsDeleted: 'Informations personnelles supprimées.',
  },
  de: {
   detailsTitle: 'Persönliche Daten der Gäste',
@@ -203,9 +191,6 @@ const DETAILS_COPY: Record<Locale, {
   detailsError: 'Daten konnten nicht geladen oder gespeichert werden. Bitte erneut versuchen.',
   invalidDetailsDate: 'Geben Sie alle Geburtsdaten im Format tt.mm.jjjj ein.',
   privacyNotice: 'Die Daten werden in der Datenbank verschlüsselt und sind für Sie und den Gastgeber sichtbar.',
-  deleteDetails: 'Persönliche Daten löschen',
-  confirmDeleteDetails: 'Persönliche Daten für diese Buchung endgültig löschen?',
-  detailsDeleted: 'Persönliche Daten gelöscht.',
  },
  es: {
   detailsTitle: 'Datos personales de los huéspedes',
@@ -236,9 +221,6 @@ const DETAILS_COPY: Record<Locale, {
   detailsError: 'No se pudieron cargar o guardar los datos. Inténtalo de nuevo.',
   invalidDetailsDate: 'Introduce todas las fechas de nacimiento en formato dd/mm/aaaa.',
   privacyNotice: 'Los datos están cifrados en la base de datos y son visibles para ti y el anfitrión.',
-  deleteDetails: 'Eliminar datos personales',
-  confirmDeleteDetails: '¿Eliminar definitivamente los datos personales de esta reserva?',
-  detailsDeleted: 'Datos personales eliminados.',
  },
  ru: {
   detailsTitle: 'Личные данные гостей',
@@ -269,9 +251,6 @@ const DETAILS_COPY: Record<Locale, {
   detailsError: 'Не удалось загрузить или сохранить данные. Попробуйте ещё раз.',
   invalidDetailsDate: 'Введите все даты рождения в формате дд.мм.гггг.',
   privacyNotice: 'Данные зашифрованы в базе данных и доступны вам и хозяину жилья.',
-  deleteDetails: 'Удалить личные данные',
-  confirmDeleteDetails: 'Безвозвратно удалить личные данные этого бронирования?',
-  detailsDeleted: 'Личные данные удалены.',
  },
 }
 
@@ -460,25 +439,6 @@ export function GuestAccount({ locale }: { locale: Locale }) {
    const data = await response.json()
    if (!response.ok) throw new Error(data?.error || copy.detailsError)
    setDetailsStatus(copy.detailsSaved)
-  } catch {
-   setDetailsStatus(copy.detailsError)
-  } finally {
-   setDetailsSaving(false)
-  }
- }
-
- async function deleteGuestDetails() {
-  if (!selected || !window.confirm(copy.confirmDeleteDetails)) return
-  setDetailsSaving(true)
-  setDetailsStatus('')
-  try {
-   const response = await fetch(
-    apiUrl(`/api/guest/details?booking_id=${encodeURIComponent(selected)}`),
-    { method: 'DELETE' },
-   )
-   if (!response.ok) throw new Error(copy.detailsError)
-   setGuestDetails(selectedBooking ? guestDetailsFormValues(selectedBooking, [], locale) : [])
-   setDetailsStatus(copy.detailsDeleted)
   } catch {
    setDetailsStatus(copy.detailsError)
   } finally {
@@ -709,14 +669,6 @@ export function GuestAccount({ locale }: { locale: Locale }) {
           className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
          >
           {detailsSaving ? copy.savingDetails : copy.saveDetails}
-         </button>
-         <button
-          type="button"
-          onClick={deleteGuestDetails}
-          disabled={detailsLoading || detailsSaving}
-          className="ml-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground disabled:opacity-60"
-         >
-          {copy.deleteDetails}
          </button>
         </form>
        )}
