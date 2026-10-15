@@ -29,6 +29,7 @@ export type Review = {
  id?: string
  name: string
  location: string
+ title?: string
  text: string
  rating?: number
  source: ReviewSource

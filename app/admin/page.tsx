@@ -577,6 +577,9 @@ function ReviewsTab() {
                     </span>
                   )}
                 </div>
+                {review.title && (
+                  <p className="mt-1 text-sm font-semibold text-foreground">{review.title}</p>
+                )}
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{review.text}</p>
               </div>
               <div className="flex gap-1">
@@ -599,6 +602,7 @@ function ReviewForm({ review, onSave, onCancel }: { review: Review | null; onSav
   const [form, setForm] = useState<Omit<Review, 'id'>>({
     name: review?.name ?? '',
     location: review?.location ?? '',
+    title: review?.title ?? '',
     text: review?.text ?? '',
     rating: review?.rating,
     source: review?.source ?? 'booking',
@@ -615,6 +619,7 @@ function ReviewForm({ review, onSave, onCancel }: { review: Review | null; onSav
         <input placeholder="Nome" value={form.name} onChange={(e) => update('name', e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
         <input placeholder="Paese" value={form.location} onChange={(e) => update('location', e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
       </div>
+      <input placeholder="Titolo della recensione (facoltativo)" value={form.title ?? ''} onChange={(e) => update('title', e.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
       <textarea placeholder="Testo della recensione" value={form.text} onChange={(e) => update('text', e.target.value)} rows={3} className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
       <div className="grid gap-3 sm:grid-cols-3">
         <select value={form.source} onChange={(e) => update('source', e.target.value as Review['source'])} className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary">

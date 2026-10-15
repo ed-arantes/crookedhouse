@@ -5,6 +5,7 @@ type Review = {
   id: string
   name: string
   location: string
+  title?: string
   text: string
   rating?: number
   source: ReviewSource
@@ -18,6 +19,7 @@ export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => 
     id: r.id,
     name: r.name,
     location: r.location,
+    title: r.title ?? undefined,
     text: r.text,
     rating: r.rating ?? undefined,
     source: r.source as ReviewSource,

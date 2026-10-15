@@ -13,6 +13,7 @@ type Review = {
   id: string
   name: string
   location: string
+  title?: string
   text: string
   rating?: number
   source: ReviewSource
@@ -33,6 +34,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     id: r.id,
     name: r.name,
     location: r.location,
+    title: r.title ?? undefined,
     text: r.text,
     rating: r.rating ?? undefined,
     source: r.source as ReviewSource,
@@ -54,6 +56,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     id: crypto.randomUUID(),
     name: body.name,
     location: body.location ?? '',
+    title: typeof body.title === 'string' ? body.title.trim() : undefined,
     text: body.text,
     rating: body.rating,
     source: body.source,
@@ -65,6 +68,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     id: newReview.id,
     name: newReview.name,
     location: newReview.location,
+    title: newReview.title,
     text: newReview.text,
     rating: newReview.rating,
     source: newReview.source,
@@ -88,6 +92,7 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
     id: body.id,
     name: body.name,
     location: body.location ?? '',
+    title: typeof body.title === 'string' ? body.title.trim() : undefined,
     text: body.text,
     rating: body.rating,
     source: body.source,
@@ -124,6 +129,7 @@ export const onRequestPatch = async ({ request, env }: PagesContext): Promise<Re
     id: r.id,
     name: r.name,
     location: r.location,
+    title: r.title ?? undefined,
     text: r.text,
     rating: r.rating ?? undefined,
     source: r.source,
