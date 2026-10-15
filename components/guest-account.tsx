@@ -65,7 +65,6 @@ const DETAILS_COPY: Record<Locale, {
  passport: string
  otherDocument: string
  documentNumber: string
- documentHint: string
  saveDetails: string
  savingDetails: string
  detailsSaved: string
@@ -99,7 +98,6 @@ const DETAILS_COPY: Record<Locale, {
   passport: 'Passaporto',
   otherDocument: 'Altro',
   documentNumber: 'Numero del documento',
-  documentHint: 'Richiesto solo per il capogruppo.',
   saveDetails: 'Salva i dati',
   savingDetails: 'Salvataggio...',
   detailsSaved: 'Dati salvati.',
@@ -133,7 +131,6 @@ const DETAILS_COPY: Record<Locale, {
   passport: 'Passport',
   otherDocument: 'Other',
   documentNumber: 'Document number',
-  documentHint: 'Required for the group leader only.',
   saveDetails: 'Save details',
   savingDetails: 'Saving...',
   detailsSaved: 'Details saved.',
@@ -167,7 +164,6 @@ const DETAILS_COPY: Record<Locale, {
   passport: 'Passeport',
   otherDocument: 'Autre',
   documentNumber: 'Numéro du document',
-  documentHint: 'Demandé uniquement pour le responsable du groupe.',
   saveDetails: 'Enregistrer',
   savingDetails: 'Enregistrement...',
   detailsSaved: 'Informations enregistrées.',
@@ -201,7 +197,6 @@ const DETAILS_COPY: Record<Locale, {
   passport: 'Reisepass',
   otherDocument: 'Sonstiges',
   documentNumber: 'Dokumentnummer',
-  documentHint: 'Nur für die Gruppenleitung erforderlich.',
   saveDetails: 'Daten speichern',
   savingDetails: 'Wird gespeichert...',
   detailsSaved: 'Daten gespeichert.',
@@ -235,7 +230,6 @@ const DETAILS_COPY: Record<Locale, {
   passport: 'Pasaporte',
   otherDocument: 'Otro',
   documentNumber: 'Número de documento',
-  documentHint: 'Solo es obligatorio para el responsable del grupo.',
   saveDetails: 'Guardar datos',
   savingDetails: 'Guardando...',
   detailsSaved: 'Datos guardados.',
@@ -269,7 +263,6 @@ const DETAILS_COPY: Record<Locale, {
   passport: 'Паспорт',
   otherDocument: 'Другое',
   documentNumber: 'Номер документа',
-  documentHint: 'Требуется только для руководителя группы.',
   saveDetails: 'Сохранить данные',
   savingDetails: 'Сохранение...',
   detailsSaved: 'Данные сохранены.',
@@ -572,7 +565,8 @@ export function GuestAccount({ locale }: { locale: Locale }) {
                  itemIndex === index ? { ...item, guest_role: event.target.value } : item))}
                 className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                >
-                <option value="head_of_family">{copy.headOfFamily}</option>
+                 <option value="">—</option>
+                 <option value="head_of_family">{copy.headOfFamily}</option>
                 <option value="group_leader">{copy.groupLeaderOption}</option>
                 <option value="single_guest">{copy.singleGuest}</option>
                </select>
@@ -687,7 +681,6 @@ export function GuestAccount({ locale }: { locale: Locale }) {
                  itemIndex === index ? { ...item, document_type: event.target.value } : item))}
                 className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                />
-               <span className="mt-1 block font-normal">{copy.documentHint}</span>
               </label>
               <label className="text-xs font-medium text-muted-foreground">{copy.documentNumber}
                <input
