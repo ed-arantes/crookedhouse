@@ -21,7 +21,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
  const router = useRouter()
  const pathname = usePathname()
  const isHomePage = pathname === '/' || pathname === `/${locale}`
- const actionPillClass = 'w-[7rem] justify-center'
+ const actionPillClass = 'w-[8rem] justify-center'
  const NAV = [
   { label: t(locale, 'nav.apartment'), href: isHomePage ? '#about' : `/${locale}#about` },
   { label: t(locale, 'nav.amenities'), href: isHomePage ? '#amenities' : `/${locale}#amenities` },

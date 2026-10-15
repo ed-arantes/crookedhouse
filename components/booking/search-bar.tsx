@@ -69,7 +69,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
 
   return (
   <>
-  <div className="mx-auto flex w-full max-w-[44rem] flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:grid md:grid-cols-[minmax(0,1.4fr)_1px_minmax(0,1.2fr)_auto] md:items-center md:gap-0 md:rounded-full md:p-2">
+  <div className="mx-auto flex w-full max-w-[44rem] flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:grid md:grid-cols-[minmax(0,1.4fr)_1px_minmax(0,1.1fr)_auto] md:items-center md:gap-0 md:rounded-full md:p-2">
    <Popover
     side="top"
     panelClassName="w-[19rem] sm:w-auto"
