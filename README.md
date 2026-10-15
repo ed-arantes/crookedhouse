@@ -24,9 +24,9 @@ Set `STRIPE_SECRET_KEY` as a Pages secret and `STRIPE_PUBLISHABLE_KEY` as a
 Pages variable. The custom Payment Element checkout requires both: the secret
 key creates the PaymentIntent on the server, and the publishable key initializes
 Stripe Elements in the browser. A previous hosted Stripe Checkout flow may have
-worked with only the secret key. Do not configure `setup_future_usage`; the Payment
-Element keeps Link available according to the Stripe account's payment-method
-settings without requesting that cards be saved for future use. Do not commit
+worked with only the secret key. The Payment Element hides Link's wallet option
+and does not request that card details be saved for future use. Do not configure
+`setup_future_usage`. Do not commit
 `.dev.vars`; `.dev.vars.example` is provided for local reference.
 
 Deploy the booking-expiration Worker separately after configuring its

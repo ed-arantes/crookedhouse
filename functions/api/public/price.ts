@@ -28,22 +28,30 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
 
   if (nights <= 0) return json({ error: 'Invalid stay' }, 400)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { results } = await (env.DB as any)
-    .prepare('SELECT id, name, type, start_date, end_date, price_per_night, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date')
-    .all()
+  const [pricingResult, baseFareSetting, councilTaxSetting, animalSurchargeSetting, animalSurchargeActiveSetting] =
+    await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (env.DB as any)
+        .prepare('SELECT id, name, type, start_date, end_date, price_per_night, min_nights, discount_percent, priority FROM pricing_rules ORDER BY priority DESC, start_date')
+        .all(),
+      d1GetSetting(env.DB, 'base_fare_per_night', ''),
+      d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)),
+      d1GetSetting(env.DB, ANIMAL_SURCHARGE_KEY, '0'),
+      d1GetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false'),
+    ])
+  const { results } = pricingResult
   const rules = ((results ?? []) as Array<Omit<PricingRule, 'type'> & { type: string }>).map((rule) => ({
     ...rule,
     type: (rule.type === 'date_range' ? 'date_adjustment' : rule.type) as PricingRule['type'],
     price_per_night: Number(rule.price_per_night ?? 0) / 100,
   }))
-  const baseFare = parseBaseFare(await d1GetSetting(env.DB, 'base_fare_per_night', ''))
+  const baseFare = parseBaseFare(baseFareSetting)
   if (baseFare === null) return json({ error: 'Base fare is not configured' }, 503)
   const price = calculateBookingPrice(checkIn, checkOut, baseFare, rules)
-  const councilTaxRate = parseInt(await d1GetSetting(env.DB, COUNCIL_TAX_KEY, String(COUNCIL_TAX_PER_PERSON_PER_NIGHT)), 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
+  const councilTaxRate = parseInt(councilTaxSetting, 10) || COUNCIL_TAX_PER_PERSON_PER_NIGHT
   const councilTax = nights * adults * councilTaxRate
-  const animalSurchargeAmount = parseAnimalSurcharge(await d1GetSetting(env.DB, ANIMAL_SURCHARGE_KEY, '0'))
-  const animalSurchargeActive = (await d1GetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false')) === 'true'
+  const animalSurchargeAmount = parseAnimalSurcharge(animalSurchargeSetting)
+  const animalSurchargeActive = animalSurchargeActiveSetting === 'true'
   const animalSurcharge = calculateAnimalSurcharge(animalSurchargeAmount, animalSurchargeActive, hasAnimals)
 
   return json({

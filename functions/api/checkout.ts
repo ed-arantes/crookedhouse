@@ -154,10 +154,6 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     }
 
     const bookingId = crypto.randomUUID()
-    const createdAt = new Date()
-    createdAt.setUTCMilliseconds(0)
-    const createdAtSql = createdAt.toISOString().slice(0, 19).replace('T', ' ')
-    const expiresAt = createdAt.getTime() + 15 * 60 * 1000
     const form = new URLSearchParams({
       amount: String(Math.round(total * 100)),
       currency: 'eur',
@@ -172,7 +168,6 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       'metadata[pets]': String(pets),
       'metadata[animal_surcharge]': String(animalSurcharge),
     })
-
     const result = await stripeRequest<StripePaymentIntent & { client_secret?: string | null }>(env, '/payment_intents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -183,6 +178,11 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     if (!result.id || !result.client_secret) {
       throw new StripeRequestError('Stripe did not return payment details')
     }
+
+    const createdAt = new Date()
+    createdAt.setUTCMilliseconds(0)
+    const createdAtSql = createdAt.toISOString().slice(0, 19).replace('T', ' ')
+    const expiresAt = createdAt.getTime() + 15 * 60 * 1000
 
     // Save booking to D1 with encrypted PII
     const encKey = env.BOOKING_ENCRYPTION_KEY

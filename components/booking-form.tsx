@@ -28,6 +28,7 @@ type CheckoutPayment = {
  paymentIntentId: string
  clientSecret: string
  publishableKey: string
+ name: string
  email: string
  amount: number
  expiresAt: number
@@ -114,6 +115,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
     paymentIntentId: data.paymentIntentId,
     clientSecret: data.clientSecret,
     publishableKey: data.publishableKey,
+    name: `${checkoutContact.firstName} ${checkoutContact.lastName}`.trim(),
     email: data.email,
     amount: data.amount,
     expiresAt: data.expiresAt,

@@ -11,6 +11,7 @@ type Props = {
  paymentIntentId: string
  clientSecret: string
  publishableKey: string
+ name: string
  email: string
  expiresAt: number
  amount: string
@@ -93,6 +94,7 @@ const COPY: Record<Locale, {
 function PaymentForm({
  locale,
  paymentIntentId,
+ name,
  email,
  expiresAt,
  amount,
@@ -108,10 +110,28 @@ function PaymentForm({
  const copy = COPY[locale]
 
  useEffect(() => {
-  const updateRemaining = () => setRemaining(Math.max(0, expiresAt - Date.now()))
+  let timeout: number | undefined
+  const updateRemaining = () => {
+   const now = Date.now()
+   const nextRemaining = Math.max(0, expiresAt - now)
+   setRemaining(nextRemaining)
+   if (nextRemaining > 0) {
+    timeout = window.setTimeout(updateRemaining, 1000 - (now % 1000))
+   }
+  }
+  const refreshOnResume = () => {
+   if (timeout !== undefined) window.clearTimeout(timeout)
+   updateRemaining()
+  }
+
   updateRemaining()
-  const interval = window.setInterval(updateRemaining, 1000)
-  return () => window.clearInterval(interval)
+  document.addEventListener('visibilitychange', refreshOnResume)
+  window.addEventListener('pageshow', refreshOnResume)
+  return () => {
+   if (timeout !== undefined) window.clearTimeout(timeout)
+   document.removeEventListener('visibilitychange', refreshOnResume)
+   window.removeEventListener('pageshow', refreshOnResume)
+  }
  }, [expiresAt])
 
  useEffect(() => {
@@ -165,7 +185,12 @@ function PaymentForm({
     {remaining > 0 ? copy.remaining.replace('{time}', time) : copy.expired}
    </p>
    {remaining > 0 && (
-    <PaymentElement options={{ defaultValues: { billingDetails: { email } } }} />
+    <PaymentElement
+     options={{
+      defaultValues: { billingDetails: { name, email } },
+      wallets: { link: 'never' },
+     }}
+    />
    )}
    {error && (
     <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
