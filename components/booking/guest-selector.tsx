@@ -118,5 +118,5 @@ export function guestLabel(guests: Guests, locale: Locale = 'en'): string {
   const total = guests.adults + guests.children
   const key = total === 1 ? 'widgets.guestLabel' : 'widgets.guestLabels'
   const label = t(locale, key, { count: total })
-  return guests.pets ? `${label} · ${t(locale, 'widgets.pets')}` : label
+  return guests.pets ? `${label} · ${t(locale, 'widgets.petsShort')}` : label
 }

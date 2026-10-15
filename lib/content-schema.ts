@@ -10,7 +10,8 @@ export const CONTENT_SECTIONS = [
   { label: 'Recensioni', keys: ['reviews.headline', 'reviews.count', 'reviews.readMore', 'reviews.readLess'] },
   { label: 'Posizione', keys: ['location.headline', 'location.address', 'location.gettingAround', 'location.nearby.lakefront', 'location.nearby.lakefrontDetail', 'location.nearby.villa', 'location.nearby.villaDetail', 'location.nearby.airport', 'location.nearby.airportDetail', 'location.nearby.malpensa', 'location.nearby.malpensaDetail'] },
   { label: 'Prenotazione', keys: ['booking.headline', 'booking.firstName', 'booking.lastName', 'booking.email', 'booking.dates', 'booking.guests', 'booking.message', 'booking.messagePlaceholder', 'booking.proceedToPayment', 'booking.processingPayment', 'booking.checkIn', 'booking.checkOut', 'booking.selectDates', 'booking.detailsTitle', 'booking.location'] },
-  { label: 'Ricerca e calendario', keys: ['widgets.where', 'widgets.location', 'widgets.locationPlaceholder', 'widgets.checkIn', 'widgets.checkOut', 'widgets.guests', 'widgets.guestLabel', 'widgets.guestLabels', 'widgets.addDate', 'widgets.addGuests', 'widgets.reserve', 'widgets.enterDates', 'widgets.adults', 'widgets.adultsHint', 'widgets.children', 'widgets.childrenHint', 'widgets.pets', 'widgets.maxGuests', 'widgets.night', 'widgets.nights', 'widgets.councilTax', 'widgets.animalSurcharge', 'widgets.total', 'widgets.previousMonth', 'widgets.nextMonth', 'widgets.review', 'widgets.reviews'] },
+  { label: 'Ricerca e calendario', keys: ['widgets.where', 'widgets.location', 'widgets.locationPlaceholder', 'widgets.checkIn', 'widgets.checkOut', 'widgets.guests', 'widgets.guestLabel', 'widgets.guestLabels', 'widgets.petsShort', 'widgets.addDate', 'widgets.addGuests', 'widgets.reserve', 'widgets.enterDates', 'widgets.adults', 'widgets.adultsHint', 'widgets.children', 'widgets.childrenHint', 'widgets.pets', 'widgets.maxGuests', 'widgets.night', 'widgets.nights', 'widgets.councilTax', 'widgets.animalSurcharge', 'widgets.total', 'widgets.previousMonth', 'widgets.nextMonth', 'widgets.review', 'widgets.reviews'] },
+  { label: 'Pagine legali', keys: ['privacyPage.title', 'termsPage.title'] },
   { label: 'Footer', keys: ['footer.explore', 'footer.contact', 'footer.privacy', 'footer.terms', 'footer.allRights', 'footer.description', 'footer.property', 'footer.whatsappIncluded'] },
 ] as const
 
@@ -19,4 +20,8 @@ export const ARRAY_CONTENT_KEYS = new Set<string>([
   'amenities.list',
   'faq.questions',
   'faq.answers',
+  'privacyPage.sectionTitles',
+  'privacyPage.sectionBodies',
+  'termsPage.sectionTitles',
+  'termsPage.sectionBodies',
 ])

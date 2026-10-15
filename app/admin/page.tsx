@@ -1098,6 +1098,23 @@ function ContentTab() {
         question: String(current['servicesPage.title'] ?? (activeLocale === 'it' ? 'Colazioni e pasti' : '')),
         answer: String(current['servicesPage.body'] ?? ''),
       }]
+  const getPolicySections = (prefix: 'privacyPage' | 'termsPage'): FaqItem[] => {
+    const storedTitles = current[`${prefix}.sectionTitles`]
+    const storedBodies = current[`${prefix}.sectionBodies`]
+    if (!Array.isArray(storedTitles) && !Array.isArray(storedBodies)) return []
+    return Array.from(
+      { length: Math.max(
+        Array.isArray(storedTitles) ? storedTitles.length : 0,
+        Array.isArray(storedBodies) ? storedBodies.length : 0,
+      ) },
+      (_, index) => ({
+        question: Array.isArray(storedTitles) ? String(storedTitles[index] ?? '') : '',
+        answer: Array.isArray(storedBodies) ? String(storedBodies[index] ?? '') : '',
+      }),
+    )
+  }
+  const privacySections = getPolicySections('privacyPage')
+  const termsSections = getPolicySections('termsPage')
 
   function updateOverride(key: string, value: string) {
     setContent((prev) => {
@@ -1164,6 +1181,19 @@ function ContentTab() {
     setStatus('')
   }
 
+  function updatePolicySections(prefix: 'privacyPage' | 'termsPage', sections: FaqItem[]) {
+    setContent((previous) => ({
+      ...previous,
+      [activeLocale]: {
+        ...previous[activeLocale],
+        [`${prefix}.sectionTitles`]: sections.map((section) => section.question),
+        [`${prefix}.sectionBodies`]: sections.map((section) => section.answer),
+      },
+    }))
+    setDirty(true)
+    setStatus('')
+  }
+
   function toggleSection(label: string) {
     setOpenSections((prev) => {
       const next = new Set(prev)
@@ -1211,7 +1241,15 @@ function ContentTab() {
         ...(section.question.trim() ? [{ key: `servicesPage.sectionTitles.${index}`, value: section.question }] : []),
         ...(section.answer.trim() ? [{ key: `servicesPage.sectionBodies.${index}`, value: section.answer }] : []),
       ])
-      pairs.push(...faqPairs, ...servicePairs)
+      const privacyPairs = privacySections.flatMap((section, index) => [
+        ...(section.question.trim() ? [{ key: `privacyPage.sectionTitles.${index}`, value: section.question }] : []),
+        ...(section.answer.trim() ? [{ key: `privacyPage.sectionBodies.${index}`, value: section.answer }] : []),
+      ])
+      const termsPairs = termsSections.flatMap((section, index) => [
+        ...(section.question.trim() ? [{ key: `termsPage.sectionTitles.${index}`, value: section.question }] : []),
+        ...(section.answer.trim() ? [{ key: `termsPage.sectionBodies.${index}`, value: section.answer }] : []),
+      ])
+      pairs.push(...faqPairs, ...servicePairs, ...privacyPairs, ...termsPairs)
 
       const targetLocales = ['en', 'fr', 'de', 'es', 'ru']
       setTranslateProgress({
@@ -1237,6 +1275,10 @@ function ContentTab() {
         const translatedAnswers = Array.from({ length: faqItems.length }, () => '')
         const translatedServiceTitles = Array.from({ length: serviceSections.length }, () => '')
         const translatedServiceBodies = Array.from({ length: serviceSections.length }, () => '')
+        const translatedPrivacyTitles = Array.from({ length: privacySections.length }, () => '')
+        const translatedPrivacyBodies = Array.from({ length: privacySections.length }, () => '')
+        const translatedTermsTitles = Array.from({ length: termsSections.length }, () => '')
+        const translatedTermsBodies = Array.from({ length: termsSections.length }, () => '')
         for (let itemIndex = 0; itemIndex < pairs.length; itemIndex++) {
           const pair = pairs[itemIndex]
           setTranslateProgress((progress) => ({ ...progress, currentKey: pair.key }))
@@ -1249,6 +1291,10 @@ function ContentTab() {
           const answerMatch = pair.key.match(/^faq\.answers\.(\d+)$/)
           const serviceTitleMatch = pair.key.match(/^servicesPage\.sectionTitles\.(\d+)$/)
           const serviceBodyMatch = pair.key.match(/^servicesPage\.sectionBodies\.(\d+)$/)
+          const privacyTitleMatch = pair.key.match(/^privacyPage\.sectionTitles\.(\d+)$/)
+          const privacyBodyMatch = pair.key.match(/^privacyPage\.sectionBodies\.(\d+)$/)
+          const termsTitleMatch = pair.key.match(/^termsPage\.sectionTitles\.(\d+)$/)
+          const termsBodyMatch = pair.key.match(/^termsPage\.sectionBodies\.(\d+)$/)
           if (questionMatch) {
             translatedQuestions[Number(questionMatch[1])] = translatedText
           } else if (answerMatch) {
@@ -1257,6 +1303,14 @@ function ContentTab() {
             translatedServiceTitles[Number(serviceTitleMatch[1])] = translatedText
           } else if (serviceBodyMatch) {
             translatedServiceBodies[Number(serviceBodyMatch[1])] = translatedText
+          } else if (privacyTitleMatch) {
+            translatedPrivacyTitles[Number(privacyTitleMatch[1])] = translatedText
+          } else if (privacyBodyMatch) {
+            translatedPrivacyBodies[Number(privacyBodyMatch[1])] = translatedText
+          } else if (termsTitleMatch) {
+            translatedTermsTitles[Number(termsTitleMatch[1])] = translatedText
+          } else if (termsBodyMatch) {
+            translatedTermsBodies[Number(termsBodyMatch[1])] = translatedText
           } else {
             localeTranslations[pair.key] = translatedText
           }
@@ -1273,6 +1327,10 @@ function ContentTab() {
           'faq.answers': translatedAnswers,
           'servicesPage.sectionTitles': translatedServiceTitles,
           'servicesPage.sectionBodies': translatedServiceBodies,
+          'privacyPage.sectionTitles': translatedPrivacyTitles,
+          'privacyPage.sectionBodies': translatedPrivacyBodies,
+          'termsPage.sectionTitles': translatedTermsTitles,
+          'termsPage.sectionBodies': translatedTermsBodies,
         })
       }
       setTranslateProgress((progress) => ({
@@ -1384,6 +1442,67 @@ function ContentTab() {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        {([
+          { prefix: 'privacyPage', label: 'Pagina privacy', sections: privacySections },
+          { prefix: 'termsPage', label: 'Pagina termini', sections: termsSections },
+        ] as const).map(({ prefix, label, sections }) => (
+          <section key={prefix} className="border-b border-border last:border-b-0">
+            <button
+              type="button"
+              onClick={() => toggleSection(label)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <span>{label}</span>
+              <span className="text-muted-foreground text-xs">{openSections.has(label) ? '−' : '+'}</span>
+            </button>
+            {openSections.has(label) && (
+              <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
+                {sections.map((section, index) => (
+                  <div key={index} className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">Sezione {index + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => updatePolicySections(prefix, sections.filter((_, itemIndex) => itemIndex !== index))}
+                        className="flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Rimuovi
+                      </button>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Titolo</span>
+                      <BoldTextarea
+                        value={section.question}
+                        onChange={(value) => updatePolicySections(prefix, sections.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, question: value } : item))}
+                        rows={2}
+                      />
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Testo</span>
+                      <BoldTextarea
+                        value={section.answer}
+                        onChange={(value) => updatePolicySections(prefix, sections.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, answer: value } : item))}
+                        rows={6}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => updatePolicySections(prefix, [...sections, { question: '', answer: '' }])}
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted/50"
+                >
+                  <Plus className="h-4 w-4" /> Aggiungi sezione
+                </button>
+              </div>
+            )}
+          </section>
+        ))}
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">

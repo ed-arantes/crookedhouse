@@ -109,10 +109,10 @@ export function SiteFooter({ locale = 'en' }: { locale?: Locale }) {
     <div className="mt-14 flex flex-col gap-3 border-t border-primary-foreground/15 pt-6 text-xs text-primary-foreground/60 sm:flex-row sm:items-center sm:justify-between">
      <p>{t(locale, 'footer.allRights').replace('{year}', String(new Date().getFullYear()))}</p>
      <p className="flex gap-5">
-      <a href="#" className="transition-colors hover:text-primary-foreground">
+      <a href={`/${locale}/privacy`} className="transition-colors hover:text-primary-foreground">
        {t(locale, 'footer.privacy')}
       </a>
-      <a href="#" className="transition-colors hover:text-primary-foreground">
+      <a href={`/${locale}/terms`} className="transition-colors hover:text-primary-foreground">
        {t(locale, 'footer.terms')}
       </a>
      </p>

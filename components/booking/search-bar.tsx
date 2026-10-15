@@ -24,10 +24,10 @@ function Field({
  active?: boolean
 }) {
  return (
-  <div className="flex items-center gap-3 px-5 py-3 text-left">
+  <div className="flex min-w-0 flex-1 items-center gap-3 px-5 py-3 text-left">
    <span className="text-primary">{icon}</span>
-   <span className="min-w-0">
-    <span className="block text-[0.7rem] font-medium uppercase tracking-wide text-muted-foreground">
+   <span className="min-w-0 flex-1">
+    <span className="block truncate text-[0.7rem] font-medium uppercase tracking-wide text-muted-foreground">
      {label}
     </span>
     <span
@@ -69,7 +69,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
 
   return (
   <>
-  <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:flex-row md:flex-nowrap md:items-center md:justify-center md:gap-0 md:rounded-full md:p-2">
+  <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:grid md:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)_1px_auto] md:items-center md:gap-0 md:rounded-full md:p-2">
    <div className="hidden md:block">
     <Field
      icon={<MapPin className="h-4 w-4" />}
@@ -87,9 +87,9 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
      <button
       type="button"
       onClick={toggle}
-      className="rounded-xl transition-colors hover:bg-muted/60 md:rounded-full"
+      className="w-full min-w-0 rounded-xl transition-colors hover:bg-muted/60 md:rounded-full"
      >
-      <div className="flex">
+      <div className="flex min-w-0">
        <Field
         icon={<CalendarDays className="h-4 w-4" />}
         label={t(locale, 'widgets.checkIn')}
@@ -129,7 +129,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
      <button
       type="button"
       onClick={toggle}
-      className="rounded-xl transition-colors hover:bg-muted/60 md:rounded-full"
+      className="w-full min-w-0 rounded-xl transition-colors hover:bg-muted/60 md:rounded-full"
      >
       <Field
        icon={<Users className="h-4 w-4" />}
@@ -147,7 +147,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
    <button
     type="button"
     onClick={handleReserve}
-    className="ml-2 flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 md:ml-4 md:mr-2 md:rounded-full"
+    className="ml-2 flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 md:ml-0 md:mr-0 md:rounded-full"
    >
     <Search className="h-4 w-4" />
     <span>{t(locale, 'widgets.reserve')}</span>
