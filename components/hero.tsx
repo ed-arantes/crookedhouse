@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import { Star } from 'lucide-react'
 import { getReviewAverage } from '@/lib/reviews'
 import { useSiteData } from '@/components/site-data-provider'
@@ -6,6 +5,7 @@ import { t, type Locale } from '@/lib/i18n'
 import { plural } from '@/lib/plural'
 import { SearchBar } from './booking/search-bar'
 import { RichText } from '@/components/rich-text'
+import { PhotoZoom } from '@/components/photo-zoom'
 
 export function Hero({ locale = 'en' }: { locale?: Locale }) {
  const { reviews, images } = useSiteData()
@@ -13,28 +13,17 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
 
  return (
   <section id="top" className="relative min-h-[92vh] w-full overflow-hidden">
-   {heroImg ? (
-    <Image
-     src={heroImg.url}
-     alt={heroImg.alt || 'Crooked House village apartment near Lake Como'}
-     fill
-     priority
-     sizes="100vw"
-     className="object-cover"
-    />
-   ) : (
-    <Image
-     src="/image.webp"
-     alt="Crooked House"
-     fill
-     priority
-     sizes="100vw"
-     className="object-cover"
-    />
-   )}
-   <div className="absolute inset-0 bg-gradient-to-b from-foreground/50 via-foreground/20 to-foreground/60" />
+   <PhotoZoom
+    src={heroImg?.url ?? '/image.webp'}
+    alt={heroImg?.alt || 'Crooked House village apartment near Lake Como'}
+    priority
+    sizes="100vw"
+    locale={locale}
+    className="absolute inset-0 z-0 rounded-none"
+   />
+   <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-foreground/50 via-foreground/20 to-foreground/60" />
 
-   <div className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-center px-5 md:px-8">
+   <div className="pointer-events-none relative z-10 mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-center px-5 md:px-8 [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
     <div className="mx-auto w-full max-w-4xl text-center">
      {reviews.length > 0 && (
       <span className="inline-flex items-center gap-2 rounded-full bg-background/15 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-background backdrop-blur">

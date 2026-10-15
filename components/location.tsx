@@ -1,10 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import { MapPin, Plane, Wine, Landmark, LocateFixed } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { useSiteData } from '@/components/site-data-provider'
 import { RichText } from '@/components/rich-text'
+import { PhotoZoom } from '@/components/photo-zoom'
 
 const NEARBY = [
  {
@@ -61,25 +61,13 @@ export function Location({ locale = 'en' }: { locale?: Locale }) {
     </div>
 
     <div className="flex flex-col gap-6">
-     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
-      {villageImg ? (
-       <Image
-        src={villageImg.url}
-        alt={villageImg.alt}
-        fill
-        sizes="(max-width: 1024px) 100vw, 33vw"
-        className="object-cover"
-       />
-      ) : (
-       <Image
-        src="/image.webp"
-        alt=""
-        fill
-        sizes="(max-width: 1024px) 100vw, 33vw"
-        className="object-cover"
-       />
-      )}
-     </div>
+     <PhotoZoom
+      src={villageImg?.url ?? '/image.webp'}
+      alt={villageImg?.alt ?? ''}
+      sizes="(max-width: 1024px) 100vw, 33vw"
+      locale={locale}
+      className="aspect-[4/3]"
+     />
      <div className="rounded-2xl border border-border bg-card p-6">
       <h3 className="type-body font-serif font-medium text-foreground">
        <RichText text={t(locale, 'location.gettingAround')} />

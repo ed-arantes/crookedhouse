@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 import { useSiteData } from '@/components/site-data-provider'
@@ -62,7 +62,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
            type="button"
            onClick={() => setActive(globalIndex)}
            aria-label={t(locale, 'gallery.openPhoto', { index: globalIndex + 1 })}
-           className="group relative aspect-[3/4] overflow-hidden rounded-2xl md:aspect-auto md:h-[220px]"
+           className="group relative aspect-[3/4] cursor-zoom-in overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:aspect-auto md:h-[220px]"
           >
            <Image
             src={photo.url}
@@ -71,7 +71,9 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
            />
-           <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
+           <span className="absolute inset-0 flex items-center justify-center bg-foreground/0 text-background opacity-0 transition-all group-hover:bg-foreground/15 group-hover:opacity-100 group-focus-visible:bg-foreground/15 group-focus-visible:opacity-100">
+            <ZoomIn className="h-8 w-8 drop-shadow" aria-hidden="true" />
+           </span>
           </button>
          )
         })}

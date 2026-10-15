@@ -1,9 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 import { useSiteData } from '@/components/site-data-provider'
+import { PhotoZoom } from '@/components/photo-zoom'
 
 export function Explore({ locale = 'en' }: { locale?: Locale }) {
  const { images } = useSiteData()
@@ -15,21 +15,25 @@ export function Explore({ locale = 'en' }: { locale?: Locale }) {
     <div className="order-2 grid auto-rows-[180px] grid-cols-2 gap-3 md:order-1 md:auto-rows-[220px] md:gap-4">
      {photos.length > 0 ? (
       photos.map((photo) => (
-       <div key={photo.id} className="relative overflow-hidden rounded-2xl">
-        <Image
-         src={photo.url}
-         alt={photo.alt}
-         fill
-         sizes="(max-width: 768px) 50vw, 25vw"
-         className="object-cover"
-        />
-       </div>
+       <PhotoZoom
+        key={photo.id}
+        src={photo.url}
+        alt={photo.alt}
+        sizes="(max-width: 768px) 50vw, 25vw"
+        locale={locale}
+        className="h-full"
+       />
       ))
      ) : (
       [0, 1, 2, 3].map((i) => (
-       <div key={i} className="relative overflow-hidden rounded-2xl">
-        <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
-       </div>
+       <PhotoZoom
+        key={i}
+        src="/image.webp"
+        alt=""
+        sizes="(max-width: 768px) 50vw, 25vw"
+        locale={locale}
+        className="h-full"
+       />
       ))
      )}
     </div>

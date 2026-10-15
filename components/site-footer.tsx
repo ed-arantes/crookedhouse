@@ -6,6 +6,7 @@ const SOCIALS = [
  { label: 'Booking', key: 'footer.bookingUrl' },
  { label: 'Airbnb', key: 'footer.airbnbUrl' },
  { label: 'Google', key: 'footer.googleUrl' },
+ { label: 'Instagram', key: 'footer.instagramUrl' },
 ]
 
 function isExternalUrl(value: string): boolean {

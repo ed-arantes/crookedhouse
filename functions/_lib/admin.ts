@@ -101,8 +101,15 @@ export type D1Review = {
 
 export async function d1ListReviews(db: Record<string, unknown>): Promise<D1Review[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { results: columns } = await (db as any)
+    .prepare('PRAGMA table_info(reviews)')
+    .all()
+  const titleColumn = columns?.some((column: { name?: string }) => column.name === 'title')
+    ? 'title'
+    : "'' AS title"
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { results } = await (db as any)
-    .prepare('SELECT id, name, location, title, text, rating, source, sort_order FROM reviews ORDER BY sort_order ASC, rowid ASC')
+    .prepare(`SELECT id, name, location, ${titleColumn}, text, rating, source, sort_order FROM reviews ORDER BY sort_order ASC, rowid ASC`)
     .all()
   return (results ?? []) as D1Review[]
 }

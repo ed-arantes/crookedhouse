@@ -3,7 +3,7 @@ export const CONTENT_SECTIONS = [
   { label: 'Navigazione', keys: ['nav.apartment', 'nav.amenities', 'nav.reviews', 'nav.location', 'nav.book', 'nav.login', 'nav.surname', 'nav.email', 'nav.loginButton'] },
   { label: 'Hero', keys: ['hero.badge', 'hero.title', 'hero.description'] },
   { label: 'Appartamento', keys: ['about.headline', 'about.p1', 'about.p2', 'about.p3'] },
-  { label: 'Layout', keys: ['gallery.headline', 'gallery.body', 'gallery.openPhoto', 'gallery.closePhoto', 'gallery.previousPhoto', 'gallery.nextPhoto'] },
+  { label: 'Layout', keys: ['gallery.headline', 'gallery.body', 'gallery.openPhoto', 'gallery.closePhoto', 'gallery.zoomPhoto', 'gallery.previousPhoto', 'gallery.nextPhoto'] },
   { label: 'Servizi', keys: ['services.headline', 'services.body'] },
   { label: 'Comodità', keys: ['amenities.headline', 'amenities.body', 'amenities.list'] },
   { label: 'Esplora il territorio', keys: ['explore.headline', 'explore.body'] },

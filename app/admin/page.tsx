@@ -1064,7 +1064,7 @@ function ContentTab() {
 
   const current: Record<string, string | string[]> = content[activeLocale] ?? {}
   const italianContent = content.it ?? {}
-  const footerLinkKeys = ['footer.bookingUrl', 'footer.airbnbUrl', 'footer.googleUrl'] as const
+  const footerLinkKeys = ['footer.bookingUrl', 'footer.airbnbUrl', 'footer.googleUrl', 'footer.instagramUrl'] as const
   const storedQuestions = current['faq.questions']
   const storedAnswers = current['faq.answers']
   const faqItems: FaqItem[] = Array.isArray(storedQuestions) || Array.isArray(storedAnswers)
@@ -1498,6 +1498,7 @@ function ContentTab() {
                         ['footer.bookingUrl', 'Booking'],
                         ['footer.airbnbUrl', 'Airbnb'],
                         ['footer.googleUrl', 'Google'],
+                        ['footer.instagramUrl', 'Instagram'],
                       ] as const).map(([key, label]) => (
                         <label key={key} className="block text-xs font-medium text-muted-foreground">
                           {label}
