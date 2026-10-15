@@ -8,10 +8,14 @@ import type { Locale } from './i18n'
 
 const validGuests = [
   {
+    guest_role: 'group_leader',
     first_name: 'Maria',
     last_name: 'Rossi',
     date_of_birth: '1990-02-15',
     place_of_birth: 'Roma',
+    nationality: 'Italian',
+    gender: 'Female',
+    place_of_issue: 'Roma',
     document_type: 'identity_card',
     document_number: 'ID-12345',
   },
@@ -20,6 +24,8 @@ const validGuests = [
     last_name: 'Rossi',
     date_of_birth: '2015-06-20',
     place_of_birth: 'Milano',
+    nationality: 'Italian',
+    gender: 'Male',
   },
 ]
 
@@ -57,6 +63,40 @@ test('requires complete details for every guest and an ID for the group leader o
     { ...validGuests[0], document_type: '', place_of_birth: '' },
     { ...validGuests[1], place_of_birth: '' },
   ], 2, true), true)
+  assert.equal(validateGuestDetails([
+    { ...validGuests[0], guest_role: 'invalid' },
+    validGuests[1],
+  ], 2), false)
+  assert.equal(validateGuestDetails([
+    { ...validGuests[0], place_of_issue: '' },
+    validGuests[1],
+  ], 2), false)
+  assert.equal(validateGuestDetails([
+    { ...validGuests[0], gender: '' },
+    validGuests[1],
+  ], 2), false)
+})
+
+test('continues to accept previously stored details without the new guest fields', () => {
+  const previousGuests = [
+    {
+      first_name: 'Maria',
+      last_name: 'Rossi',
+      date_of_birth: '1990-02-15',
+      place_of_birth: 'Roma',
+      document_type: 'identity_card',
+      document_number: 'ID-12345',
+    },
+    {
+      first_name: 'Luca',
+      last_name: 'Rossi',
+      date_of_birth: '2015-06-20',
+      place_of_birth: 'Milano',
+    },
+  ]
+
+  assert.equal(validateGuestDetails(previousGuests, 2, true), true)
+  assert.equal(validateGuestDetails(previousGuests, 2), false)
 })
 
 test('encrypts saved personal details before storing them in D1', async () => {

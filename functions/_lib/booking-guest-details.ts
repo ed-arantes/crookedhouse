@@ -1,10 +1,14 @@
 import { decrypt, encrypt, json, type AdminEnv } from './admin'
 
 export type BookingGuestDetails = {
+  guest_role?: string
   first_name: string
   last_name: string
   date_of_birth: string
   place_of_birth?: string
+  nationality?: string
+  gender?: string
+  place_of_issue?: string
   document_type?: string
   document_number?: string
 }
@@ -26,7 +30,7 @@ function getEncryptionKey(env: AdminEnv): string | Response {
   return key
 }
 
-const DOCUMENT_TYPES = new Set(['identity_card', 'passport', 'other'])
+const GUEST_ROLES = new Set(['head_of_family', 'group_leader', 'single_guest'])
 
 export function validateGuestDetails(
   value: unknown,
@@ -43,6 +47,10 @@ export function validateGuestDetails(
     const lastName = typeof details.last_name === 'string' ? details.last_name.trim() : ''
     const dateOfBirth = typeof details.date_of_birth === 'string' ? details.date_of_birth : ''
     const placeOfBirth = typeof details.place_of_birth === 'string' ? details.place_of_birth.trim() : ''
+    const nationality = typeof details.nationality === 'string' ? details.nationality.trim() : ''
+    const gender = typeof details.gender === 'string' ? details.gender.trim() : ''
+    const placeOfIssue = typeof details.place_of_issue === 'string' ? details.place_of_issue.trim() : ''
+    const guestRole = typeof details.guest_role === 'string' ? details.guest_role.trim() : ''
     const documentType = typeof details.document_type === 'string' ? details.document_type.trim() : ''
     const documentNumber = typeof details.document_number === 'string' ? details.document_number.trim() : ''
 
@@ -52,10 +60,14 @@ export function validateGuestDetails(
       new Date(`${dateOfBirth}T00:00:00.000Z`).toISOString().slice(0, 10) !== dateOfBirth ||
       dateOfBirth > today) return false
     if ((!placeOfBirth && !allowLegacyDetails) || placeOfBirth.length > 120) return false
+    if ((!nationality && !allowLegacyDetails) || nationality.length > 120) return false
+    if ((!gender && !allowLegacyDetails) || gender.length > 60) return false
     if (index === 0 &&
-      ((!documentType && !allowLegacyDetails) || (documentType && !DOCUMENT_TYPES.has(documentType)) ||
+      ((!guestRole && !allowLegacyDetails) || (guestRole && !GUEST_ROLES.has(guestRole)) ||
+        (!placeOfIssue && !allowLegacyDetails) || placeOfIssue.length > 120 ||
+        (!documentType && !allowLegacyDetails) || documentType.length > 100 ||
         !documentNumber || documentNumber.length > 100)) return false
-    if (index > 0 && (documentType || documentNumber)) return false
+    if (index > 0 && (guestRole || placeOfIssue || documentType || documentNumber)) return false
     return true
   })
 }
@@ -111,6 +123,10 @@ export async function saveBookingGuestDetails(
       last_name: guest.last_name.trim(),
       date_of_birth: guest.date_of_birth,
       place_of_birth: guest.place_of_birth?.trim() ?? '',
+      ...(guest.nationality?.trim() ? { nationality: guest.nationality.trim() } : {}),
+      ...(guest.gender?.trim() ? { gender: guest.gender.trim() } : {}),
+      ...(guest.guest_role?.trim() ? { guest_role: guest.guest_role.trim() } : {}),
+      ...(guest.place_of_issue?.trim() ? { place_of_issue: guest.place_of_issue.trim() } : {}),
       ...(guest.document_type?.trim() ? { document_type: guest.document_type.trim() } : {}),
       ...(documentNumber ? { document_number: documentNumber } : {}),
     }

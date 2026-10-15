@@ -1,10 +1,14 @@
 import type { Locale } from './i18n'
 
 export type GuestDetailsFormValue = {
+  guest_role: string
   first_name: string
   last_name: string
   date_of_birth: string
   place_of_birth: string
+  nationality: string
+  gender: string
+  place_of_issue: string
   document_type: string
   document_number: string
 }
@@ -47,10 +51,14 @@ type BookingName = {
 }
 
 type SavedGuestDetails = {
+  guest_role?: string
   first_name?: string
   last_name?: string
   date_of_birth?: string
   place_of_birth?: string
+  nationality?: string
+  gender?: string
+  place_of_issue?: string
   document_type?: string
   document_number?: string
 }
@@ -65,10 +73,14 @@ export function guestDetailsFormValues(
   return Array.from({ length: guestCount }, (_, index) => {
     const savedGuest = savedGuests[index]
     return {
+      guest_role: index === 0 ? savedGuest?.guest_role ?? 'group_leader' : '',
       first_name: savedGuest?.first_name?.trim() || (index === 0 ? booking.first_name.trim() : ''),
       last_name: savedGuest?.last_name?.trim() || (index === 0 ? booking.last_name.trim() : ''),
       date_of_birth: savedGuest?.date_of_birth ? formatGuestDate(savedGuest.date_of_birth, locale) : '',
       place_of_birth: savedGuest?.place_of_birth ?? '',
+      nationality: savedGuest?.nationality ?? '',
+      gender: savedGuest?.gender ?? '',
+      place_of_issue: index === 0 ? savedGuest?.place_of_issue ?? '' : '',
       document_type: index === 0 ? savedGuest?.document_type ?? '' : '',
       document_number: index === 0 ? savedGuest?.document_number ?? '' : '',
     }

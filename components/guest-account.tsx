@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { Locale } from '@/lib/i18n'
 import { apiUrl } from '@/lib/api-url'
 import { formatEU } from '@/lib/format-date'
-import { guestDetailsFormValues, parseGuestDate, type GuestDetailsFormValue } from '@/lib/guest-details-form'
+import { formatGuestDate, guestDetailsFormValues, parseGuestDate, type GuestDetailsFormValue } from '@/lib/guest-details-form'
 
 type Booking = {
  id: string
@@ -46,11 +46,20 @@ const DETAILS_COPY: Record<Locale, {
  detailsTitle: string
  detailsIntro: string
  groupLeader: string
+ guestRole: string
+ headOfFamily: string
+ groupLeaderOption: string
+ singleGuest: string
+ arrivalDate: string
+ numberOfNights: string
  firstName: string
  lastName: string
  dateOfBirth: string
  datePlaceholder: string
+ nationality: string
  placeOfBirth: string
+ gender: string
+ placeOfIssue: string
  documentType: string
  identityCard: string
  passport: string
@@ -71,11 +80,20 @@ const DETAILS_COPY: Record<Locale, {
   detailsTitle: 'Dati personali dell’ospite',
   detailsIntro: 'Nome e cognome inseriti nella prenotazione sono precompilati per il capogruppo. Completa i dati richiesti e correggili se necessario.',
   groupLeader: 'Capogruppo',
+  guestRole: 'Ruolo dell’ospite',
+  headOfFamily: 'Capofamiglia',
+  groupLeaderOption: 'Capogruppo',
+  singleGuest: 'Ospite singolo',
+  arrivalDate: 'Data di arrivo',
+  numberOfNights: 'Numero di notti',
   firstName: 'Nome',
   lastName: 'Cognome',
   dateOfBirth: 'Data di nascita',
   datePlaceholder: 'gg/mm/aaaa',
+  nationality: 'Nazionalità',
   placeOfBirth: 'Luogo di nascita',
+  gender: 'Genere',
+  placeOfIssue: 'Luogo di rilascio',
   documentType: 'Tipo di documento',
   identityCard: 'Carta d’identità',
   passport: 'Passaporto',
@@ -96,11 +114,20 @@ const DETAILS_COPY: Record<Locale, {
   detailsTitle: 'Guest personal details',
   detailsIntro: 'The name entered during booking is prefilled for the group leader. Complete the required details and correct the name if needed.',
   groupLeader: 'Group leader',
+  guestRole: 'Guest role',
+  headOfFamily: 'Head of family',
+  groupLeaderOption: 'Group leader',
+  singleGuest: 'Single guest',
+  arrivalDate: 'Arrival date',
+  numberOfNights: 'Number of nights',
   firstName: 'First name',
   lastName: 'Last name',
   dateOfBirth: 'Date of birth',
   datePlaceholder: 'mm/dd/yyyy',
+  nationality: 'Nationality',
   placeOfBirth: 'Place of birth',
+  gender: 'Gender',
+  placeOfIssue: 'Place of issue',
   documentType: 'Document type',
   identityCard: 'Identity card',
   passport: 'Passport',
@@ -121,11 +148,20 @@ const DETAILS_COPY: Record<Locale, {
   detailsTitle: 'Informations personnelles des voyageurs',
   detailsIntro: 'Le nom saisi lors de la réservation est prérempli pour le responsable du groupe. Complétez les informations requises et corrigez-le si nécessaire.',
   groupLeader: 'Responsable du groupe',
+  guestRole: 'Rôle du voyageur',
+  headOfFamily: 'Chef de famille',
+  groupLeaderOption: 'Responsable du groupe',
+  singleGuest: 'Voyageur seul',
+  arrivalDate: 'Date d’arrivée',
+  numberOfNights: 'Nombre de nuits',
   firstName: 'Prénom',
   lastName: 'Nom',
   dateOfBirth: 'Date de naissance',
   datePlaceholder: 'jj/mm/aaaa',
+  nationality: 'Nationalité',
   placeOfBirth: 'Lieu de naissance',
+  gender: 'Genre',
+  placeOfIssue: 'Lieu de délivrance',
   documentType: 'Type de document',
   identityCard: 'Carte d’identité',
   passport: 'Passeport',
@@ -146,11 +182,20 @@ const DETAILS_COPY: Record<Locale, {
   detailsTitle: 'Persönliche Daten der Gäste',
   detailsIntro: 'Der bei der Buchung eingegebene Name ist für die Gruppenleitung vorausgefüllt. Ergänzen Sie die erforderlichen Angaben und korrigieren Sie den Namen bei Bedarf.',
   groupLeader: 'Gruppenleitung',
+  guestRole: 'Rolle des Gastes',
+  headOfFamily: 'Familienoberhaupt',
+  groupLeaderOption: 'Gruppenleitung',
+  singleGuest: 'Einzelgast',
+  arrivalDate: 'Anreisedatum',
+  numberOfNights: 'Anzahl der Nächte',
   firstName: 'Vorname',
   lastName: 'Nachname',
   dateOfBirth: 'Geburtsdatum',
   datePlaceholder: 'tt.mm.jjjj',
+  nationality: 'Staatsangehörigkeit',
   placeOfBirth: 'Geburtsort',
+  gender: 'Geschlecht',
+  placeOfIssue: 'Ausstellungsort',
   documentType: 'Dokumenttyp',
   identityCard: 'Personalausweis',
   passport: 'Reisepass',
@@ -171,11 +216,20 @@ const DETAILS_COPY: Record<Locale, {
   detailsTitle: 'Datos personales de los huéspedes',
   detailsIntro: 'El nombre introducido durante la reserva aparece para el responsable del grupo. Completa los datos requeridos y corrígelo si es necesario.',
   groupLeader: 'Responsable del grupo',
+  guestRole: 'Rol del huésped',
+  headOfFamily: 'Cabeza de familia',
+  groupLeaderOption: 'Responsable del grupo',
+  singleGuest: 'Huésped individual',
+  arrivalDate: 'Fecha de llegada',
+  numberOfNights: 'Número de noches',
   firstName: 'Nombre',
   lastName: 'Apellido',
   dateOfBirth: 'Fecha de nacimiento',
   datePlaceholder: 'dd/mm/aaaa',
+  nationality: 'Nacionalidad',
   placeOfBirth: 'Lugar de nacimiento',
+  gender: 'Género',
+  placeOfIssue: 'Lugar de expedición',
   documentType: 'Tipo de documento',
   identityCard: 'Documento de identidad',
   passport: 'Pasaporte',
@@ -196,11 +250,20 @@ const DETAILS_COPY: Record<Locale, {
   detailsTitle: 'Личные данные гостей',
   detailsIntro: 'Имя, указанное при бронировании, предварительно заполнено для руководителя группы. Заполните обязательные данные и при необходимости исправьте имя.',
   groupLeader: 'Руководитель группы',
+  guestRole: 'Роль гостя',
+  headOfFamily: 'Глава семьи',
+  groupLeaderOption: 'Руководитель группы',
+  singleGuest: 'Один гость',
+  arrivalDate: 'Дата заезда',
+  numberOfNights: 'Количество ночей',
   firstName: 'Имя',
   lastName: 'Фамилия',
   dateOfBirth: 'Дата рождения',
   datePlaceholder: 'дд.мм.гггг',
+  nationality: 'Гражданство',
   placeOfBirth: 'Место рождения',
+  gender: 'Пол',
+  placeOfIssue: 'Место выдачи',
   documentType: 'Тип документа',
   identityCard: 'Удостоверение личности',
   passport: 'Паспорт',
@@ -291,10 +354,14 @@ export function GuestAccount({ locale }: { locale: Locale }) {
     if (!response.ok) throw new Error(data?.error || copy.detailsError)
     if (!active) return
     const savedGuests = Array.isArray(data.guests) ? data.guests as Array<{
+     guest_role?: string
      first_name: string
      last_name: string
      date_of_birth: string
      place_of_birth?: string
+     nationality?: string
+     gender?: string
+     place_of_issue?: string
      document_type?: string
      document_number?: string
     }> : []
@@ -377,6 +444,10 @@ export function GuestAccount({ locale }: { locale: Locale }) {
     last_name: guest.last_name.trim(),
     date_of_birth: dateOfBirth ?? '',
     place_of_birth: guest.place_of_birth.trim(),
+    nationality: guest.nationality.trim(),
+    gender: guest.gender.trim(),
+    ...(guest.guest_role ? { guest_role: guest.guest_role } : {}),
+    ...(guest.place_of_issue.trim() ? { place_of_issue: guest.place_of_issue.trim() } : {}),
     ...(guest.document_type ? { document_type: guest.document_type } : {}),
     ...(guest.document_number.trim() ? { document_number: guest.document_number.trim() } : {}),
    }
@@ -485,9 +556,43 @@ export function GuestAccount({ locale }: { locale: Locale }) {
          {guestDetails.map((guest, index) => (
           <fieldset key={`${selected}-${index}`} className="space-y-3 rounded-xl border border-border p-3">
            <legend className="px-1 text-sm font-medium">
-            {copy.guestSingular} {index + 1}{index === 0 ? ` · ${copy.groupLeader}` : ''}
+            {copy.guestSingular} {index + 1}{index === 0
+             ? ` · ${guest.guest_role === 'head_of_family' ? copy.headOfFamily :
+              guest.guest_role === 'single_guest' ? copy.singleGuest : copy.groupLeaderOption}`
+             : ''}
            </legend>
            <div className="grid gap-3 sm:grid-cols-2">
+            {index === 0 && (
+             <>
+              <label className="text-xs font-medium text-muted-foreground">{copy.guestRole}
+               <select
+                required
+                value={guest.guest_role}
+                onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+                 itemIndex === index ? { ...item, guest_role: event.target.value } : item))}
+                className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+               >
+                <option value="head_of_family">{copy.headOfFamily}</option>
+                <option value="group_leader">{copy.groupLeaderOption}</option>
+                <option value="single_guest">{copy.singleGuest}</option>
+               </select>
+              </label>
+              <label className="text-xs font-medium text-muted-foreground">{copy.arrivalDate}
+               <input
+                readOnly
+                value={formatGuestDate(selectedBooking.check_in, locale)}
+                className="mt-1 block w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground"
+               />
+              </label>
+              <label className="text-xs font-medium text-muted-foreground">{copy.numberOfNights}
+               <input
+                readOnly
+                value={String(selectedBooking.nights)}
+                className="mt-1 block w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground"
+               />
+              </label>
+             </>
+            )}
             <label className="text-xs font-medium text-muted-foreground">{copy.firstName}
              <input
               required
@@ -522,6 +627,17 @@ export function GuestAccount({ locale }: { locale: Locale }) {
               className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
              />
             </label>
+            <label className="text-xs font-medium text-muted-foreground">{copy.nationality}
+             <input
+              required
+              maxLength={120}
+              autoComplete="country-name"
+              value={guest.nationality}
+              onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+               itemIndex === index ? { ...item, nationality: event.target.value } : item))}
+              className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+             />
+            </label>
             <label className="text-xs font-medium text-muted-foreground">{copy.placeOfBirth}
              <input
               required
@@ -533,21 +649,44 @@ export function GuestAccount({ locale }: { locale: Locale }) {
               className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
              />
             </label>
+            <label className="text-xs font-medium text-muted-foreground">{copy.gender}
+             <input
+              required
+              maxLength={60}
+              autoComplete="off"
+              value={guest.gender}
+              onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+               itemIndex === index ? { ...item, gender: event.target.value } : item))}
+              className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+             />
+            </label>
             {index === 0 && (
              <>
-              <label className="text-xs font-medium text-muted-foreground">{copy.documentType}
-               <select
+              <label className="text-xs font-medium text-muted-foreground">{copy.placeOfIssue}
+               <input
                 required
-                value={guest.document_type}
+                maxLength={120}
+                autoComplete="off"
+                value={guest.place_of_issue}
+                onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
+                 itemIndex === index ? { ...item, place_of_issue: event.target.value } : item))}
+                className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+               />
+              </label>
+              <label className="text-xs font-medium text-muted-foreground">{copy.documentType}
+               <input
+                required
+                maxLength={100}
+                autoComplete="off"
+                value={
+                 guest.document_type === 'identity_card' ? copy.identityCard :
+                  guest.document_type === 'passport' ? copy.passport :
+                   guest.document_type === 'other' ? copy.otherDocument : guest.document_type
+                }
                 onChange={(event) => setGuestDetails((current) => current.map((item, itemIndex) =>
                  itemIndex === index ? { ...item, document_type: event.target.value } : item))}
                 className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-               >
-                <option value="">—</option>
-                <option value="identity_card">{copy.identityCard}</option>
-                <option value="passport">{copy.passport}</option>
-                <option value="other">{copy.otherDocument}</option>
-               </select>
+               />
                <span className="mt-1 block font-normal">{copy.documentHint}</span>
               </label>
               <label className="text-xs font-medium text-muted-foreground">{copy.documentNumber}
