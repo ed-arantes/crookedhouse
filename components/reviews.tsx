@@ -96,13 +96,16 @@ export function Reviews({ locale = 'en' }: { locale?: Locale }) {
          key={`${review.name}-${index}`}
          className="min-w-[20rem] w-[22rem] flex-shrink-0 flex-col rounded-2xl bg-primary-foreground/10 p-6 backdrop-blur-sm"
         >
-        <div className="mb-4 flex gap-0.5">
+        <div className="mb-4 flex items-center gap-2">
+         <div className="flex gap-0.5">
          {Array.from({ length: 5 }).map((_, i) => {
           const reviewStars = review.source === 'airbnb' ? (review.rating ?? 0) : (review.rating ? review.rating / 2 : 0)
           return (
            <Star key={i} className={`h-4 w-4 ${i < Math.round(reviewStars) ? 'fill-accent text-accent' : 'text-primary-foreground/30'}`} />
           )
          })}
+         </div>
+         {review.title && <span className="text-sm font-semibold text-primary-foreground">{review.title}</span>}
         </div>
         <ReviewText text={review.text} locale={locale} />
         <div className="mt-4 flex items-center justify-between gap-3 text-sm text-primary-foreground/70">
