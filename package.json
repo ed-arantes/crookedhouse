@@ -11,6 +11,8 @@
   "test": "tsx --test lib/*.test.ts"
  },
  "dependencies": {
+  "@stripe/react-stripe-js": "^7.0.0",
+  "@stripe/stripe-js": "^10.1.0",
   "@tabler/icons-react": "^3.46.0",
   "clsx": "^2.1.1",
   "es-toolkit": "^1.51.0",

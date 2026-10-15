@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CalendarDays, LoaderCircle, Users } from 'lucide-react'
 import { CheckoutGuestDialog } from './booking/checkout-guest-dialog'
+import { StripePaymentDialog } from './booking/stripe-payment-dialog'
 import { useBooking } from './booking/booking-context'
 import { Popover } from './booking/popover'
 import { RangeCalendar } from './booking/range-calendar'
@@ -23,6 +24,15 @@ type CheckoutGuestDetails = Omit<GuestDetailsFormValue, 'date_of_birth'> & {
  date_of_birth: string
 }
 
+type CheckoutPayment = {
+ paymentIntentId: string
+ clientSecret: string
+ publishableKey: string
+ email: string
+ amount: number
+ expiresAt: number
+}
+
 const CANCELLATION_COPY: Record<Locale, string> = {
  it: 'Le cancellazioni sono consentite solo fino a 7 giorni prima della data di arrivo.',
  en: 'Cancellations are allowed only up to 7 days before the arrival date.',
@@ -39,6 +49,8 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
  const [checkoutError, setCheckoutError] = useState('')
  const [isGuestDetailsOpen, setIsGuestDetailsOpen] = useState(false)
  const [checkoutContact, setCheckoutContact] = useState<CheckoutContact | null>(null)
+ const [checkoutPayment, setCheckoutPayment] = useState<CheckoutPayment | null>(null)
+ const closingPaymentIds = useRef(new Set<string>())
 
  useEffect(() => {
   function resetPaymentState() {
@@ -81,13 +93,66 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
      ...(guestDetails ? { guestDetails } : {}),
     }),
    })
-   const data = await response.json()
-   if (!response.ok || !data?.url) throw new Error(data?.error || 'Unable to create checkout session')
-   window.location.href = data.url
+   const data = await response.json() as Partial<CheckoutPayment> & { error?: string }
+   if (!response.ok || typeof data.paymentIntentId !== 'string' ||
+    typeof data.clientSecret !== 'string' || typeof data.publishableKey !== 'string' ||
+    typeof data.email !== 'string' ||
+    typeof data.amount !== 'number' || !Number.isFinite(data.amount) || data.amount <= 0 ||
+    typeof data.expiresAt !== 'number' || !Number.isFinite(data.expiresAt)) {
+    throw new Error(data.error || 'Unable to create payment intent')
+   }
+   setIsGuestDetailsOpen(false)
+   setCheckoutPayment({
+    paymentIntentId: data.paymentIntentId,
+    clientSecret: data.clientSecret,
+    publishableKey: data.publishableKey,
+    email: data.email,
+    amount: data.amount,
+    expiresAt: data.expiresAt,
+   })
+   setIsLoadingPayment(false)
   } catch (error) {
    console.error('Booking checkout failed', error)
    setCheckoutError(t(locale, 'errors.checkout'))
    setIsLoadingPayment(false)
+  }
+ }
+
+ async function closeCheckoutPayment(paymentIntentId: string, cancel: boolean) {
+  if (closingPaymentIds.current.has(paymentIntentId)) return
+  closingPaymentIds.current.add(paymentIntentId)
+  try {
+   const response = await fetch(apiUrl('/api/checkout-expire'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentIntentId, ...(cancel ? { cancel: true } : {}) }),
+   })
+   const data = await response.json() as { error?: string; status?: string }
+   if (!response.ok) throw new Error(data.error || 'Unable to close payment')
+   if (data.status === 'paid' || data.status === 'already_final') {
+    window.location.assign(`/success?payment_intent_id=${encodeURIComponent(paymentIntentId)}`)
+    return
+   }
+   setCheckoutPayment(null)
+   setCheckoutError(cancel
+    ? locale === 'it' ? 'Pagamento annullato.' : locale === 'fr' ? 'Paiement annulé.' : locale === 'de' ? 'Zahlung abgebrochen.' : locale === 'es' ? 'Pago cancelado.' : locale === 'ru' ? 'Платёж отменён.' : 'Payment cancelled.'
+    : locale === 'it' ? 'Il tempo per completare il pagamento è scaduto.' : locale === 'fr' ? 'Le délai de paiement a expiré.' : locale === 'de' ? 'Die Zahlungsfrist ist abgelaufen.' : locale === 'es' ? 'Ha vencido el plazo para completar el pago.' : locale === 'ru' ? 'Время для оплаты истекло.' : 'The payment time limit has expired.')
+  } catch (error) {
+   console.error('Closing booking payment failed', error)
+   setCheckoutPayment(null)
+   setCheckoutError(locale === 'it'
+    ? 'Non è stato possibile chiudere il pagamento. Riprova o contattaci.'
+    : locale === 'fr'
+     ? 'Impossible de clôturer le paiement. Réessayez ou contactez-nous.'
+     : locale === 'de'
+      ? 'Die Zahlung konnte nicht beendet werden. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.'
+      : locale === 'es'
+       ? 'No se pudo cerrar el pago. Inténtalo de nuevo o contáctanos.'
+       : locale === 'ru'
+        ? 'Не удалось завершить платёж. Попробуйте ещё раз или свяжитесь с нами.'
+        : 'Unable to close the payment. Please retry or contact us.')
+  } finally {
+   closingPaymentIds.current.delete(paymentIntentId)
   }
  }
 
@@ -299,7 +364,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
         {nights > 0 && (
          <button
          type="submit"
-          disabled={isLoadingPayment || isGuestDetailsOpen}
+          disabled={isLoadingPayment || isGuestDetailsOpen || !!checkoutPayment}
           aria-busy={isLoadingPayment}
           className="w-full rounded-xl bg-accent px-6 py-3.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
          >
@@ -333,6 +398,15 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
       onSkip={() => startCheckout()}
       onClose={() => setIsGuestDetailsOpen(false)}
      />
+    )}
+    {checkoutPayment && (
+      <StripePaymentDialog
+       {...checkoutPayment}
+       locale={locale}
+       amount={formatCurrency(checkoutPayment.amount)}
+       onExpire={() => closeCheckoutPayment(checkoutPayment.paymentIntentId, false)}
+       onCancel={() => closeCheckoutPayment(checkoutPayment.paymentIntentId, true)}
+      />
     )}
    </div>
   </section>

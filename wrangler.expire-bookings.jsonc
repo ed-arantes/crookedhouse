@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "crookedhouse-expire-bookings",
+  "main": "workers/expire-pending-bookings.ts",
+  "compatibility_date": "2024-01-01",
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "crookedhouse-translations",
+      "database_id": "a3b9127b-ee7a-450c-84a6-97c162453803"
+    }
+  ]
+}

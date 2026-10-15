@@ -1,9 +1,17 @@
 # Crooked House — Cloudflare Pages
 
-This copy is a static Next.js export for Cloudflare Pages. The public pages are served as static files. Stripe uses two Pages Functions:
+This copy is a static Next.js export for Cloudflare Pages. The public pages are served as static files. Stripe payments use the Payment Element and these Pages Functions:
 
-- `POST /api/checkout` creates a Checkout Session.
-- `GET /api/checkout-session?session_id=...` verifies the payment after Stripe redirects back.
+- `POST /api/checkout` creates a PaymentIntent and a pending booking.
+- `POST /api/checkout-expire` cancels an expired or user-cancelled PaymentIntent.
+- `GET /api/checkout-session?payment_intent_id=...` verifies new PaymentIntent payments. The endpoint still verifies existing Checkout Sessions with `session_id`.
+
+The payment form starts a 15-minute deadline when the pending booking is created.
+The countdown prevents submission after the deadline and the expiry endpoint
+cancels the PaymentIntent. A separate scheduled Worker is the fallback when a
+guest closes the page; it checks once a minute and marks cancelled bookings in
+Admin. If Stripe reports that payment succeeded during an expiry race, the
+booking is recorded as paid instead.
 
 ## Cloudflare Pages settings
 
@@ -12,7 +20,31 @@ This copy is a static Next.js export for Cloudflare Pages. The public pages are 
 - Functions directory: `functions`
 - Node.js version: 20 or newer
 
-Set `STRIPE_SECRET_KEY` as a Pages secret. Do not commit `.dev.vars`; `.dev.vars.example` is provided for local reference.
+Set `STRIPE_SECRET_KEY` as a Pages secret and `STRIPE_PUBLISHABLE_KEY` as a
+Pages variable. The publishable key is returned by the checkout API only to
+initialize Stripe Elements. Do not configure `setup_future_usage`; the Payment
+Element keeps Link available according to the Stripe account's payment-method
+settings without requesting that cards be saved for future use. Do not commit
+`.dev.vars`; `.dev.vars.example` is provided for local reference.
+
+Deploy the booking-expiration Worker separately after configuring its
+`STRIPE_SECRET_KEY` secret:
+
+```text
+npx wrangler deploy --config wrangler.expire-bookings.jsonc
+```
+
+The config binds it to the existing `crookedhouse-translations` D1 database and
+adds the once-per-minute Cron Trigger. Review the account and D1 binding in
+`wrangler.expire-bookings.jsonc` before deploying. The secret must be configured
+for this Worker as well as for Pages; do not place secret values in Wrangler
+config or source control.
+
+For a safe payment test, use Stripe test-mode keys and an isolated test D1
+database. For example, Stripe's `4242 4242 4242 4242` test card can be used with
+a future expiry date and any valid CVC. Do not test against live keys. The
+`dev:cloudflare` command below uses remote production D1/R2 bindings, so do not
+use it for test bookings or payment-expiry tests.
 
 The Pages Functions return `Cache-Control: no-store`, and this project does not use Next.js ISR, OpenNext, an R2 incremental cache, or custom long-lived asset cache headers.
 

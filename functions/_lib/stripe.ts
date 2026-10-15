@@ -8,6 +8,14 @@ export type StripeCheckoutSession = {
  url?: string | null
 }
 
+export type StripePaymentIntent = {
+ id: string
+ status: 'canceled' | 'processing' | 'requires_action' | 'requires_capture' | 'requires_confirmation' | 'requires_payment_method' | 'succeeded'
+ amount: number
+ amount_received: number
+ client_secret?: string | null
+}
+
 export class StripeRequestError extends Error {
  readonly status: number
 

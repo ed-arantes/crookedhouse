@@ -3,6 +3,7 @@ import test from 'node:test'
 import { saveBookingGuestDetails, readBookingGuestDetails, validateGuestDetails } from '../functions/_lib/booking-guest-details'
 import type { AdminEnv } from '../functions/_lib/admin'
 import { onRequestPost } from '../functions/api/checkout'
+import { expirePaymentIntent, handlePaymentExpirationRequest, PAYMENT_WINDOW_MS } from '../functions/_lib/payment-expiration'
 import { formatGuestDate, parseGuestDate } from './guest-details-form'
 import type { Locale } from './i18n'
 
@@ -208,4 +209,142 @@ test('rejects incomplete guest details before creating a checkout session', asyn
 
   assert.equal(response.status, 400)
   assert.deepEqual(await response.json(), { error: 'Invalid guest details' })
+})
+
+function createPaymentExpirationEnv(createdAt: string) {
+  const booking = {
+    id: 'booking-1',
+    status: 'pending',
+    session_id: 'pi_test123',
+    created_at: createdAt,
+  }
+  const env = {
+    STRIPE_SECRET_KEY: 'sk_test_value',
+    DB: {
+      prepare(query: string) {
+        let parameters: unknown[] = []
+        const statement = {
+          bind(...values: unknown[]) {
+            parameters = values
+            return statement
+          },
+          async first() {
+            if (query.startsWith('SELECT id, status, session_id')) return booking
+            return null
+          },
+          async run() {
+            if (query.startsWith('UPDATE bookings')) booking.status = String(parameters[0])
+            return { meta: { changes: 1 } }
+          },
+          async all() {
+            return { results: [] }
+          },
+        }
+        return statement
+      },
+    },
+  } as Parameters<typeof expirePaymentIntent>[0]
+  return { env, booking }
+}
+
+test('enforces the 15-minute payment deadline before contacting Stripe', async () => {
+  const createdAt = '2026-11-01 12:00:00'
+  const { env } = createPaymentExpirationEnv(createdAt)
+  const beforeDeadline = Date.parse(`${createdAt.replace(' ', 'T')}Z`) + PAYMENT_WINDOW_MS - 1
+
+  const result = await expirePaymentIntent(env, 'pi_test123', beforeDeadline)
+
+  assert.deepEqual(result, {
+    status: 'not_expired',
+    expiresAt: Date.parse(`${createdAt.replace(' ', 'T')}Z`) + PAYMENT_WINDOW_MS,
+  })
+})
+
+test('cancels an unpaid PaymentIntent and marks its booking cancelled at expiry', async () => {
+  const { env, booking } = createPaymentExpirationEnv('2026-11-01 12:00:00')
+  const originalFetch = globalThis.fetch
+  const requests: string[] = []
+  globalThis.fetch = async (input, init) => {
+    const url = String(input)
+    requests.push(`${init?.method ?? 'GET'} ${url}`)
+    return Response.json({
+      id: 'pi_test123',
+      status: init?.method === 'POST' ? 'canceled' : 'requires_payment_method',
+      amount_received: 0,
+    })
+  }
+
+  try {
+    const result = await expirePaymentIntent(env, 'pi_test123', Date.parse('2026-11-01T12:15:00Z'))
+    assert.deepEqual(result, { status: 'expired' })
+    assert.equal(booking.status, 'cancelled')
+    assert.deepEqual(requests.map((request) => request.split(' ')[0]), ['GET', 'POST'])
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('records a successful payment instead of cancelling it when expiry races payment', async () => {
+  const { env, booking } = createPaymentExpirationEnv('2026-11-01 12:00:00')
+  const originalFetch = globalThis.fetch
+  let requestCount = 0
+  globalThis.fetch = async () => {
+    requestCount++
+    return Response.json({
+      id: 'pi_test123',
+      status: 'succeeded',
+      amount_received: 12000,
+    })
+  }
+
+  try {
+    const result = await expirePaymentIntent(env, 'pi_test123', Date.parse('2026-11-01T12:15:00Z'))
+    assert.deepEqual(result, { status: 'paid' })
+    assert.equal(booking.status, 'paid')
+    assert.equal(requestCount, 1)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('rechecks Stripe and records payment when cancellation loses a race', async () => {
+  const { env, booking } = createPaymentExpirationEnv('2026-11-01 12:00:00')
+  const originalFetch = globalThis.fetch
+  let requestCount = 0
+  globalThis.fetch = async (_input, init) => {
+    requestCount++
+    if (init?.method === 'POST') {
+      return Response.json({ error: { message: 'Payment is no longer cancelable' } }, { status: 400 })
+    }
+    return Response.json({
+      id: 'pi_test123',
+      status: requestCount === 1 ? 'requires_payment_method' : 'succeeded',
+      amount_received: 12000,
+    })
+  }
+
+  try {
+    const result = await expirePaymentIntent(env, 'pi_test123', Date.parse('2026-11-01T12:15:00Z'))
+    assert.deepEqual(result, { status: 'paid' })
+    assert.equal(booking.status, 'paid')
+    assert.equal(requestCount, 3)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('rejects a client expiry request while the payment window is still open', async () => {
+  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  const { env } = createPaymentExpirationEnv(createdAt)
+  const response = await handlePaymentExpirationRequest(
+    new Request('https://example.com/api/checkout-expire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentIntentId: 'pi_test123' }),
+    }),
+    env,
+  )
+
+  assert.equal(response.status, 409)
+  assert.equal((await response.json() as { error: string }).error, 'Payment window is still open')
 })

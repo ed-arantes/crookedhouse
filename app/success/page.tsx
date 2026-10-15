@@ -4,19 +4,24 @@ import { useEffect, useState } from 'react'
 import { SuccessRedirect } from '@/components/success-redirect'
 import { apiUrl } from '@/lib/api-url'
 
-type State = 'loading' | 'missing' | 'invalid' | 'failed' | 'unpaid' | 'paid'
+type State = 'loading' | 'missing' | 'invalid' | 'failed' | 'unpaid' | 'processing' | 'cancelled' | 'paid'
 
 export default function SuccessPage() {
  const [state, setState] = useState<State>('loading')
 
  useEffect(() => {
-  const sessionId = new URLSearchParams(window.location.search).get('session_id')
-  if (!sessionId) {
+  const params = new URLSearchParams(window.location.search)
+  const sessionId = params.get('session_id')
+  const paymentIntentId = params.get('payment_intent_id')
+  if (!sessionId && !paymentIntentId) {
    setState('missing')
    return
   }
 
-  fetch(apiUrl(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`), {
+  const query = paymentIntentId
+   ? `payment_intent_id=${encodeURIComponent(paymentIntentId)}`
+   : `session_id=${encodeURIComponent(sessionId!)}`
+  fetch(apiUrl(`/api/checkout-session?${query}`), {
    cache: 'no-store',
   })
    .then(async (response) => {
@@ -26,7 +31,10 @@ export default function SuccessPage() {
     }
     if (!response.ok) throw new Error('Verification failed')
     const session = await response.json() as { payment_status?: string }
-    setState(session.payment_status === 'paid' ? 'paid' : 'unpaid')
+    if (session.payment_status === 'paid') setState('paid')
+    else if (session.payment_status === 'processing') setState('processing')
+    else if (session.payment_status === 'canceled') setState('cancelled')
+    else setState('unpaid')
    })
    .catch(() => setState('failed'))
  }, [])
@@ -68,6 +76,24 @@ export default function SuccessPage() {
      <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">Payment is not complete</h1>
      <p className="mt-4 text-sm text-muted-foreground">
       We have not received a completed payment for this session.
+     </p>
+    </div>
+   </main>
+  )
+ }
+
+ if (state === 'processing' || state === 'cancelled') {
+  return (
+   <main className="flex min-h-screen items-center justify-center bg-background px-5 text-center">
+    <div>
+     <p className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">Payment</p>
+     <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">
+      {state === 'processing' ? 'Payment is processing' : 'Payment was cancelled'}
+     </h1>
+     <p className="mt-4 text-sm text-muted-foreground">
+      {state === 'processing'
+       ? 'We will confirm your booking as soon as the payment is complete.'
+       : 'No payment was completed for this booking.'}
      </p>
     </div>
    </main>

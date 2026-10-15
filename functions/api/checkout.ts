@@ -4,7 +4,7 @@ import {
   json,
   stripeRequest,
   StripeRequestError,
-  type StripeCheckoutSession,
+  type StripePaymentIntent,
   type StripeEnv,
 } from '../_lib/stripe'
 import { d1ListBlockedDates, d1GetSetting, type AdminEnv } from '../_lib/admin'
@@ -42,7 +42,7 @@ const ANIMAL_SURCHARGE_ACTIVE_KEY = 'animal_surcharge_active'
 
 type PagesContext = {
   request: Request
-  env: StripeEnv & AdminEnv
+  env: StripeEnv & AdminEnv & { STRIPE_PUBLISHABLE_KEY?: string }
 }
 
 function parseDate(value: unknown): Date | null {
@@ -52,6 +52,7 @@ function parseDate(value: unknown): Date | null {
 }
 
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
+  let createdPaymentIntentId: string | null = null
   try {
     const body = await request.json() as {
       checkIn?: unknown
@@ -148,47 +149,44 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const animalSurchargeActive = (await d1GetSetting(env.DB, ANIMAL_SURCHARGE_ACTIVE_KEY, 'false')) === 'true'
     const animalSurcharge = calculateAnimalSurcharge(animalSurchargeAmount, animalSurchargeActive, pets === 1)
     const total = subtotal + councilTax + animalSurcharge
-    const origin = new URL(request.url).origin
+    if (!env.STRIPE_PUBLISHABLE_KEY) {
+      throw new StripeRequestError('Stripe publishable key is not configured')
+    }
+
+    const bookingId = crypto.randomUUID()
+    const createdAt = new Date()
+    createdAt.setUTCMilliseconds(0)
+    const createdAtSql = createdAt.toISOString().slice(0, 19).replace('T', ' ')
+    const expiresAt = createdAt.getTime() + 15 * 60 * 1000
     const form = new URLSearchParams({
-      mode: 'payment',
-      'line_items[0][quantity]': '1',
-      'line_items[0][price_data][currency]': 'eur',
-      'line_items[0][price_data][unit_amount]': String(Math.round((subtotal + councilTax) * 100)),
-      'line_items[0][price_data][product_data][name]': 'Crooked House Booking',
-      'line_items[0][price_data][product_data][description]': `${nights} night${nights > 1 ? 's' : ''} \u00b7 ${guestCount} guest${guestCount > 1 ? 's' : ''}`,
-      customer_email: email,
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/#booking`,
+      amount: String(Math.round(total * 100)),
+      currency: 'eur',
+      'automatic_payment_methods[enabled]': 'true',
+      receipt_email: email,
+      description: `Crooked House Booking · ${nights} night${nights > 1 ? 's' : ''} · ${guestCount} guest${guestCount > 1 ? 's' : ''}`,
+      'metadata[booking_id]': bookingId,
       'metadata[check_in]': String(body.checkIn),
       'metadata[check_out]': String(body.checkOut),
       'metadata[nights]': String(nights),
       'metadata[guests]': String(guestCount),
       'metadata[pets]': String(pets),
       'metadata[animal_surcharge]': String(animalSurcharge),
-      'metadata[first_name]': firstName,
-      'metadata[last_name]': lastName,
-      'metadata[email]': email,
     })
-    if (animalSurcharge > 0) {
-      form.set('line_items[1][quantity]', '1')
-      form.set('line_items[1][price_data][currency]', 'eur')
-      form.set('line_items[1][price_data][unit_amount]', String(Math.round(animalSurcharge * 100)))
-      form.set('line_items[1][price_data][product_data][name]', 'Pet surcharge')
-    }
 
-    const result = await stripeRequest<StripeCheckoutSession>(env, '/checkout/sessions', {
+    const result = await stripeRequest<StripePaymentIntent & { client_secret?: string | null }>(env, '/payment_intents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: form,
     })
+    createdPaymentIntentId = result.id || null
 
-    if (!result.url) throw new StripeRequestError('Stripe did not return a checkout URL')
+    if (!result.id || !result.client_secret) {
+      throw new StripeRequestError('Stripe did not return payment details')
+    }
 
     // Save booking to D1 with encrypted PII
     const encKey = env.BOOKING_ENCRYPTION_KEY
-    console.log('BOOKING_ENCRYPTION_KEY present:', !!encKey, 'length:', encKey?.length)
 
-    const bookingId = crypto.randomUUID()
     const message = initialMessage
     const bookingMessageId = initialMessage ? crypto.randomUUID() : ''
     let [storedFirstName, storedLastName, storedEmail, storedMessage] = [firstName, lastName, email, message]
@@ -207,7 +205,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = env.DB as any
     const bookingStatement = db.prepare(
-      'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(
       bookingId,
       result.id || '',
@@ -223,6 +221,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       storedMessage,
       total,
       'pending',
+      createdAtSql,
     )
     const statements = [bookingStatement]
     if (initialMessage) {
@@ -237,12 +236,30 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     }
     await db.batch(statements)
 
-    return json({ url: result.url })
+    return json({
+      paymentIntentId: result.id,
+      clientSecret: result.client_secret,
+      publishableKey: env.STRIPE_PUBLISHABLE_KEY,
+      email,
+      amount: result.amount / 100,
+      expiresAt,
+    })
   } catch (error: unknown) {
+    if (createdPaymentIntentId) {
+      try {
+        await stripeRequest<StripePaymentIntent>(
+          env,
+          `/payment_intents/${encodeURIComponent(createdPaymentIntentId)}/cancel`,
+          { method: 'POST' },
+        )
+      } catch (cancelError) {
+        console.error('Unable to cancel PaymentIntent after checkout setup failed', cancelError)
+      }
+    }
     console.error('Stripe checkout error', error)
     const statusCode = error instanceof StripeRequestError ? error.status : 500
     return json(
-      { error: 'Unable to create checkout session' },
+      { error: 'Unable to create payment' },
       statusCode >= 400 && statusCode < 500 ? statusCode : 500,
     )
   }
