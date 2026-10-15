@@ -50,7 +50,7 @@ export function PolicyPage({ locale, kind }: { locale: Locale; kind: PolicyKind 
  }, [kind, locale, prefix])
 
  return (
-  <main className="min-h-screen bg-accent px-5 py-16 text-accent-foreground md:px-8">
+  <main className="min-h-screen bg-primary px-5 py-16 text-primary-foreground md:px-8">
    <div className="mx-auto w-full max-w-7xl">
     <Link
      href={`/${locale}`}
@@ -69,7 +69,7 @@ export function PolicyPage({ locale, kind }: { locale: Locale; kind: PolicyKind 
        </h2>
       )}
       {section.body && (
-       <div className="mt-4 max-w-3xl whitespace-pre-line text-sm leading-7 text-accent-foreground/80">
+       <div className="mt-4 max-w-3xl whitespace-pre-line text-sm leading-7 text-primary-foreground/80">
         <RichText text={section.body} />
        </div>
       )}
