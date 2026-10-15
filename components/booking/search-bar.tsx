@@ -69,7 +69,7 @@ export function SearchBar({ locale = 'en' }: { locale?: Locale }) {
 
   return (
   <>
-  <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:grid md:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)_1px_auto] md:items-center md:gap-0 md:rounded-full md:p-2">
+  <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 rounded-2xl border border-border bg-card/95 p-2 backdrop-blur md:grid md:grid-cols-[minmax(0,1fr)_1px_minmax(0,2fr)_1px_minmax(0,1fr)_auto] md:items-center md:gap-0 md:rounded-full md:p-2">
    <div className="hidden md:block">
     <Field
      icon={<MapPin className="h-4 w-4" />}
