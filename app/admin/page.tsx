@@ -27,12 +27,14 @@ import {
   saveR2BaseUrl,
   fetchBookings,
   sendTestEmail,
+  sendTestBookingConfirmation,
   type Review,
   type BlockedDate,
   type AdminImage,
   type AdminBooking,
   type ICalFeedPreview,
   type ICalSource,
+  type BookingConfirmationTest,
 } from '@/lib/admin-api'
 import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare, Copy, Mail } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
@@ -172,6 +174,19 @@ function ResendTestTab() {
   const [sending, setSending] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
+  const [confirmation, setConfirmation] = useState<BookingConfirmationTest>({
+    to: '',
+    guestName: '',
+    checkIn: '',
+    checkOut: '',
+    nights: 1,
+    guests: 1,
+    totalPaid: 0,
+    bookingReference: '',
+  })
+  const [sendingConfirmation, setSendingConfirmation] = useState(false)
+  const [confirmationStatus, setConfirmationStatus] = useState('')
+  const [confirmationError, setConfirmationError] = useState('')
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -188,40 +203,202 @@ function ResendTestTab() {
     }
   }
 
+  async function handleConfirmationSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSendingConfirmation(true)
+    setConfirmationStatus('')
+    setConfirmationError('')
+    try {
+      const result = await sendTestBookingConfirmation(confirmation)
+      setConfirmationStatus(`Email di conferma inviata. ID Resend: ${result.id}`)
+    } catch (cause) {
+      setConfirmationError(cause instanceof Error ? cause.message : 'Invio non riuscito. Riprova.')
+    } finally {
+      setSendingConfirmation(false)
+    }
+  }
+
+  function updateConfirmation<K extends keyof BookingConfirmationTest>(
+    key: K,
+    value: BookingConfirmationTest[K],
+  ) {
+    setConfirmation((current) => ({ ...current, [key]: value }))
+  }
+
   return (
-    <section className="max-w-2xl rounded-2xl border border-border bg-card p-6">
-      <h2 className="text-lg font-semibold text-foreground">Test email Resend</h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Invia un messaggio di prova all’indirizzo indicato usando la configurazione Resend del server.
-      </p>
-      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-        <div>
-          <label htmlFor="test-email-recipient" className="mb-1.5 block text-sm font-medium text-foreground">
-            Indirizzo email destinatario
-          </label>
-          <input
-            id="test-email-recipient"
-            type="email"
-            autoComplete="email"
-            required
-            maxLength={254}
-            value={recipient}
-            onChange={(event) => setRecipient(event.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={sending}
-          className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <Mail className="h-4 w-4" />
-          {sending ? 'Invio in corso…' : 'Invia email di prova'}
-        </button>
-        {status && <p role="status" className="text-sm text-green-700">{status}</p>}
-        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-      </form>
-    </section>
+    <div className="grid max-w-4xl gap-6">
+      <section className="max-w-2xl rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground">Test email Resend</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Invia un messaggio di prova all’indirizzo indicato usando la configurazione Resend del server.
+        </p>
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div>
+            <label htmlFor="test-email-recipient" className="mb-1.5 block text-sm font-medium text-foreground">
+              Indirizzo email destinatario
+            </label>
+            <input
+              id="test-email-recipient"
+              type="email"
+              autoComplete="email"
+              required
+              maxLength={254}
+              value={recipient}
+              onChange={(event) => setRecipient(event.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={sending}
+            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Mail className="h-4 w-4" />
+            {sending ? 'Invio in corso…' : 'Invia email di prova'}
+          </button>
+          {status && <p role="status" className="text-sm text-green-700">{status}</p>}
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+        </form>
+      </section>
+
+      <section className="max-w-2xl rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground">Test template di conferma (confirmation-it)</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Invia un’anteprima del template di conferma configurato, senza creare o modificare una prenotazione.
+        </p>
+        <form onSubmit={handleConfirmationSubmit} className="mt-5 space-y-4">
+          <div>
+            <label htmlFor="confirmation-test-to" className="mb-1.5 block text-sm font-medium text-foreground">
+              Indirizzo email destinatario
+            </label>
+            <input
+              id="confirmation-test-to"
+              type="email"
+              autoComplete="email"
+              required
+              maxLength={254}
+              value={confirmation.to}
+              onChange={(event) => updateConfirmation('to', event.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="confirmation-test-name" className="mb-1.5 block text-sm font-medium text-foreground">
+                Nome ospite
+              </label>
+              <input
+                id="confirmation-test-name"
+                type="text"
+                required
+                maxLength={120}
+                value={confirmation.guestName}
+                onChange={(event) => updateConfirmation('guestName', event.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmation-test-reference" className="mb-1.5 block text-sm font-medium text-foreground">
+                Riferimento prenotazione
+              </label>
+              <input
+                id="confirmation-test-reference"
+                type="text"
+                required
+                maxLength={80}
+                value={confirmation.bookingReference}
+                onChange={(event) => updateConfirmation('bookingReference', event.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmation-test-check-in" className="mb-1.5 block text-sm font-medium text-foreground">
+                Check-in
+              </label>
+              <input
+                id="confirmation-test-check-in"
+                type="date"
+                required
+                value={confirmation.checkIn}
+                onChange={(event) => updateConfirmation('checkIn', event.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmation-test-check-out" className="mb-1.5 block text-sm font-medium text-foreground">
+                Check-out
+              </label>
+              <input
+                id="confirmation-test-check-out"
+                type="date"
+                required
+                value={confirmation.checkOut}
+                onChange={(event) => updateConfirmation('checkOut', event.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmation-test-nights" className="mb-1.5 block text-sm font-medium text-foreground">
+                Notti
+              </label>
+              <input
+                id="confirmation-test-nights"
+                type="number"
+                min={1}
+                max={365}
+                step={1}
+                required
+                value={confirmation.nights}
+                onChange={(event) => updateConfirmation('nights', Number(event.target.value))}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmation-test-guests" className="mb-1.5 block text-sm font-medium text-foreground">
+                Ospiti
+              </label>
+              <input
+                id="confirmation-test-guests"
+                type="number"
+                min={1}
+                max={50}
+                step={1}
+                required
+                value={confirmation.guests}
+                onChange={(event) => updateConfirmation('guests', Number(event.target.value))}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmation-test-total" className="mb-1.5 block text-sm font-medium text-foreground">
+                Totale pagato (€)
+              </label>
+              <input
+                id="confirmation-test-total"
+                type="number"
+                min={0}
+                max={1000000}
+                step="0.01"
+                required
+                value={confirmation.totalPaid}
+                onChange={(event) => updateConfirmation('totalPaid', Number(event.target.value))}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={sendingConfirmation}
+            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Mail className="h-4 w-4" />
+            {sendingConfirmation ? 'Invio in corso…' : 'Invia test template di conferma'}
+          </button>
+          {confirmationStatus && <p role="status" className="text-sm text-green-700">{confirmationStatus}</p>}
+          {confirmationError && <p role="alert" className="text-sm text-red-600">{confirmationError}</p>}
+        </form>
+      </section>
+    </div>
   )
 }
 

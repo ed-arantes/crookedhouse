@@ -42,6 +42,9 @@ the root domain `crookedhouse.it` in Resend; verifying only
 is `Crooked House <reception@crookedhouse.it>`. Set `RESEND_FROM_EMAIL` as a
 Pages variable (and in local `.dev.vars`) if using a different verified sender.
 Keep the Resend key server-side and never expose it in client-side variables.
+The Admin → Email tab also has a confirmation-template test form with editable
+booking details. It sends to the entered recipient using the configured template
+and does not create a booking or update booking email tracking.
 
 Paid bookings send a confirmation using a published Resend template. Create
 and publish a responsive template in Resend with variables named `GUEST_NAME`,
@@ -49,7 +52,8 @@ and publish a responsive template in Resend with variables named `GUEST_NAME`,
 `BOOKING_REFERENCE`. Use type `number` for `NIGHTS` and `GUESTS`, and `string`
 for the remaining variables. Set its ID as
 `RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID` in the Cloudflare Pages environment
-(and local `.dev.vars`). The template layout and copy are managed in Resend.
+(and local `.dev.vars`); point it to the published `confirmation-it` template's
+Resend template ID. The template layout and copy are managed in Resend.
 Apply the booking email tracking migration before deploying:
 
 ```text

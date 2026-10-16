@@ -151,6 +151,27 @@ export function sendTestEmail(to: string): Promise<{ ok: boolean; id: string }> 
   })
 }
 
+export type BookingConfirmationTest = {
+  to: string
+  guestName: string
+  checkIn: string
+  checkOut: string
+  nights: number
+  guests: number
+  totalPaid: number
+  bookingReference: string
+}
+
+export function sendTestBookingConfirmation(
+  confirmation: BookingConfirmationTest,
+): Promise<{ ok: boolean; id: string }> {
+  return adminFetch('/api/admin/test-confirmation-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(confirmation),
+  })
+}
+
 export function createReview(review: Omit<Review, 'id'>): Promise<Review> {
   return adminFetch('/api/admin/reviews', {
     method: 'POST',
