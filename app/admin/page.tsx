@@ -33,7 +33,7 @@ import {
   type ICalFeedPreview,
   type ICalSource,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare, Copy } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { DEFAULT_FAQ_ITEMS, type FaqItem } from '@/lib/faq-content'
@@ -852,7 +852,7 @@ function BlockedDatesTab() {
               const reason = blocked.find((b) => b.date === dateStr)?.reason
               tooltip = reason ? `Bloccata: ${reason}` : 'Bloccata dall’amministratore'
             } else if (hasIcal) {
-              tooltip = `Bloccata (${Array.from(icalSources ?? []).map((source) => source === 'airbnb' ? 'Airbnb' : 'Booking.com').join(' e ')})`
+              tooltip = `Bloccata (${Array.from(icalSources ?? []).map((source) => source === 'airbnb' ? 'Airbnb' : 'Booking').join(' e ')})`
             }
 
             return (
@@ -876,8 +876,8 @@ function BlockedDatesTab() {
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-accent" /> Bloccata dall’amministratore</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#FD5C63]" /> Airbnb</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#003B95]" /> Booking.com</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm" style={{ backgroundImage: 'linear-gradient(135deg, #FD5C63 50%, #003B95 50%)' }} /> Airbnb + Booking.com</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#003B95]" /> Booking</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm" style={{ backgroundImage: 'linear-gradient(135deg, #FD5C63 50%, #003B95 50%)' }} /> Airbnb + Booking</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-amber-400" /> In attesa di pagamento</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-green-500" /> Pagata / Prenotata</span>
       </div>
@@ -1725,10 +1725,12 @@ function ContentTab() {
 function IcalTab() {
   const [airbnbUrl, setAirbnbUrl] = useState('')
   const [bookingUrl, setBookingUrl] = useState('')
+  const [exportUrl, setExportUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [feeds, setFeeds] = useState<ICalFeedPreview[]>([])
   const [saveError, setSaveError] = useState('')
+  const [copyStatus, setCopyStatus] = useState('')
 
   const loadPreview = useCallback(async () => {
     try {
@@ -1744,9 +1746,13 @@ function IcalTab() {
     fetchIcalUrls().then((data) => {
       setAirbnbUrl(data.airbnbUrl)
       setBookingUrl(data.bookingUrl)
+      setExportUrl(data.exportUrl)
       setLoading(false)
       if (data.airbnbUrl || data.bookingUrl) loadPreview()
-    }).catch(() => setLoading(false))
+    }).catch((error) => {
+      setSaveError(error instanceof Error ? error.message : 'Impossibile caricare il link iCal')
+      setLoading(false)
+    })
   }, [loadPreview])
 
   async function handleSave() {
@@ -1762,16 +1768,51 @@ function IcalTab() {
     }
   }
 
+  async function handleCopyExportUrl() {
+    try {
+      await navigator.clipboard.writeText(exportUrl)
+      setCopyStatus('Link copiato.')
+    } catch {
+      setCopyStatus('Impossibile copiare il link.')
+    }
+  }
+
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
 
   return (
     <div className="space-y-4">
+      <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+        <h3 className="text-sm font-medium text-foreground">Calendario iCal Crooked House</h3>
+        <p className="text-xs text-muted-foreground">
+          Usa questo link di sola lettura per importare le prenotazioni pagate e le date bloccate manualmente. Il link è fisso e non può essere cambiato. Chiunque ne sia in possesso può vedere i nomi degli ospiti e le date.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            aria-label="Link calendario iCal Crooked House"
+            value={exportUrl}
+            readOnly
+            className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground"
+          />
+          <button
+            type="button"
+            onClick={handleCopyExportUrl}
+            className="flex shrink-0 items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs font-medium text-accent-foreground hover:bg-accent/90"
+          >
+            <Copy className="h-3.5 w-3.5" /> Copia link
+          </button>
+        </div>
+        {copyStatus && <p role="status" className="text-xs text-muted-foreground">{copyStatus}</p>}
+        <p className="text-xs text-muted-foreground">
+          Il calendario viene aggiornato a ogni richiesta; la frequenza di aggiornamento dipende dal sito a cui lo colleghi.
+        </p>
+      </div>
       <p className="text-sm text-muted-foreground">
-        Inserisci i link iCal di Airbnb e Booking.com. Le prenotazioni importate bloccano automaticamente le date e sono mostrate con colori diversi.
+        Inserisci i link iCal di Airbnb e Booking. Le prenotazioni importate bloccano automaticamente le date e sono mostrate con colori diversi.
       </p>
       <div className="space-y-3">
         <label className="block space-y-1.5">
-          <span className="flex items-center gap-2 text-sm font-medium text-[#FD5C63]"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#FD5C63]" /> Airbnb calendar URL</span>
+          <span className="flex items-center gap-2 text-sm font-medium text-[#FD5C63]"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#FD5C63]" /> Airbnb URL</span>
           <input
             type="url"
             value={airbnbUrl}
@@ -1781,7 +1822,7 @@ function IcalTab() {
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="flex items-center gap-2 text-sm font-medium text-[#003B95]"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#003B95]" /> Booking.com </span>
+          <span className="flex items-center gap-2 text-sm font-medium text-[#003B95]"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#003B95]" /> Booking URL</span>
           <input
             type="url"
             value={bookingUrl}
@@ -1801,7 +1842,7 @@ function IcalTab() {
       {saveError && <p className="text-sm text-destructive">{saveError}</p>}
       {feeds.map((feed) => {
         const isAirbnb = feed.source === 'airbnb'
-        const providerName = isAirbnb ? 'Airbnb' : 'Booking.com'
+        const providerName = isAirbnb ? 'Airbnb' : 'Booking'
         return (
           <div key={feed.source} className="rounded-xl border border-border bg-card p-4">
             <h3 className={`mb-2 flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-[#FD5C63]' : 'text-[#003B95]'}`}>

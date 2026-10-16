@@ -53,3 +53,5 @@ graphify-out/
 !lib/locale-detection.test.ts
 !lib/booking-guest-details.test.ts
 !lib/i18n.test.ts
+!lib/ical-feed.test.ts
+!lib/ical-export.test.ts

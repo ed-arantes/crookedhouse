@@ -1,8 +1,25 @@
-import { json, requireAdmin, d1SetSetting, type AdminEnv } from '../../_lib/admin'
+import { json, requireAdmin, d1GetSetting, d1SetSetting, type AdminEnv } from '../../_lib/admin'
 import { parseICalEvents } from '../../../lib/ical-parser'
 import { fetchICalFeed, getICalFeeds, type ICalSource } from '../../_lib/ical-feeds'
 
 type PagesContext = { request: Request; env: AdminEnv }
+
+async function getExportUrl(db: AdminEnv['DB']): Promise<string> {
+  let token = await d1GetSetting(db, 'ical_export_token', '')
+  if (!token) {
+    const bytes = crypto.getRandomValues(new Uint8Array(32))
+    const newToken = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).prepare(
+      'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)',
+    ).bind('ical_export_token', newToken).run()
+    token = await d1GetSetting(db, 'ical_export_token', '')
+  }
+  if (!/^[a-f0-9]{64}$/.test(token)) {
+    throw new Error('The stored iCal export token is invalid')
+  }
+  return `https://crookedhouse.it/api/export.ics?token=${token}`
+}
 
 export const onRequestGet = async ({ request, env }: PagesContext): Promise<Response> => {
   const unauthed = requireAdmin(env, request)
@@ -32,6 +49,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   return json({
     airbnbUrl: feeds.find((feed) => feed.source === 'airbnb')?.url ?? '',
     bookingUrl: feeds.find((feed) => feed.source === 'booking')?.url ?? '',
+    exportUrl: await getExportUrl(env.DB),
   })
 }
 

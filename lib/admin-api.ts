@@ -213,7 +213,7 @@ export function translateContent(pairs: { key: string; value: string }[], target
   })
 }
 
-export function fetchIcalUrls(): Promise<{ airbnbUrl: string; bookingUrl: string }> {
+export function fetchIcalUrls(): Promise<{ airbnbUrl: string; bookingUrl: string; exportUrl: string }> {
   return adminFetch('/api/admin/ical')
 }
 
