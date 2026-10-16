@@ -829,7 +829,7 @@ function BlockedDatesTab() {
                 : icalSources?.has('airbnb')
                   ? 'bg-red-500 text-white hover:bg-red-600'
                   : icalSources?.has('booking')
-                  ? 'bg-[#0f2f5f] text-white hover:bg-[#123b69]'
+                  ? 'bg-[#1f1f1f] text-white hover:bg-[#2a2a2a]'
                   : bookingStatus === 'paid'
                     ? 'bg-green-500 text-white hover:bg-green-600'
                     : bookingStatus === 'pending'
@@ -870,7 +870,7 @@ function BlockedDatesTab() {
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-accent" /> Bloccata dall’amministratore</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-red-500" /> Airbnb</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#0f2f5f]" /> Booking.com</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#1f1f1f]" /> Booking.com</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-amber-400" /> In attesa di pagamento</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-green-500" /> Pagata / Prenotata</span>
       </div>
@@ -933,10 +933,10 @@ function BlockedDatesTab() {
                                 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
                                   date.source === 'airbnb'
                                     ? 'bg-red-100 text-red-700'
-                                    : 'bg-[#0f2f5f]/10 text-[#0f2f5f]'
+                                    : 'bg-[#1f1f1f]/10 text-[#1f1f1f]'
                                 }`}
                               >
-                                <span className={`inline-block h-2.5 w-2.5 rounded-sm ${date.source === 'airbnb' ? 'bg-red-500' : 'bg-[#0f2f5f]'}`} />
+                                <span className={`inline-block h-2.5 w-2.5 rounded-sm ${date.source === 'airbnb' ? 'bg-red-500' : 'bg-[#1f1f1f]'}`} />
                                 {formatEU(date.date)}
                               </span>
                             ))}
@@ -1774,7 +1774,7 @@ function IcalTab() {
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="flex items-center gap-2 text-sm font-medium text-[#0f2f5f]"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#0f2f5f]" /> Booking.com </span>
+          <span className="flex items-center gap-2 text-sm font-medium text-[#1f1f1f]"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#1f1f1f]" /> Booking.com </span>
           <input
             type="url"
             value={bookingUrl}
@@ -1797,8 +1797,8 @@ function IcalTab() {
         const providerName = isAirbnb ? 'Airbnb' : 'Booking.com'
         return (
           <div key={feed.source} className="rounded-xl border border-border bg-card p-4">
-            <h3 className={`mb-2 flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-red-700' : 'text-[#0f2f5f]'}`}>
-              <span className={`inline-block h-3.5 w-3.5 rounded-sm ${isAirbnb ? 'bg-red-500' : 'bg-[#0f2f5f]'}`} /> {providerName}
+            <h3 className={`mb-2 flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-red-700' : 'text-[#1f1f1f]'}`}>
+              <span className={`inline-block h-3.5 w-3.5 rounded-sm ${isAirbnb ? 'bg-red-500' : 'bg-[#1f1f1f]'}`} /> {providerName}
             </h3>
             {feed.error ? (
               <p className="text-sm text-destructive">{feed.error}</p>
@@ -1816,7 +1816,7 @@ function IcalTab() {
                         className={`rounded-lg border px-3 py-2 text-xs ${
                           isAirbnb
                             ? 'border-red-200 bg-red-50 text-red-800'
-                            : 'border-[#0f2f5f]/20 bg-[#0f2f5f]/5 text-[#0f2f5f]'
+                            : 'border-[#1f1f1f]/20 bg-[#1f1f1f]/5 text-[#1f1f1f]'
                         }`}
                       >
                         {event.summary} · {formatEU(event.start)} → {formatEU(event.end)} ({event.nights} {event.nights === 1 ? 'notte' : 'notti'})
