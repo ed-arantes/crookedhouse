@@ -29,6 +29,12 @@ and does not request that card details be saved for future use. Do not configure
 `setup_future_usage`. Do not commit
 `.dev.vars`; `.dev.vars.example` is provided for local reference.
 
+When rotating Stripe credentials, update the Pages Production bindings (and
+Preview too if it is used) with keys from the intended Stripe account. Pages
+Functions read `STRIPE_SECRET_KEY` from the Cloudflare environment; they do not
+fall back to a key in the source code. Create a new Pages deployment after
+changing the bindings so the deployed Functions use the updated values.
+
 Deploy the booking-expiration Worker separately after configuring its
 `STRIPE_SECRET_KEY` secret:
 
@@ -39,8 +45,11 @@ npx wrangler deploy --config wrangler.expire-bookings.jsonc
 The config binds it to the existing `crookedhouse-translations` D1 database and
 adds the once-per-minute Cron Trigger. Review the account and D1 binding in
 `wrangler.expire-bookings.jsonc` before deploying. The secret must be configured
-for this Worker as well as for Pages; do not place secret values in Wrangler
-config or source control.
+for this Worker independently of Pages. To update the Worker secret, run
+`npx wrangler secret put STRIPE_SECRET_KEY --config wrangler.expire-bookings.jsonc`
+and enter the key for the intended Stripe account when prompted. Do not place
+secret values in Wrangler config, source control, or chat. After verifying both
+Cloudflare bindings use the intended account, revoke the old key in Stripe.
 
 For a safe payment test, use Stripe test-mode keys and an isolated test D1
 database. For example, Stripe's `4242 4242 4242 4242` test card can be used with
