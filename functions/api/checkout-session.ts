@@ -7,6 +7,7 @@ import {
  type StripePaymentIntent,
 } from '../_lib/stripe'
 import { type AdminEnv } from '../_lib/admin'
+import { attemptBookingConfirmation } from '../_lib/booking-confirmation-email'
 
 type PagesContext = {
  request: Request
@@ -45,7 +46,10 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
     env,
     `/payment_intents/${encodeURIComponent(paymentIntentId)}`,
    )
-   if (intent.status === 'succeeded') await updateBookingStatus(env, paymentIntentId, 'paid')
+   if (intent.status === 'succeeded') {
+    await updateBookingStatus(env, paymentIntentId, 'paid')
+    await attemptBookingConfirmation(env, paymentIntentId)
+   }
    if (intent.status === 'canceled') await updateBookingStatus(env, paymentIntentId, 'cancelled')
    return json({
     payment_status: intent.status === 'succeeded' ? 'paid' : intent.status,
@@ -63,6 +67,7 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
 
   if (session.payment_status === 'paid') {
    await updateBookingStatus(env, sessionId, 'paid')
+   await attemptBookingConfirmation(env, sessionId)
   }
 
   return json({

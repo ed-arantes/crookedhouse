@@ -6,6 +6,7 @@ export type AdminEnv = {
   BOOKING_ENCRYPTION_KEY?: string
   RESEND_API_KEY?: string
   RESEND_FROM_EMAIL?: string
+  RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID?: string
 }
 
 export { encrypt, decrypt } from '../../lib/encryption'

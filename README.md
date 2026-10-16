@@ -43,6 +43,19 @@ is `Crooked House <reception@crookedhouse.it>`. Set `RESEND_FROM_EMAIL` as a
 Pages variable (and in local `.dev.vars`) if using a different verified sender.
 Keep the Resend key server-side and never expose it in client-side variables.
 
+Paid bookings send a confirmation using a published Resend template. Create
+and publish a responsive template in Resend with variables named `GUEST_NAME`,
+`CHECK_IN`, `CHECK_OUT`, `NIGHTS`, `GUESTS`, `TOTAL_PAID`, and
+`BOOKING_REFERENCE`. Use type `number` for `NIGHTS` and `GUESTS`, and `string`
+for the remaining variables. Set its ID as
+`RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID` in the Cloudflare Pages environment
+(and local `.dev.vars`). The template layout and copy are managed in Resend.
+Apply the booking email tracking migration before deploying:
+
+```text
+npx wrangler d1 migrations apply crookedhouse-translations --remote
+```
+
 When rotating Stripe credentials, update the Pages Production bindings (and
 Preview too if it is used) with keys from the intended Stripe account. Pages
 Functions read `STRIPE_SECRET_KEY` from the Cloudflare environment; they do not

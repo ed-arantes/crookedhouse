@@ -4,6 +4,7 @@ import {
  type StripeEnv,
  type StripePaymentIntent,
 } from './stripe'
+import { attemptBookingConfirmation } from './booking-confirmation-email'
 
 export const PAYMENT_WINDOW_MS = 15 * 60 * 1000
 
@@ -17,7 +18,13 @@ type PaymentDatabase = {
  }
 }
 
-export type ExpirationEnv = StripeEnv & { DB: PaymentDatabase }
+export type ExpirationEnv = StripeEnv & {
+ DB: PaymentDatabase
+ BOOKING_ENCRYPTION_KEY?: string
+ RESEND_API_KEY?: string
+ RESEND_FROM_EMAIL?: string
+ RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID?: string
+}
 
 type BookingPaymentRow = {
  id: string
@@ -52,6 +59,7 @@ async function resolveStripeStatus(
 ): Promise<ExpirationResult> {
  if (intent.status === 'succeeded') {
   await updateBookingStatus(env, booking, 'paid')
+  await attemptBookingConfirmation(env, booking.session_id ?? '')
   return { status: 'paid' }
  }
  if (intent.status === 'canceled') {
@@ -72,7 +80,10 @@ export async function expirePaymentIntent(
  ).bind(paymentIntentId).first<BookingPaymentRow>()
 
  if (!booking) return null
- if (booking.status !== 'pending') return { status: 'already_final' }
+ if (booking.status !== 'pending') {
+  if (booking.status === 'paid') await attemptBookingConfirmation(env, booking.session_id ?? '')
+  return { status: 'already_final' }
+ }
 
  const createdAt = parseDatabaseDate(booking.created_at)
  if (!Number.isFinite(createdAt)) {

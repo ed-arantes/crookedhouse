@@ -52,6 +52,7 @@ graphify-out/
 *.spec.tsx
 !lib/locale-detection.test.ts
 !lib/booking-guest-details.test.ts
+!lib/booking-confirmation-email.test.ts
 !lib/i18n.test.ts
 !lib/ical-feed.test.ts
 !lib/ical-host.test.ts
