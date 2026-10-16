@@ -33,7 +33,7 @@ import {
   type ICalFeedPreview,
   type ICalSource,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare, House, BedDouble } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { DEFAULT_FAQ_ITEMS, type FaqItem } from '@/lib/faq-content'
@@ -825,11 +825,11 @@ function BlockedDatesTab() {
             const cellClass = isPast
               ? 'text-muted-foreground/30 cursor-not-allowed'
               : isBlocked
-                ? 'bg-red-500 text-white hover:bg-red-600'
+                ? 'bg-accent text-accent-foreground hover:bg-accent/90'
                 : icalSources?.has('airbnb')
-                  ? 'bg-rose-500 text-white hover:bg-rose-600'
+                  ? 'bg-red-500 text-white hover:bg-red-600'
                   : icalSources?.has('booking')
-                  ? 'bg-sky-200 text-sky-900 hover:bg-sky-300'
+                  ? 'bg-[#0f2f5f] text-white hover:bg-[#123b69]'
                   : bookingStatus === 'paid'
                     ? 'bg-green-500 text-white hover:bg-green-600'
                     : bookingStatus === 'pending'
@@ -868,11 +868,11 @@ function BlockedDatesTab() {
       </div>
 
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-red-500" /> Bloccata dall’amministratore</span>
-        <span className="flex items-center gap-1.5"><House className="h-3.5 w-3.5 text-rose-600" /> Airbnb</span>
-        <span className="flex items-center gap-1.5"><BedDouble className="h-3.5 w-3.5 text-sky-700" /> Booking.com</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-amber-400" /> In attesa di pagamento</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-green-500" /> Pagata / Prenotata</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-accent" /> Bloccata dall’amministratore</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-red-500" /> Airbnb</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#0f2f5f]" /> Booking.com</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-amber-400" /> In attesa di pagamento</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-green-500" /> Pagata / Prenotata</span>
       </div>
 
       {(blocked.length > 0 || icalDates.length > 0) && (
@@ -930,13 +930,13 @@ function BlockedDatesTab() {
                             {monthGroup.items.map((date) => (
                               <span
                                 key={`${date.source}:${date.date}`}
-                                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs ${
+                                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
                                   date.source === 'airbnb'
-                                    ? 'bg-rose-100 text-rose-700'
-                                    : 'bg-sky-100 text-sky-700'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-[#0f2f5f]/10 text-[#0f2f5f]'
                                 }`}
                               >
-                                {date.source === 'airbnb' ? <House className="h-3 w-3" /> : <BedDouble className="h-3 w-3" />}
+                                <span className={`inline-block h-2.5 w-2.5 rounded-sm ${date.source === 'airbnb' ? 'bg-red-500' : 'bg-[#0f2f5f]'}`} />
                                 {formatEU(date.date)}
                               </span>
                             ))}
@@ -1764,7 +1764,7 @@ function IcalTab() {
       </p>
       <div className="space-y-3">
         <label className="block space-y-1.5">
-          <span className="flex items-center gap-2 text-sm font-medium text-rose-700"><House className="h-4 w-4" /> Airbnb calendar URL</span>
+          <span className="flex items-center gap-2 text-sm font-medium text-red-700"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-red-500" /> Airbnb calendar URL</span>
           <input
             type="url"
             value={airbnbUrl}
@@ -1774,7 +1774,7 @@ function IcalTab() {
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="flex items-center gap-2 text-sm font-medium text-sky-700"><BedDouble className="h-4 w-4" /> Booking.com calendar URL</span>
+          <span className="flex items-center gap-2 text-sm font-medium text-[#0f2f5f]"><span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#0f2f5f]" /> Booking.com </span>
           <input
             type="url"
             value={bookingUrl}
@@ -1794,12 +1794,11 @@ function IcalTab() {
       {saveError && <p className="text-sm text-destructive">{saveError}</p>}
       {feeds.map((feed) => {
         const isAirbnb = feed.source === 'airbnb'
-        const ProviderIcon = isAirbnb ? House : BedDouble
         const providerName = isAirbnb ? 'Airbnb' : 'Booking.com'
         return (
           <div key={feed.source} className="rounded-xl border border-border bg-card p-4">
-            <h3 className={`mb-2 flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-rose-700' : 'text-sky-700'}`}>
-              <ProviderIcon className="h-4 w-4" /> {providerName}
+            <h3 className={`mb-2 flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-red-700' : 'text-[#0f2f5f]'}`}>
+              <span className={`inline-block h-3.5 w-3.5 rounded-sm ${isAirbnb ? 'bg-red-500' : 'bg-[#0f2f5f]'}`} /> {providerName}
             </h3>
             {feed.error ? (
               <p className="text-sm text-destructive">{feed.error}</p>
@@ -1816,8 +1815,8 @@ function IcalTab() {
                         key={`${event.start}:${event.end}:${index}`}
                         className={`rounded-lg border px-3 py-2 text-xs ${
                           isAirbnb
-                            ? 'border-rose-200 bg-rose-50 text-rose-800'
-                            : 'border-sky-200 bg-sky-50 text-sky-800'
+                            ? 'border-red-200 bg-red-50 text-red-800'
+                            : 'border-[#0f2f5f]/20 bg-[#0f2f5f]/5 text-[#0f2f5f]'
                         }`}
                       >
                         {event.summary} · {formatEU(event.start)} → {formatEU(event.end)} ({event.nights} {event.nights === 1 ? 'notte' : 'notti'})
