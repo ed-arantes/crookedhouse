@@ -1804,7 +1804,7 @@ function IcalTab() {
         </div>
         {copyStatus && <p role="status" className="text-xs text-muted-foreground">{copyStatus}</p>}
         <p className="text-xs text-muted-foreground">
-          Il calendario viene aggiornato a ogni richiesta; la frequenza di aggiornamento dipende dal sito a cui lo colleghi.
+          Il link serve solo il calendario iCal su ical.crookedhouse.it; non espone il sito. Il calendario viene aggiornato a ogni richiesta, ma la frequenza di aggiornamento dipende dal sito a cui lo colleghi.
         </p>
       </div>
       <p className="text-sm text-muted-foreground">

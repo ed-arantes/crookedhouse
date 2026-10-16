@@ -18,7 +18,7 @@ async function getExportUrl(db: AdminEnv['DB']): Promise<string> {
   if (!/^[a-f0-9]{64}$/.test(token)) {
     throw new Error('The stored iCal export token is invalid')
   }
-  return `https://crookedhouse.it/api/export.ics?token=${token}`
+  return `https://ical.crookedhouse.it/api/export.ics?token=${token}`
 }
 
 export const onRequestGet = async ({ request, env }: PagesContext): Promise<Response> => {

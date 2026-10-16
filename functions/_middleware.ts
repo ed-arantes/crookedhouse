@@ -16,6 +16,16 @@ type PagesContext = {
 
 export async function onRequest({ request, next }: PagesContext): Promise<Response> {
   const url = new URL(request.url)
+  if (url.hostname.toLowerCase() === 'ical.crookedhouse.it') {
+    if (url.pathname !== '/api/export.ics' || request.method !== 'GET') {
+      return new Response('Not found', {
+        status: 404,
+        headers: { 'Cache-Control': 'no-store' },
+      })
+    }
+    return next()
+  }
+
   const path = url.pathname.replace(/\/+$/, '') || '/'
   const redirectingFromUnlocalizedPage = path === '/' || path === '/servizi'
 

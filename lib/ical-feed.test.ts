@@ -61,7 +61,7 @@ function mockEnv(): { env: AdminEnv; queries: string[] } {
 test('serves only paid direct bookings and admin blocks from the live database', async () => {
   const { env, queries } = mockEnv()
   const response = await onRequestGet({
-    request: new Request(`https://crookedhouse.it/api/export.ics?token=${feedToken}`),
+    request: new Request(`https://ical.crookedhouse.it/api/export.ics?token=${feedToken}`),
     env,
   })
   const calendar = await response.text()
@@ -81,7 +81,7 @@ test('serves only paid direct bookings and admin blocks from the live database',
 test('does not query booking data when the private feed token is invalid', async () => {
   const { env, queries } = mockEnv()
   const response = await onRequestGet({
-    request: new Request(`https://crookedhouse.it/api/export.ics?token=${'b'.repeat(64)}`),
+    request: new Request(`https://ical.crookedhouse.it/api/export.ics?token=${'b'.repeat(64)}`),
     env,
   })
 

@@ -54,4 +54,5 @@ graphify-out/
 !lib/booking-guest-details.test.ts
 !lib/i18n.test.ts
 !lib/ical-feed.test.ts
+!lib/ical-host.test.ts
 !lib/ical-export.test.ts
