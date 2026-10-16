@@ -1,33 +1,27 @@
-import { json, d1ListBlockedDates, d1GetSetting, type AdminEnv } from '../../_lib/admin'
+import { json, d1ListBlockedDates, type AdminEnv } from '../../_lib/admin'
 import { parseICalDates } from '../../../lib/ical-parser'
-
-const ICAL_URL_KEY = 'ical_url'
+import { fetchICalFeed, getICalFeeds } from '../../_lib/ical-feeds'
 
 type PagesContext = { request: Request; env: AdminEnv }
 
 export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => {
   const blocked = await d1ListBlockedDates(env.DB)
-  const blockedSet = new Set(blocked.map((d) => d.date))
 
-  // Fetch iCal feed if a URL is configured
-  const icalUrl = await d1GetSetting(env.DB, ICAL_URL_KEY, '')
-  let icalDates: string[] = []
-  if (icalUrl) {
+  const feeds = await getICalFeeds(env.DB)
+  const feedDates = await Promise.all(feeds.map(async (feed) => {
     try {
-      const res = await fetch(icalUrl, { signal: AbortSignal.timeout(8000) })
-      if (res.ok) {
-        const text = await res.text()
-        icalDates = parseICalDates(text)
-      }
-    } catch {
-      // iCal fetch failed — return only blocked dates
+      return parseICalDates(await fetchICalFeed(feed.url))
+    } catch (error) {
+      console.error(`Unable to load ${feed.source} iCal availability`, error)
+      return []
     }
-  }
+  }))
+  const icalDates = feedDates.flat()
 
   // Fetch confirmed bookings (paid) and block their nights
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = env.DB as any
-  let bookingDates: string[] = []
+  const bookingDates: string[] = []
   try {
     const { results } = await db.prepare(
       "SELECT check_in, check_out FROM bookings WHERE status = 'paid'"

@@ -10,6 +10,7 @@ import {
 import { COUNCIL_TAX_PER_PERSON_PER_NIGHT } from '../../../lib/booking'
 import { calculateAnimalSurcharge, calculateBookingPrice, parseAnimalSurcharge, parseBaseFare, type PricingRule } from '../../../lib/pricing'
 import { parseICalDates } from '../../../lib/ical-parser'
+import { fetchICalFeed, getICalFeeds } from '../../_lib/ical-feeds'
 
 type PagesContext = {
   request: Request
@@ -177,17 +178,15 @@ export const onRequestPut = async ({ request, env }: PagesContext): Promise<Resp
 
       const blocked = await d1ListBlockedDates(env.DB)
       const blockedDates = new Set(blocked.map((item) => item.date))
-      const icalUrl = await d1GetSetting(env.DB, 'ical_url', '')
-      if (icalUrl) {
-        try {
-          const response = await fetch(icalUrl, { signal: AbortSignal.timeout(8000) })
-          if (response.ok) {
-            for (const date of parseICalDates(await response.text())) blockedDates.add(date)
-          }
-        } catch (error) {
-          console.error('Could not verify iCal dates while amending a booking', error)
-          return json({ error: 'Unable to verify calendar availability. Try again later.' }, 503)
-        }
+      const icalFeeds = await getICalFeeds(env.DB)
+      try {
+        const icalDates = await Promise.all(icalFeeds.map(async (feed) => (
+          parseICalDates(await fetchICalFeed(feed.url))
+        )))
+        for (const date of icalDates.flat()) blockedDates.add(date)
+      } catch (error) {
+        console.error('Could not verify iCal dates while amending a booking', error)
+        return json({ error: 'Unable to verify calendar availability. Try again later.' }, 503)
       }
 
       const { results: pricingRows } = await db.prepare(

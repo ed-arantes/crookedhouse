@@ -213,9 +213,11 @@ export function translateContent(pairs: { key: string; value: string }[], target
   })
 }
 
-export function fetchIcalUrl(): Promise<{ url: string }> {
+export function fetchIcalUrls(): Promise<{ airbnbUrl: string; bookingUrl: string }> {
   return adminFetch('/api/admin/ical')
 }
+
+export type ICalSource = 'airbnb' | 'booking'
 
 export type ICalEvent = {
   summary: string
@@ -224,15 +226,22 @@ export type ICalEvent = {
   nights: number
 }
 
-export function fetchIcalPreview(): Promise<{ url: string; events: ICalEvent[]; error?: string }> {
+export type ICalFeedPreview = {
+  source: ICalSource
+  url: string
+  events: ICalEvent[]
+  error?: string
+}
+
+export function fetchIcalPreview(): Promise<{ feeds: ICalFeedPreview[] }> {
   return adminFetch('/api/admin/ical?preview=1')
 }
 
-export function saveIcalUrl(url: string): Promise<{ ok: boolean }> {
+export function saveIcalUrls(airbnbUrl: string, bookingUrl: string): Promise<{ ok: boolean }> {
   return adminFetch('/api/admin/ical', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ airbnbUrl, bookingUrl }),
   })
 }
 

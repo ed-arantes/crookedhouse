@@ -13,6 +13,11 @@ guest closes the page; it checks once a minute and marks cancelled bookings in
 Admin. If Stripe reports that payment succeeded during an expiry race, the
 booking is recorded as paid instead.
 
+The Admin iCal tab supports importing separate Airbnb and Booking.com calendar
+feeds. Imported dates block availability and are shown with a red Airbnb marker
+or a blue Booking.com marker. This is a one-way import; it does not publish
+Crooked House bookings back to either platform.
+
 ## Cloudflare Pages settings
 
 - Build command: `npm run build`

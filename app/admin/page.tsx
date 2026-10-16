@@ -15,8 +15,8 @@ import {
   fetchAllContent,
   saveContent,
   translateContent,
-  fetchIcalUrl,
-  saveIcalUrl,
+  fetchIcalUrls,
+  saveIcalUrls,
   fetchIcalPreview,
   fetchAllImages,
   uploadImage,
@@ -30,9 +30,10 @@ import {
   type BlockedDate,
   type AdminImage,
   type AdminBooking,
-  type ICalEvent,
+  type ICalFeedPreview,
+  type ICalSource,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare, House, BedDouble } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { DEFAULT_FAQ_ITEMS, type FaqItem } from '@/lib/faq-content'
@@ -688,7 +689,7 @@ function groupByYear<T>(
 function BlockedDatesTab() {
   const [blocked, setBlocked] = useState<BlockedDate[]>([])
   const [bookings, setBookings] = useState<AdminBooking[]>([])
-  const [icalDates, setIcalDates] = useState<string[]>([])
+  const [icalDates, setIcalDates] = useState<Array<{ date: string; source: ICalSource }>>([])
   const [loading, setLoading] = useState(true)
   const [reason, setReason] = useState('')
   const today = new Date()
@@ -701,18 +702,21 @@ function BlockedDatesTab() {
       const [b, bk, icalData] = await Promise.all([fetchBlockedDates(), fetchBookings(), fetchIcalPreview()])
       setBlocked(b)
       setBookings(bk)
-      const dates = new Set<string>()
-      for (const ev of icalData.events || []) {
-        const start = new Date(`${ev.start}T00:00:00.000Z`)
-        const end = new Date(`${ev.end}T00:00:00.000Z`)
-        const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
-        for (let i = 0; i < nights; i++) {
-          const d = new Date(start)
-          d.setDate(d.getDate() + i)
-          dates.add(d.toISOString().slice(0, 10))
+      const dates = new Map<string, { date: string; source: ICalSource }>()
+      for (const feed of icalData.feeds) {
+        for (const ev of feed.events) {
+          const start = new Date(`${ev.start}T00:00:00.000Z`)
+          const end = new Date(`${ev.end}T00:00:00.000Z`)
+          const nights = Math.round((end.getTime() - start.getTime()) / 86400000)
+          for (let i = 0; i < nights; i++) {
+            const d = new Date(start)
+            d.setUTCDate(d.getUTCDate() + i)
+            const date = d.toISOString().slice(0, 10)
+            dates.set(`${feed.source}:${date}`, { date, source: feed.source })
+          }
         }
       }
-      setIcalDates(Array.from(dates))
+      setIcalDates(Array.from(dates.values()))
     } catch { /* */ }
     setLoading(false)
   }, [])
@@ -720,7 +724,12 @@ function BlockedDatesTab() {
   useEffect(() => { load() }, [load])
 
   const blockedSet = new Set(blocked.map((d) => d.date))
-  const icalSet = new Set(icalDates)
+  const icalSourceMap = new Map<string, Set<ICalSource>>()
+  for (const item of icalDates) {
+    const sources = icalSourceMap.get(item.date) ?? new Set<ICalSource>()
+    sources.add(item.source)
+    icalSourceMap.set(item.date, sources)
+  }
 
   // Build a map of date -> booking status for confirmed bookings
   const bookingDateMap = new Map<string, string>()
@@ -763,7 +772,10 @@ function BlockedDatesTab() {
     [...blocked].sort((a, b) => a.date.localeCompare(b.date)),
     (date) => date.date,
   )
-  const groupedIcal = groupByYear([...icalDates].sort(), (date) => date)
+  const groupedIcal = groupByYear(
+    [...icalDates].sort((a, b) => a.date.localeCompare(b.date) || a.source.localeCompare(b.source)),
+    (item) => item.date,
+  )
   const groupedBookings = groupByYear(
     [...bookings].sort((a, b) => a.check_in.localeCompare(b.check_in)),
     (booking) => booking.check_in,
@@ -806,14 +818,17 @@ function BlockedDatesTab() {
             if (day === null) return <div key={`e${i}`} />
             const dateStr = formatDate(viewYear, viewMonth, day)
             const isBlocked = blockedSet.has(dateStr)
-            const isIcal = icalSet.has(dateStr)
+            const icalSources = icalSourceMap.get(dateStr)
+            const hasIcal = !!icalSources?.size
             const bookingStatus = bookingDateMap.get(dateStr)
             const isPast = new Date(dateStr) < new Date(today.toISOString().slice(0, 10))
             const cellClass = isPast
               ? 'text-muted-foreground/30 cursor-not-allowed'
               : isBlocked
                 ? 'bg-red-500 text-white hover:bg-red-600'
-                : isIcal
+                : icalSources?.has('airbnb')
+                  ? 'bg-rose-500 text-white hover:bg-rose-600'
+                  : icalSources?.has('booking')
                   ? 'bg-sky-200 text-sky-900 hover:bg-sky-300'
                   : bookingStatus === 'paid'
                     ? 'bg-green-500 text-white hover:bg-green-600'
@@ -833,8 +848,8 @@ function BlockedDatesTab() {
             } else if (isBlocked) {
               const reason = blocked.find((b) => b.date === dateStr)?.reason
               tooltip = reason ? `Bloccata: ${reason}` : 'Bloccata dall’amministratore'
-            } else if (isIcal) {
-              tooltip = 'Bloccata (iCal)'
+            } else if (hasIcal) {
+              tooltip = `Bloccata (${Array.from(icalSources ?? []).map((source) => source === 'airbnb' ? 'Airbnb' : 'Booking.com').join(' e ')})`
             }
 
             return (
@@ -854,7 +869,8 @@ function BlockedDatesTab() {
 
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-red-500" /> Bloccata dall’amministratore</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-sky-200" /> Bloccata (iCal)</span>
+        <span className="flex items-center gap-1.5"><House className="h-3.5 w-3.5 text-rose-600" /> Airbnb</span>
+        <span className="flex items-center gap-1.5"><BedDouble className="h-3.5 w-3.5 text-sky-700" /> Booking.com</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-amber-400" /> In attesa di pagamento</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-green-500" /> Pagata / Prenotata</span>
       </div>
@@ -912,8 +928,16 @@ function BlockedDatesTab() {
                           </summary>
                           <div className="flex flex-wrap gap-2 border-t border-border px-3 py-3">
                             {monthGroup.items.map((date) => (
-                              <span key={date} className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700">
-                                {formatEU(date)}
+                              <span
+                                key={`${date.source}:${date.date}`}
+                                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs ${
+                                  date.source === 'airbnb'
+                                    ? 'bg-rose-100 text-rose-700'
+                                    : 'bg-sky-100 text-sky-700'
+                                }`}
+                              >
+                                {date.source === 'airbnb' ? <House className="h-3 w-3" /> : <BedDouble className="h-3 w-3" />}
+                                {formatEU(date.date)}
                               </span>
                             ))}
                           </div>
@@ -1692,36 +1716,43 @@ function ContentTab() {
 }
 
 function IcalTab() {
-  const [url, setUrl] = useState('')
+  const [airbnbUrl, setAirbnbUrl] = useState('')
+  const [bookingUrl, setBookingUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [events, setEvents] = useState<ICalEvent[]>([])
-  const [fetchError, setFetchError] = useState('')
+  const [feeds, setFeeds] = useState<ICalFeedPreview[]>([])
+  const [saveError, setSaveError] = useState('')
 
   const loadPreview = useCallback(async () => {
     try {
       const data = await fetchIcalPreview()
-      setEvents(data.events || [])
-      setFetchError(data.error || '')
+      setFeeds(data.feeds)
     } catch {
-      setEvents([])
-      setFetchError('Impossibile caricare il feed iCal')
+      setFeeds([])
+      setSaveError('Impossibile caricare i calendari iCal')
     }
   }, [])
 
   useEffect(() => {
-    fetchIcalUrl().then((data) => {
-      setUrl(data.url)
+    fetchIcalUrls().then((data) => {
+      setAirbnbUrl(data.airbnbUrl)
+      setBookingUrl(data.bookingUrl)
       setLoading(false)
-      if (data.url) loadPreview()
+      if (data.airbnbUrl || data.bookingUrl) loadPreview()
     }).catch(() => setLoading(false))
   }, [loadPreview])
 
   async function handleSave() {
     setSaving(true)
-    await saveIcalUrl(url)
-    setSaving(false)
-    loadPreview()
+    setSaveError('')
+    try {
+      await saveIcalUrls(airbnbUrl, bookingUrl)
+      await loadPreview()
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Impossibile salvare i calendari')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Caricamento...</p>
@@ -1729,47 +1760,78 @@ function IcalTab() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Inserisci l&apos;URL del calendario iCal dalla tua piattaforma per visualizzare le prenotazioni esistenti.
+        Inserisci i link iCal di Airbnb e Booking.com. Le prenotazioni importate bloccano automaticamente le date e sono mostrate con colori diversi.
       </p>
-      <div className="flex gap-2">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://ical.booking.com/ical/..."
-          className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
-        />
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
-        >
-          <Save className="h-4 w-4" /> {saving ? 'Salvataggio...' : 'Salva'}
-        </button>
+      <div className="space-y-3">
+        <label className="block space-y-1.5">
+          <span className="flex items-center gap-2 text-sm font-medium text-rose-700"><House className="h-4 w-4" /> Airbnb calendar URL</span>
+          <input
+            type="url"
+            value={airbnbUrl}
+            onChange={(e) => setAirbnbUrl(e.target.value)}
+            placeholder="https://www.airbnb.com/calendar/ical/..."
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </label>
+        <label className="block space-y-1.5">
+          <span className="flex items-center gap-2 text-sm font-medium text-sky-700"><BedDouble className="h-4 w-4" /> Booking.com calendar URL</span>
+          <input
+            type="url"
+            value={bookingUrl}
+            onChange={(e) => setBookingUrl(e.target.value)}
+            placeholder="https://ical.booking.com/ical/..."
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </label>
       </div>
-      {url && (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">URL attuale:</p>
-          <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 block truncate text-sm text-accent underline">
-            {url}
-          </a>
-        </div>
-      )}
-      {fetchError && (
-        <p className="text-sm text-destructive">{fetchError}</p>
-      )}
-      {events.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h3 className="mb-3 text-sm font-medium text-foreground">Prenotazioni iCal ({events.length})</h3>
-          <div className="space-y-2">
-            {events.map((e, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
-                <span>{e.summary} · {formatEU(e.start)} → {formatEU(e.end)} ({e.nights} {e.nights === 1 ? 'notte' : 'notti'})</span>
-              </div>
-            ))}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+      >
+        <Save className="h-4 w-4" /> {saving ? 'Salvataggio...' : 'Salva calendari'}
+      </button>
+      {saveError && <p className="text-sm text-destructive">{saveError}</p>}
+      {feeds.map((feed) => {
+        const isAirbnb = feed.source === 'airbnb'
+        const ProviderIcon = isAirbnb ? House : BedDouble
+        const providerName = isAirbnb ? 'Airbnb' : 'Booking.com'
+        return (
+          <div key={feed.source} className="rounded-xl border border-border bg-card p-4">
+            <h3 className={`mb-2 flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-rose-700' : 'text-sky-700'}`}>
+              <ProviderIcon className="h-4 w-4" /> {providerName}
+            </h3>
+            {feed.error ? (
+              <p className="text-sm text-destructive">{feed.error}</p>
+            ) : feed.url ? (
+              <>
+                <p className="mb-3 truncate text-xs text-muted-foreground">{feed.url}</p>
+                <p className="mb-2 text-xs text-muted-foreground">Prenotazioni iCal ({feed.events.length})</p>
+                {feed.events.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nessuna prenotazione importata.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {feed.events.map((event, index) => (
+                      <div
+                        key={`${event.start}:${event.end}:${index}`}
+                        className={`rounded-lg border px-3 py-2 text-xs ${
+                          isAirbnb
+                            ? 'border-rose-200 bg-rose-50 text-rose-800'
+                            : 'border-sky-200 bg-sky-50 text-sky-800'
+                        }`}
+                      >
+                        {event.summary} · {formatEU(event.start)} → {formatEU(event.end)} ({event.nights} {event.nights === 1 ? 'notte' : 'notti'})
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">Nessun calendario configurato.</p>
+            )}
           </div>
-        </div>
-      )}
+        )
+      })}
     </div>
   )
 }

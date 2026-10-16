@@ -9,6 +9,7 @@ import {
 } from '../_lib/stripe'
 import { d1ListBlockedDates, d1GetSetting, type AdminEnv } from '../_lib/admin'
 import { parseICalDates } from '../../lib/ical-parser'
+import { fetchICalFeed, getICalFeeds } from '../_lib/ical-feeds'
 import { encrypt } from '../../lib/encryption'
 import {
   getGuestDetailsEncryptionKey,
@@ -16,7 +17,6 @@ import {
 } from '../_lib/booking-guest-details'
 
 const MAX_GUESTS = 4
-const ICAL_URL_KEY = 'ical_url'
 
 async function getPricingRules(db: Record<string, unknown>): Promise<PricingRule[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,15 +100,16 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     // Check availability: blocked dates + iCal + confirmed bookings
     const blocked = await d1ListBlockedDates(env.DB)
     const blockedSet = new Set(blocked.map((d) => d.date))
-    const icalUrl = await d1GetSetting(env.DB, ICAL_URL_KEY, '')
-    if (icalUrl) {
+    const icalFeeds = await getICalFeeds(env.DB)
+    const icalDates = await Promise.all(icalFeeds.map(async (feed) => {
       try {
-        const res = await fetch(icalUrl, { signal: AbortSignal.timeout(8000) })
-        if (res.ok) {
-          for (const d of parseICalDates(await res.text())) blockedSet.add(d)
-        }
-      } catch { /* proceed with manual blocks only */ }
-    }
+        return parseICalDates(await fetchICalFeed(feed.url))
+      } catch (error) {
+        console.error(`Unable to load ${feed.source} iCal availability during checkout`, error)
+        return []
+      }
+    }))
+    for (const date of icalDates.flat()) blockedSet.add(date)
 
     // Also block dates from confirmed bookings
     try {

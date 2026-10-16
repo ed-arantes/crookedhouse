@@ -1,7 +1,6 @@
-import { json, requireAdmin, d1GetSetting, d1SetSetting, type AdminEnv } from '../../_lib/admin'
+import { json, requireAdmin, d1SetSetting, type AdminEnv } from '../../_lib/admin'
 import { parseICalEvents } from '../../../lib/ical-parser'
-
-const ICAL_URL_KEY = 'ical_url'
+import { fetchICalFeed, getICalFeeds, type ICalSource } from '../../_lib/ical-feeds'
 
 type PagesContext = { request: Request; env: AdminEnv }
 
@@ -9,31 +8,59 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   const unauthed = requireAdmin(env, request)
   if (unauthed) return unauthed
 
-  const url = await d1GetSetting(env.DB, ICAL_URL_KEY, '')
-
   const preview = new URL(request.url).searchParams.get('preview')
-  if (preview && url) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
-      if (!res.ok) return json({ url, events: [], error: `Il feed iCal ha restituito un errore (HTTP ${res.status}).` })
-      const text = await res.text()
-      const events = parseICalEvents(text)
-      return json({ url, events })
-    } catch {
-      return json({ url, events: [], error: 'Impossibile caricare il feed iCal' })
-    }
+  const feeds = await getICalFeeds(env.DB)
+  if (preview) {
+    const previews = await Promise.all(
+      feeds.map(async (feed) => {
+        try {
+          const events = parseICalEvents(await fetchICalFeed(feed.url))
+          return { ...feed, events }
+        } catch (error) {
+          console.error(`Unable to load ${feed.source} iCal feed`, error)
+          return {
+            ...feed,
+            events: [],
+            error: 'Impossibile caricare il feed iCal',
+          }
+        }
+      }),
+    )
+    return json({ feeds: previews })
   }
 
-  return json({ url })
+  return json({
+    airbnbUrl: feeds.find((feed) => feed.source === 'airbnb')?.url ?? '',
+    bookingUrl: feeds.find((feed) => feed.source === 'booking')?.url ?? '',
+  })
 }
 
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
   const unauthed = requireAdmin(env, request)
   if (unauthed) return unauthed
 
-  const body = await request.json().catch(() => null) as { url?: string } | null
-  if (!body?.url) return json({ error: 'Missing url' }, 400)
+  const body = await request.json().catch(() => null) as {
+    airbnbUrl?: unknown
+    bookingUrl?: unknown
+  } | null
+  if (typeof body?.airbnbUrl !== 'string' || typeof body.bookingUrl !== 'string') {
+    return json({ error: 'Missing calendar URLs' }, 400)
+  }
 
-  await d1SetSetting(env.DB, ICAL_URL_KEY, body.url)
-  return json({ ok: true, url: body.url })
+  const urls: Array<{ source: ICalSource; key: string; url: string }> = [
+    { source: 'airbnb', key: 'airbnb_ical_url', url: body.airbnbUrl.trim() },
+    { source: 'booking', key: 'ical_url', url: body.bookingUrl.trim() },
+  ]
+  for (const { source, url } of urls) {
+    if (!url) continue
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error()
+    } catch {
+      return json({ error: `Invalid ${source} calendar URL` }, 400)
+    }
+  }
+
+  await Promise.all(urls.map(({ key, url }) => d1SetSetting(env.DB, key, url)))
+  return json({ ok: true })
 }
