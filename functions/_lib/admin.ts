@@ -4,6 +4,8 @@ export type AdminEnv = {
   AI: { run: (model: string, body: Record<string, unknown>) => Promise<unknown> }
   ADMIN_PASSWORD?: string
   BOOKING_ENCRYPTION_KEY?: string
+  RESEND_API_KEY?: string
+  RESEND_FROM_EMAIL?: string
 }
 
 export { encrypt, decrypt } from '../../lib/encryption'

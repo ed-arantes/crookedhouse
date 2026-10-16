@@ -26,6 +26,7 @@ import {
   fetchR2BaseUrl,
   saveR2BaseUrl,
   fetchBookings,
+  sendTestEmail,
   type Review,
   type BlockedDate,
   type AdminImage,
@@ -33,7 +34,7 @@ import {
   type ICalFeedPreview,
   type ICalSource,
 } from '@/lib/admin-api'
-import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare, Copy } from 'lucide-react'
+import { LogOut, Plus, Pencil, Trash2, Save, Calendar, Star, MessageSquareQuote, FileText, Link, Bold, GripVertical, Image as ImageIcon, Upload, CalendarCheck, BarChart3, DollarSign, MessagesSquare, Copy, Mail } from 'lucide-react'
 import { RichText } from '@/components/rich-text'
 import { ARRAY_CONTENT_KEYS, CONTENT_SECTIONS } from '@/lib/content-schema'
 import { DEFAULT_FAQ_ITEMS, type FaqItem } from '@/lib/faq-content'
@@ -41,7 +42,7 @@ import { usesRemoteApi } from '@/lib/api-url'
 import { IMAGE_SECTIONS } from '@/lib/images'
 import { BookingsTab, AnalyticsTab, PricingTab, MessagesTab } from './admin-tabs'
 import { formatEU } from '@/lib/format-date'
-type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'messages' | 'pricing' | 'analytics'
+type Tab = 'reviews' | 'blocked' | 'content' | 'ical' | 'images' | 'bookings' | 'messages' | 'pricing' | 'analytics' | 'email'
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -134,6 +135,7 @@ export default function AdminPage() {
             ['content', <FileText key="c" className="h-4 w-4" />, 'Contenuti'],
             ['images', <ImageIcon key="m" className="h-4 w-4" />, 'Immagini'],
             ['analytics', <BarChart3 key="a" className="h-4 w-4" />, 'Analisi'],
+            ['email', <Mail key="e" className="h-4 w-4" />, 'Email'],
             ['ical', <Link key="i" className="h-4 w-4" />, 'iCal'],
           ] as const).map(([key, icon, label]) => (
             <button
@@ -159,8 +161,67 @@ export default function AdminPage() {
         {tab === 'messages' && <MessagesTab />}
         {tab === 'pricing' && <PricingTab />}
         {tab === 'analytics' && <AnalyticsTab />}
+        {tab === 'email' && <ResendTestTab />}
       </div>
     </div>
+  )
+}
+
+function ResendTestTab() {
+  const [recipient, setRecipient] = useState('')
+  const [sending, setSending] = useState(false)
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSending(true)
+    setStatus('')
+    setError('')
+    try {
+      const result = await sendTestEmail(recipient)
+      setStatus(`Email di prova inviata. ID Resend: ${result.id}`)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Invio non riuscito. Riprova.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <section className="max-w-2xl rounded-2xl border border-border bg-card p-6">
+      <h2 className="text-lg font-semibold text-foreground">Test email Resend</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Invia un messaggio di prova all’indirizzo indicato usando la configurazione Resend del server.
+      </p>
+      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <div>
+          <label htmlFor="test-email-recipient" className="mb-1.5 block text-sm font-medium text-foreground">
+            Indirizzo email destinatario
+          </label>
+          <input
+            id="test-email-recipient"
+            type="email"
+            autoComplete="email"
+            required
+            maxLength={254}
+            value={recipient}
+            onChange={(event) => setRecipient(event.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={sending}
+          className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Mail className="h-4 w-4" />
+          {sending ? 'Invio in corso…' : 'Invia email di prova'}
+        </button>
+        {status && <p role="status" className="text-sm text-green-700">{status}</p>}
+        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      </form>
+    </section>
   )
 }
 

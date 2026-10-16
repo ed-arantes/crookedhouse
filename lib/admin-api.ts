@@ -143,6 +143,14 @@ export function fetchReviews(): Promise<Review[]> {
   return adminFetch('/api/admin/reviews')
 }
 
+export function sendTestEmail(to: string): Promise<{ ok: boolean; id: string }> {
+  return adminFetch('/api/admin/test-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to }),
+  })
+}
+
 export function createReview(review: Omit<Review, 'id'>): Promise<Review> {
   return adminFetch('/api/admin/reviews', {
     method: 'POST',
