@@ -56,6 +56,9 @@ function parseInput(value: unknown): ConfirmationTestInput | null {
   const totalPaid = value.totalPaid
   const bookingReference =
     typeof value.bookingReference === 'string' ? value.bookingReference.trim() : ''
+  const stayNights = isDate(checkIn) && isDate(checkOut)
+    ? (Date.parse(`${checkOut}T00:00:00.000Z`) - Date.parse(`${checkIn}T00:00:00.000Z`)) / 86_400_000
+    : null
 
   if (
     to.length > 254 ||
@@ -65,6 +68,7 @@ function parseInput(value: unknown): ConfirmationTestInput | null {
     !isDate(checkIn) ||
     !isDate(checkOut) ||
     checkOut <= checkIn ||
+    nights !== stayNights ||
     typeof nights !== 'number' ||
     !Number.isInteger(nights) ||
     nights < 1 ||
