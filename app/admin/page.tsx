@@ -832,7 +832,7 @@ function BlockedDatesTab() {
                   : icalSources?.has('airbnb')
                   ? 'bg-[#FD5C63] text-white hover:bg-[#e85359]'
                   : icalSources?.has('booking')
-                  ? 'bg-[#003B95] text-white hover:bg-[#2a2a2a]'
+                  ? 'bg-[#003B95] text-white hover:bg-[#02337c]'
                   : bookingStatus === 'paid'
                     ? 'bg-green-500 text-white hover:bg-green-600'
                     : bookingStatus === 'pending'
