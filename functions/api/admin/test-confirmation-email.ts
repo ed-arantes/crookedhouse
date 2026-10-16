@@ -44,6 +44,11 @@ function formatDate(value: string): string {
   }).format(new Date(`${value}T00:00:00.000Z`))
 }
 
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message.slice(0, 300)
+  return 'Unknown Resend error'
+}
+
 function parseInput(value: unknown): ConfirmationTestInput | null {
   if (!isRecord(value)) return null
 
@@ -132,7 +137,9 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
 
     if (error) {
       console.error('Resend booking confirmation test failed', error)
-      return json({ error: 'Resend could not send the booking confirmation test' }, 502)
+      return json({
+        error: `Resend could not send the booking confirmation test: ${error.message.slice(0, 300)}`,
+      }, 502)
     }
     if (!data?.id) {
       console.error('Resend booking confirmation test returned no email ID')
@@ -142,6 +149,8 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     return json({ ok: true, id: data.id })
   } catch (error) {
     console.error('Resend booking confirmation test request failed', error)
-    return json({ error: 'Unable to send the booking confirmation test' }, 502)
+    return json({
+      error: `Unable to send the booking confirmation test: ${errorMessage(error)}`,
+    }, 502)
   }
 }
