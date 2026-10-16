@@ -7,4 +7,3 @@ ADMIN_PASSWORD=changeme
 BOOKING_ENCRYPTION_KEY=replace_with_64_hex_characters
 RESEND_API_KEY=re_replace_me
 RESEND_FROM_EMAIL=Crooked House <reception@crookedhouse.it>
-RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID=replace_with_published_template_id

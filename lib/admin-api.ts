@@ -78,7 +78,6 @@ const ADMIN_ERROR_TRANSLATIONS: Record<string, string> = {
   'Unable to delete guest details': 'Impossibile eliminare i dati degli ospiti.',
   'Enter valid details for each guest and a document number for the group leader': 'Inserisci i dati validi di ogni ospite e il  del documento del capogruppo.',
   'Resend API key is not configured': 'La chiave API Resend non è configurata nell’ambiente Cloudflare Pages.',
-  'Booking confirmation template is not configured': 'Configura RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID con l’ID del template confirmation-it pubblicato.',
 }
 
 function translateAdminError(message: string, status: number): string {

@@ -1,0 +1,1 @@
+export const BOOKING_CONFIRMATION_TEMPLATE_ID = '86e7bbd4-2553-4bf8-947b-c72ee4af5eeb'

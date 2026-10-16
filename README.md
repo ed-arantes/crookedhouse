@@ -50,10 +50,9 @@ Paid bookings send a confirmation using a published Resend template. Create
 and publish a responsive template in Resend with variables named `GUEST_NAME`,
 `CHECK_IN`, `CHECK_OUT`, `NIGHTS`, `GUESTS`, `TOTAL_PAID`, and
 `BOOKING_REFERENCE`. Use type `number` for `NIGHTS` and `GUESTS`, and `string`
-for the remaining variables. Set its ID as
-`RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID` in the Cloudflare Pages environment
-(and local `.dev.vars`); point it to the published `confirmation-it` template's
-Resend template ID. The template layout and copy are managed in Resend.
+for the remaining variables. The confirmation template ID for `confirmation-it`
+is hardcoded in `functions/_lib/resend-templates.ts`; the template must be
+published in Resend. The template layout and copy are managed in Resend.
 Apply the booking email tracking migration before deploying:
 
 ```text

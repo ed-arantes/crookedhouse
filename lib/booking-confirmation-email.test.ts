@@ -26,7 +26,6 @@ test('sends a paid booking confirmation once with its Resend template variables'
   const env = {
     BOOKING_ENCRYPTION_KEY: encryptionKey,
     RESEND_API_KEY: 're_test_key',
-    RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID: 'template-confirmation',
     DB: {
       prepare(query: string) {
         let parameters: unknown[] = []
@@ -72,7 +71,7 @@ test('sends a paid booking confirmation once with its Resend template variables'
   assert.equal(sentAt, '2026-10-17 00:00:00')
   const requestBody = captured.requestBody
   assert.ok(requestBody)
-  assert.equal((requestBody.template as { id: string }).id, 'template-confirmation')
+  assert.equal((requestBody.template as { id: string }).id, '86e7bbd4-2553-4bf8-947b-c72ee4af5eeb')
   assert.deepEqual((requestBody.template as { variables: Record<string, unknown> }).variables, {
     GUEST_NAME: 'Maria &lt;Guest&gt; Rossi',
     CHECK_IN: '10 December 2026',
@@ -95,7 +94,6 @@ test('does not send a booking confirmation before payment is confirmed', async (
   try {
     await sendBookingConfirmation({
       RESEND_API_KEY: 're_test_key',
-      RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID: 'template-confirmation',
       DB: {
         prepare() {
           return {

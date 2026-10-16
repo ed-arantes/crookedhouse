@@ -1,12 +1,12 @@
 import { Resend } from 'resend'
 import { decrypt } from '../../lib/encryption'
+import { BOOKING_CONFIRMATION_TEMPLATE_ID } from './resend-templates'
 
 type ConfirmationEnv = {
   DB: Record<string, unknown>
   BOOKING_ENCRYPTION_KEY?: string
   RESEND_API_KEY?: string
   RESEND_FROM_EMAIL?: string
-  RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID?: string
 }
 
 type BookingConfirmationRow = {
@@ -56,9 +56,6 @@ export async function sendBookingConfirmation(
   paymentIntentId: string,
 ): Promise<void> {
   if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not configured')
-  if (!env.RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID) {
-    throw new Error('RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID is not configured')
-  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const booking = await (env.DB as any).prepare(
@@ -84,7 +81,7 @@ export async function sendBookingConfirmation(
     from: env.RESEND_FROM_EMAIL || 'Crooked House <reception@crookedhouse.it>',
     to: recipient,
     template: {
-      id: env.RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID,
+      id: BOOKING_CONFIRMATION_TEMPLATE_ID,
       variables: {
         GUEST_NAME: escapeTemplateHtml(`${firstName} ${lastName}`.trim()),
         CHECK_IN: formatDate(booking.check_in),

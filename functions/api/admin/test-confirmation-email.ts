@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { json, requireAdmin, type AdminEnv } from '../../_lib/admin'
+import { BOOKING_CONFIRMATION_TEMPLATE_ID } from '../../_lib/resend-templates'
 
 type PagesContext = { request: Request; env: AdminEnv }
 
@@ -107,17 +108,13 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
   if (!env.RESEND_API_KEY) {
     return json({ error: 'Resend API key is not configured' }, 500)
   }
-  if (!env.RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID) {
-    return json({ error: 'Booking confirmation template is not configured' }, 500)
-  }
-
   try {
     const resend = new Resend(env.RESEND_API_KEY)
     const { data, error } = await resend.emails.send({
       from: env.RESEND_FROM_EMAIL || 'Crooked House <reception@crookedhouse.it>',
       to: input.to,
       template: {
-        id: env.RESEND_BOOKING_CONFIRMATION_TEMPLATE_ID,
+        id: BOOKING_CONFIRMATION_TEMPLATE_ID,
         variables: {
           GUEST_NAME: escapeTemplateHtml(input.guestName),
           CHECK_IN: formatDate(input.checkIn),
