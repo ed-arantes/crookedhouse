@@ -23,11 +23,11 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
   try {
     const resend = new Resend(env.RESEND_API_KEY)
     const { data, error } = await resend.emails.send({
-      from: env.RESEND_FROM_EMAIL || 'Crooked House <reception@mail.crookedhouse.it>',
+      from: env.RESEND_FROM_EMAIL || 'Crooked House <reception@crookedhouse.it>',
       to: recipient,
-      subject: 'Crooked House email test',
-      text: 'This is a test email from the Crooked House admin panel. Resend is connected.',
-      html: '<p>This is a test email from the Crooked House admin panel.</p><p>Resend is connected.</p>',
+      subject: 'Crooked House Email Test',
+      text: 'Questa è un’email di prova dal pannello di amministrazione di Crooked House. Resend è connesso correttamente.',
+      html: '<p>Questa è un’email di prova dal pannello di amministrazione di Crooked House.</p><p>Resend è connesso correttamente.</p>',
     }, {
       idempotencyKey: `admin-test/${crypto.randomUUID()}`,
     })

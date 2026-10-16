@@ -36,11 +36,12 @@ and does not request that card details be saved for future use. Do not configure
 
 The Admin → Email tab can send a test message through Resend. Configure
 `RESEND_API_KEY` as a Cloudflare Pages secret (and in local `.dev.vars` for
-local development). The default sender is
-`Crooked House <reception@mail.crookedhouse.it>`; if your verified Resend
-subdomain or sender differs, set `RESEND_FROM_EMAIL` as a Pages variable and
-in local `.dev.vars`. Keep the Resend key server-side and never expose it in
-client-side variables.
+local development). To send from `reception@crookedhouse.it`, add and verify
+the root domain `crookedhouse.it` in Resend; verifying only
+`mail.crookedhouse.it` does not authorize the root domain. The default sender
+is `Crooked House <reception@crookedhouse.it>`. Set `RESEND_FROM_EMAIL` as a
+Pages variable (and in local `.dev.vars`) if using a different verified sender.
+Keep the Resend key server-side and never expose it in client-side variables.
 
 When rotating Stripe credentials, update the Pages Production bindings (and
 Preview too if it is used) with keys from the intended Stripe account. Pages
