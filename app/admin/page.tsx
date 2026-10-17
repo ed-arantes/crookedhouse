@@ -1101,7 +1101,7 @@ function BlockedDatesTab() {
                 title={tooltip}
                 className={`h-7 w-7 rounded text-[11px] transition-colors ${cellClass}`}
                 style={hasBothIcalSources && !isBlocked
-                  ? { backgroundImage: 'linear-gradient(135deg, #FD5C63 50%, #003B95 50%)' }
+                  ? { background: 'linear-gradient(to right, #FD5C63 0 50%, #003B95 50% 100%)' }
                   : undefined}
               >
                 {day}
@@ -1115,7 +1115,7 @@ function BlockedDatesTab() {
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-accent" /> Bloccata dall’amministratore</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#FD5C63]" /> Airbnb</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#003B95]" /> Booking</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm" style={{ backgroundImage: 'linear-gradient(135deg, #FD5C63 50%, #003B95 50%)' }} /> Airbnb + Booking</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: 'linear-gradient(to right, #FD5C63 0 50%, #003B95 50% 100%)' }} /> Airbnb + Booking</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-amber-400" /> In attesa di pagamento</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-green-500" /> Pagata / Prenotata</span>
       </div>
@@ -2082,39 +2082,45 @@ function IcalTab() {
         const isAirbnb = feed.source === 'airbnb'
         const providerName = isAirbnb ? 'Airbnb' : 'Booking'
         return (
-          <div key={feed.source} className="rounded-xl border border-border bg-card p-4">
-            <h3 className={`mb-2 flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-[#FD5C63]' : 'text-[#003B95]'}`}>
-              <span className={`inline-block h-3.5 w-3.5 rounded-sm ${isAirbnb ? 'bg-[#FD5C63]' : 'bg-[#003B95]'}`} /> {providerName}
-            </h3>
-            {feed.error ? (
-              <p className="text-sm text-destructive">{feed.error}</p>
-            ) : feed.url ? (
-              <>
-                <p className="mb-3 truncate text-xs text-muted-foreground">{feed.url}</p>
-                <p className="mb-2 text-xs text-muted-foreground">Prenotazioni iCal ({feed.events.length})</p>
-                {feed.events.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Nessuna prenotazione importata.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {feed.events.map((event, index) => (
-                      <div
-                        key={`${event.start}:${event.end}:${index}`}
-                        className={`rounded-lg border px-3 py-2 text-xs ${
-                          isAirbnb
-                            ? 'border-red-200 bg-red-50 text-red-800'
-                            : 'border-[#003B95]/20 bg-[#003B95]/5 text-[#003B95]'
-                        }`}
-                      >
-                        {event.summary} · {formatEU(event.start)} → {formatEU(event.end)} ({event.nights} {event.nights === 1 ? 'notte' : 'notti'})
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-xs text-muted-foreground">Nessun calendario configurato.</p>
-            )}
-          </div>
+          <details key={feed.source} className="rounded-xl border border-border bg-card">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:hidden">
+              <span className={`flex items-center gap-2 text-sm font-medium ${isAirbnb ? 'text-[#FD5C63]' : 'text-[#003B95]'}`}>
+                <span className={`inline-block h-3.5 w-3.5 rounded-sm ${isAirbnb ? 'bg-[#FD5C63]' : 'bg-[#003B95]'}`} /> {providerName}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {feed.error ? 'Errore' : feed.url ? `Prenotazioni iCal (${feed.events.length})` : 'Nessun calendario configurato'}
+              </span>
+            </summary>
+            <div className="space-y-2 border-t border-border p-4">
+              {feed.error ? (
+                <p className="text-sm text-destructive">{feed.error}</p>
+              ) : feed.url ? (
+                <>
+                  <p className="mb-3 truncate text-xs text-muted-foreground">{feed.url}</p>
+                  {feed.events.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Nessuna prenotazione importata.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {feed.events.map((event, index) => (
+                        <div
+                          key={`${event.start}:${event.end}:${index}`}
+                          className={`rounded-lg border px-3 py-2 text-xs ${
+                            isAirbnb
+                              ? 'border-red-200 bg-red-50 text-red-800'
+                              : 'border-[#003B95]/20 bg-[#003B95]/5 text-[#003B95]'
+                          }`}
+                        >
+                          {event.summary} · {formatEU(event.start)} → {formatEU(event.end)} ({event.nights} {event.nights === 1 ? 'notte' : 'notti'})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">Nessun calendario configurato.</p>
+              )}
+            </div>
+          </details>
         )
       })}
     </div>
