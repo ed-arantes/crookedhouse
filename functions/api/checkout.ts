@@ -88,14 +88,19 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       return json({ error: 'Invalid booking details' }, 400)
     }
 
-    let guestDetailsEncrypted: string | null = null
-    if (body.guestDetails !== undefined) {
-      const guestDetails = normalizeBookingGuestDetails(body.guestDetails, guestCount)
-      if (!guestDetails) return json({ error: 'Invalid guest details' }, 400)
-      const key = await getGuestDetailsEncryptionKey(env)
-      if (key instanceof Response) return key
-      guestDetailsEncrypted = await encrypt(JSON.stringify(guestDetails), key)
+    const guestDetails = body.guestDetails === undefined
+      ? null
+      : normalizeBookingGuestDetails(body.guestDetails, guestCount)
+    if (body.guestDetails !== undefined && !guestDetails) {
+      return json({ error: 'Invalid guest details' }, 400)
     }
+
+    const encryptionKey = await getGuestDetailsEncryptionKey(env)
+    if (encryptionKey instanceof Response) return encryptionKey
+
+    const guestDetailsEncrypted = guestDetails
+      ? await encrypt(JSON.stringify(guestDetails), encryptionKey)
+      : null
 
     // Check availability: blocked dates + iCal + confirmed bookings
     const blocked = await d1ListBlockedDates(env.DB)
@@ -186,22 +191,14 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const expiresAt = createdAt.getTime() + 15 * 60 * 1000
 
     // Save booking to D1 with encrypted PII
-    const encKey = env.BOOKING_ENCRYPTION_KEY
-
     const message = initialMessage
     const bookingMessageId = initialMessage ? crypto.randomUUID() : ''
-    let [storedFirstName, storedLastName, storedEmail, storedMessage] = [firstName, lastName, email, message]
-    if (encKey) {
-      [storedFirstName, storedLastName, storedEmail, storedMessage] = await Promise.all([
-        encrypt(firstName, encKey),
-        encrypt(lastName, encKey),
-        encrypt(email, encKey),
-        encrypt(message, encKey),
-      ])
-    } else {
-      // Fallback: save without encryption
-      console.warn('BOOKING_ENCRYPTION_KEY not set — saving without encryption')
-    }
+    const [storedFirstName, storedLastName, storedEmail, storedMessage] = await Promise.all([
+      encrypt(firstName, encryptionKey),
+      encrypt(lastName, encryptionKey),
+      encrypt(email, encryptionKey),
+      encrypt(message, encryptionKey),
+    ])
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = env.DB as any

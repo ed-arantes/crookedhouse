@@ -189,6 +189,43 @@ test('rejects invalid booking-form contact details before creating checkout', as
   }
 })
 
+test('refuses checkout when the booking personal-data encryption key is missing or invalid', async () => {
+  const body = {
+    checkIn: '2026-12-10',
+    checkOut: '2026-12-12',
+    guests: { adults: 1, children: 0, pets: false },
+    firstName: 'Maria',
+    lastName: 'Rossi',
+    email: 'maria@example.com',
+  }
+
+  for (const key of [undefined, 'invalid-key']) {
+    let databaseAccessed = false
+    const response = await onRequestPost({
+      request: new Request('https://example.com/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+      env: {
+        BOOKING_ENCRYPTION_KEY: key,
+        DB: {
+          prepare() {
+            databaseAccessed = true
+            throw new Error('Database must not be accessed without an encryption key')
+          },
+        },
+        IMAGES: {},
+        AI: { run: async () => null },
+      } as Parameters<typeof onRequestPost>[0]['env'],
+    })
+
+    assert.equal(response.status, 500)
+    assert.deepEqual(await response.json(), { error: 'Guest details encryption is not configured' })
+    assert.equal(databaseAccessed, false)
+  }
+})
+
 test('rejects incomplete guest details before creating a checkout session', async () => {
   const response = await onRequestPost({
     request: new Request('https://example.com/api/checkout', {
