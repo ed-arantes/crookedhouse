@@ -97,6 +97,7 @@ export function BookingForm({ locale = 'en' }: { locale?: Locale }) {
     body: JSON.stringify({
      checkIn: checkIn ? formatDateLocal(checkIn) : undefined,
      checkOut: checkOut ? formatDateLocal(checkOut) : undefined,
+    locale,
      guests,
      ...checkoutContact,
      ...(guestDetails ? { guestDetails } : {}),

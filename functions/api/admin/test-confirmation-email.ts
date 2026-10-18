@@ -1,10 +1,17 @@
 import { Resend } from 'resend'
 import { json, requireAdmin, type AdminEnv } from '../../_lib/admin'
+import {
+  getBookingConfirmationVariables,
+  getBookingEmailIntlLocale,
+  isBookingEmailLocale,
+  type BookingEmailLocale,
+} from '../../_lib/booking-confirmation-copy'
 import { BOOKING_CONFIRMATION_TEMPLATE_ID } from '../../_lib/resend-templates'
 
 type PagesContext = { request: Request; env: AdminEnv }
 
 type ConfirmationTestInput = {
+  locale: BookingEmailLocale
   to: string
   guestName: string
   checkIn: string
@@ -36,15 +43,6 @@ function escapeTemplateHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => escapes[character] ?? character)
 }
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${value}T00:00:00.000Z`))
-}
-
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message.slice(0, 300)
   return 'Unknown Resend error'
@@ -60,6 +58,7 @@ function parseInput(value: unknown): ConfirmationTestInput | null {
   const nights = value.nights
   const guests = value.guests
   const totalPaid = value.totalPaid
+  const locale = value.locale === undefined ? 'it' : value.locale
   const bookingReference =
     typeof value.bookingReference === 'string' ? value.bookingReference.trim() : ''
   const stayNights = isDate(checkIn) && isDate(checkOut)
@@ -67,6 +66,7 @@ function parseInput(value: unknown): ConfirmationTestInput | null {
     : null
 
   if (
+    !isBookingEmailLocale(locale) ||
     to.length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) ||
     guestName.length < 1 ||
@@ -94,7 +94,7 @@ function parseInput(value: unknown): ConfirmationTestInput | null {
     return null
   }
 
-  return { to, guestName, checkIn, checkOut, nights, guests, totalPaid, bookingReference }
+  return { locale, to, guestName, checkIn, checkOut, nights, guests, totalPaid, bookingReference }
 }
 
 export const onRequestPost = async ({ request, env }: PagesContext): Promise<Response> => {
@@ -110,18 +110,24 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
   }
   try {
     const resend = new Resend(env.RESEND_API_KEY)
+    const intlLocale = getBookingEmailIntlLocale(input.locale)
     const { data, error } = await resend.emails.send({
       from: env.RESEND_FROM_EMAIL || 'Crooked House <reception@crookedhouse.it>',
       to: input.to,
       template: {
         id: BOOKING_CONFIRMATION_TEMPLATE_ID,
         variables: {
+          ...getBookingConfirmationVariables(input.locale, input.nights, input.guests),
           GUEST_NAME: escapeTemplateHtml(input.guestName),
-          CHECK_IN: formatDate(input.checkIn),
-          CHECK_OUT: formatDate(input.checkOut),
+          CHECK_IN: new Intl.DateTimeFormat(intlLocale, {
+            day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+          }).format(new Date(`${input.checkIn}T00:00:00.000Z`)),
+          CHECK_OUT: new Intl.DateTimeFormat(intlLocale, {
+            day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+          }).format(new Date(`${input.checkOut}T00:00:00.000Z`)),
           NIGHTS: input.nights,
           GUESTS: input.guests,
-          TOTAL_PAID: new Intl.NumberFormat('en-GB', {
+          TOTAL_PAID: new Intl.NumberFormat(intlLocale, {
             style: 'currency',
             currency: 'EUR',
           }).format(input.totalPaid),

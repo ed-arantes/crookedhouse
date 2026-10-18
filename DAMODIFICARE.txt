@@ -1,0 +1,23 @@
+checkout overlap, fai il check quando uno clicca su pulsante paga se le date sono state prenotate nel mentre manda messagio date non disponibili e non caricare stripe.
+
+fai in modo che non ci siano pagamenti in sospeso
+
+
+i want all the photo to have over effect and be clickable to zoom as per ogni angolo curato
+
+
+sync ical in adn add ical out on booking confirmation
+
+add stripe
+
+add timeout on stripe checkout if expires booking is from pending to cancelled
+
+procedi al pagment please fill out this field always English
+
+create pages for pricavy and termini
+
+traduzioni automatiche stripe
+
+ci mette troppo a caricare i prezzi
+
+add google pay apple pay etc

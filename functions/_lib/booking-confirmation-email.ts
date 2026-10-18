@@ -1,5 +1,10 @@
 import { Resend } from 'resend'
 import { decrypt } from '../../lib/encryption'
+import {
+  getBookingConfirmationVariables,
+  getBookingEmailIntlLocale,
+  isBookingEmailLocale,
+} from './booking-confirmation-copy'
 import { BOOKING_CONFIRMATION_TEMPLATE_ID } from './resend-templates'
 
 type ConfirmationEnv = {
@@ -22,6 +27,7 @@ type BookingConfirmationRow = {
   adults: number
   children: number
   total_price: number
+  locale: string
 }
 
 async function decryptBookingValue(value: string, key?: string): Promise<string> {
@@ -40,10 +46,10 @@ function escapeTemplateHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => escapes[character] ?? character)
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string, locale: string): string {
   const date = new Date(`${value}T00:00:00.000Z`)
   if (Number.isNaN(date.getTime())) throw new Error('Booking confirmation contains an invalid date')
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -61,7 +67,7 @@ export async function sendBookingConfirmation(
   const booking = await (env.DB as any).prepare(
     `SELECT id, status, confirmation_email_sent_at, first_name_encrypted,
       last_name_encrypted, email_encrypted, check_in, check_out, nights,
-      adults, children, total_price
+      adults, children, total_price, locale
      FROM bookings WHERE session_id = ?`,
   ).bind(paymentIntentId).first() as BookingConfirmationRow | null
 
@@ -75,6 +81,8 @@ export async function sendBookingConfirmation(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
     throw new Error('Booking confirmation recipient email is invalid')
   }
+  const locale = isBookingEmailLocale(booking.locale) ? booking.locale : 'it'
+  const intlLocale = getBookingEmailIntlLocale(locale)
 
   const resend = new Resend(env.RESEND_API_KEY)
   const { data, error } = await resend.emails.send({
@@ -83,12 +91,17 @@ export async function sendBookingConfirmation(
     template: {
       id: BOOKING_CONFIRMATION_TEMPLATE_ID,
       variables: {
+        ...getBookingConfirmationVariables(
+          locale,
+          Number(booking.nights),
+          Number(booking.adults) + Number(booking.children),
+        ),
         GUEST_NAME: escapeTemplateHtml(`${firstName} ${lastName}`.trim()),
-        CHECK_IN: formatDate(booking.check_in),
-        CHECK_OUT: formatDate(booking.check_out),
+        CHECK_IN: formatDate(booking.check_in, intlLocale),
+        CHECK_OUT: formatDate(booking.check_out, intlLocale),
         NIGHTS: Number(booking.nights),
         GUESTS: Number(booking.adults) + Number(booking.children),
-        TOTAL_PAID: new Intl.NumberFormat('en-GB', {
+        TOTAL_PAID: new Intl.NumberFormat(intlLocale, {
           style: 'currency',
           currency: 'EUR',
         }).format(Number(booking.total_price)),

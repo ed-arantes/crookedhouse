@@ -175,6 +175,7 @@ function ResendTestTab() {
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [confirmation, setConfirmation] = useState<BookingConfirmationTest>({
+    locale: 'it',
     to: '',
     guestName: '',
     checkIn: '',
@@ -262,7 +263,7 @@ function ResendTestTab() {
       </section>
 
       <section className="max-w-2xl rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold text-foreground">Test template di conferma (confirmation-it)</h2>
+        <h2 className="text-lg font-semibold text-foreground">Test template di conferma</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Invia un’anteprima del template di conferma configurato, senza creare o modificare una prenotazione.
         </p>
@@ -281,6 +282,24 @@ function ResendTestTab() {
               onChange={(event) => updateConfirmation('to', event.target.value)}
               className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
             />
+          </div>
+          <div>
+            <label htmlFor="confirmation-test-locale" className="mb-1.5 block text-sm font-medium text-foreground">
+              Lingua email
+            </label>
+            <select
+              id="confirmation-test-locale"
+              value={confirmation.locale}
+              onChange={(event) => updateConfirmation('locale', event.target.value as BookingConfirmationTest['locale'])}
+              className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+            >
+              <option value="it">Italiano</option>
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="es">Español</option>
+              <option value="ru">Русский</option>
+            </select>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>

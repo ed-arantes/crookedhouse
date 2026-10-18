@@ -1,3 +1,5 @@
+import type { Locale } from './i18n'
+
 export type Review = {
   id: string
   name: string
@@ -155,6 +157,7 @@ export function sendTestEmail(to: string): Promise<{ ok: boolean; id: string }> 
 }
 
 export type BookingConfirmationTest = {
+  locale: Locale
   to: string
   guestName: string
   checkIn: string

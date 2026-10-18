@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { sendBookingConfirmation } from '../functions/_lib/booking-confirmation-email'
+import { getBookingConfirmationVariables } from '../functions/_lib/booking-confirmation-copy'
 import { encrypt } from './encryption'
+
+test('provides an Italian confirmation-email test variant with singular stay labels', () => {
+  const variables = getBookingConfirmationVariables('it', 1, 1)
+  assert.equal(variables.EMAIL_SUBJECT, 'La prenotazione a Crooked House è confermata')
+  assert.equal(variables.BOOKING_TITLE, 'Prenotazione confermata')
+  assert.equal(variables.STAY_SUMMARY, '1 notte · 1 ospite')
+})
 
 test('sends a paid booking confirmation once with its Resend template variables', async () => {
   const encryptionKey = 'a'.repeat(64)
@@ -22,6 +30,7 @@ test('sends a paid booking confirmation once with its Resend template variables'
     adults: 2,
     children: 1,
     total_price: 300,
+    locale: 'fr',
   }
   const env = {
     BOOKING_ENCRYPTION_KEY: encryptionKey,
@@ -73,12 +82,26 @@ test('sends a paid booking confirmation once with its Resend template variables'
   assert.ok(requestBody)
   assert.equal((requestBody.template as { id: string }).id, '86e7bbd4-2553-4bf8-947b-c72ee4af5eeb')
   assert.deepEqual((requestBody.template as { variables: Record<string, unknown> }).variables, {
+    EMAIL_SUBJECT: 'Votre réservation à Crooked House est confirmée',
+    EMAIL_PREVIEW: 'Votre séjour est confirmé. Consultez les détails de votre réservation.',
+    BOOKING_TITLE: 'Réservation confirmée',
+    GREETING: 'Merci,',
+    INTRO: 'Votre paiement a été reçu et votre séjour est confirmé. Nous avons hâte de vous accueillir.',
+    CHECK_IN_LABEL: 'Arrivée',
+    CHECK_OUT_LABEL: 'Départ',
+    STAY_LABEL: 'Séjour',
+    PAYMENT_LABEL: 'Paiement reçu',
+    BOOKING_REFERENCE_LABEL: 'Référence de réservation',
+    PORTAL_INSTRUCTIONS: 'Pour consulter votre réservation ou modifier les informations des voyageurs, connectez-vous au site avec votre nom et votre adresse e-mail.',
+    FOOTER: 'Crooked House · Confirmation de réservation',
+    EMAIL_LANGUAGE: 'fr',
+    STAY_SUMMARY: '2 nuits · 3 voyageurs',
     GUEST_NAME: 'Maria &lt;Guest&gt; Rossi',
-    CHECK_IN: '10 December 2026',
-    CHECK_OUT: '12 December 2026',
+    CHECK_IN: '10 décembre 2026',
+    CHECK_OUT: '12 décembre 2026',
     NIGHTS: 2,
     GUESTS: 3,
-    TOTAL_PAID: new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR' }).format(300),
+    TOTAL_PAID: new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(300),
     BOOKING_REFERENCE: 'booking-123',
   })
 })

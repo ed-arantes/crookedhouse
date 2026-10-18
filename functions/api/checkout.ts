@@ -15,6 +15,7 @@ import {
   getGuestDetailsEncryptionKey,
   normalizeBookingGuestDetails,
 } from '../_lib/booking-guest-details'
+import { isBookingEmailLocale } from '../_lib/booking-confirmation-copy'
 
 const MAX_GUESTS = 4
 
@@ -63,6 +64,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       email?: unknown
       message?: unknown
       guestDetails?: unknown
+      locale?: unknown
     }
     const start = parseDate(body?.checkIn)
     const end = parseDate(body?.checkOut)
@@ -70,6 +72,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     const children = Number(body?.guests?.children)
     const pets = body?.guests?.pets === true ? 1 : 0
     const guestCount = adults + children
+    const locale = isBookingEmailLocale(body?.locale) ? body.locale : 'it'
 
     const firstName = typeof body?.firstName === 'string' ? body.firstName.trim() : ''
     const lastName = typeof body?.lastName === 'string' ? body.lastName.trim() : ''
@@ -203,7 +206,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = env.DB as any
     const bookingStatement = db.prepare(
-      'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO bookings (id, session_id, first_name_encrypted, last_name_encrypted, email_encrypted, check_in, check_out, nights, adults, children, pets, message_encrypted, total_price, status, created_at, locale) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(
       bookingId,
       result.id || '',
@@ -220,6 +223,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       total,
       'pending',
       createdAtSql,
+      locale,
     )
     const statements = [bookingStatement]
     if (initialMessage) {
