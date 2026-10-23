@@ -11,6 +11,7 @@ type BookingConfirmationCopy = {
   CHECK_OUT_LABEL: string
   STAY_LABEL: string
   PAYMENT_LABEL: string
+  RECEIPT_LABEL: string
   BOOKING_REFERENCE_LABEL: string
   PORTAL_INSTRUCTIONS: string
   FOOTER: string
@@ -27,6 +28,7 @@ const COPY: Record<BookingEmailLocale, BookingConfirmationCopy> = {
     CHECK_OUT_LABEL: 'Check-out',
     STAY_LABEL: 'Soggiorno',
     PAYMENT_LABEL: 'Pagamento ricevuto',
+    RECEIPT_LABEL: 'Ricevuta di pagamento',
     BOOKING_REFERENCE_LABEL: 'Codice prenotazione',
     PORTAL_INSTRUCTIONS: 'Per consultare la prenotazione o modificare i dati degli ospiti, accedi al sito con il tuo cognome e indirizzo e-mail.',
     FOOTER: 'Crooked House · Conferma della prenotazione',
@@ -41,6 +43,7 @@ const COPY: Record<BookingEmailLocale, BookingConfirmationCopy> = {
     CHECK_OUT_LABEL: 'Check-out',
     STAY_LABEL: 'Stay',
     PAYMENT_LABEL: 'Payment received',
+    RECEIPT_LABEL: 'Payment receipt',
     BOOKING_REFERENCE_LABEL: 'Booking reference',
     PORTAL_INSTRUCTIONS: 'To view your booking details or edit guest details, log in to the website using your surname and email address.',
     FOOTER: 'Crooked House · Booking confirmation',
@@ -55,6 +58,7 @@ const COPY: Record<BookingEmailLocale, BookingConfirmationCopy> = {
     CHECK_OUT_LABEL: 'Départ',
     STAY_LABEL: 'Séjour',
     PAYMENT_LABEL: 'Paiement reçu',
+    RECEIPT_LABEL: 'Reçu de paiement',
     BOOKING_REFERENCE_LABEL: 'Référence de réservation',
     PORTAL_INSTRUCTIONS: 'Pour consulter votre réservation ou modifier les informations des voyageurs, connectez-vous au site avec votre nom et votre adresse e-mail.',
     FOOTER: 'Crooked House · Confirmation de réservation',
@@ -69,6 +73,7 @@ const COPY: Record<BookingEmailLocale, BookingConfirmationCopy> = {
     CHECK_OUT_LABEL: 'Abreise',
     STAY_LABEL: 'Aufenthalt',
     PAYMENT_LABEL: 'Zahlung erhalten',
+    RECEIPT_LABEL: 'Zahlungsbeleg',
     BOOKING_REFERENCE_LABEL: 'Buchungsnummer',
     PORTAL_INSTRUCTIONS: 'Um Ihre Buchung anzusehen oder Gästedaten zu ändern, melden Sie sich auf der Website mit Ihrem Nachnamen und Ihrer E-Mail-Adresse an.',
     FOOTER: 'Crooked House · Buchungsbestätigung',
@@ -83,6 +88,7 @@ const COPY: Record<BookingEmailLocale, BookingConfirmationCopy> = {
     CHECK_OUT_LABEL: 'Salida',
     STAY_LABEL: 'Estancia',
     PAYMENT_LABEL: 'Pago recibido',
+    RECEIPT_LABEL: 'Recibo de pago',
     BOOKING_REFERENCE_LABEL: 'Referencia de reserva',
     PORTAL_INSTRUCTIONS: 'Para consultar tu reserva o modificar los datos de los huéspedes, inicia sesión en la web con tu apellido y tu correo electrónico.',
     FOOTER: 'Crooked House · Confirmación de reserva',
@@ -97,6 +103,7 @@ const COPY: Record<BookingEmailLocale, BookingConfirmationCopy> = {
     CHECK_OUT_LABEL: 'Выезд',
     STAY_LABEL: 'Проживание',
     PAYMENT_LABEL: 'Оплата получена',
+    RECEIPT_LABEL: 'Квитанция об оплате',
     BOOKING_REFERENCE_LABEL: 'Номер бронирования',
     PORTAL_INSTRUCTIONS: 'Чтобы посмотреть бронирование или изменить данные гостей, войдите на сайт, указав фамилию и адрес электронной почты.',
     FOOTER: 'Crooked House · Подтверждение бронирования',

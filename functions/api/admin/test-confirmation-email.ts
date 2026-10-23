@@ -132,6 +132,7 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
             currency: 'EUR',
           }).format(input.totalPaid),
           BOOKING_REFERENCE: escapeTemplateHtml(input.bookingReference),
+          RECEIPT_URL: '',
         },
       },
     }, {

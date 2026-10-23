@@ -5,6 +5,7 @@ import {
  type StripeCheckoutSession,
  type StripeEnv,
  type StripePaymentIntent,
+ getStripeReceiptUrl,
 } from '../_lib/stripe'
 import { type AdminEnv } from '../_lib/admin'
 import { attemptBookingConfirmation } from '../_lib/booking-confirmation-email'
@@ -44,11 +45,11 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
 
    const intent = await stripeRequest<StripePaymentIntent>(
     env,
-    `/payment_intents/${encodeURIComponent(paymentIntentId)}`,
+    `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand%5B%5D=latest_charge`,
    )
    if (intent.status === 'succeeded') {
     await updateBookingStatus(env, paymentIntentId, 'paid')
-    await attemptBookingConfirmation(env, paymentIntentId)
+    await attemptBookingConfirmation(env, paymentIntentId, getStripeReceiptUrl(intent))
    }
    if (intent.status === 'canceled') await updateBookingStatus(env, paymentIntentId, 'cancelled')
    return json({
@@ -62,12 +63,12 @@ export const onRequestGet = async ({ request, env }: PagesContext): Promise<Resp
   }
   const session = await stripeRequest<StripeCheckoutSession>(
    env,
-   `/checkout/sessions/${encodeURIComponent(sessionId)}`,
+   `/checkout/sessions/${encodeURIComponent(sessionId)}?expand%5B%5D=payment_intent.latest_charge`,
   )
 
   if (session.payment_status === 'paid') {
    await updateBookingStatus(env, sessionId, 'paid')
-   await attemptBookingConfirmation(env, sessionId)
+   await attemptBookingConfirmation(env, sessionId, getStripeReceiptUrl(session.payment_intent))
   }
 
   return json({

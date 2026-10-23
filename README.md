@@ -48,11 +48,19 @@ and does not create a booking or update booking email tracking.
 
 Paid bookings send a confirmation using a published Resend template. Create
 and publish a responsive template in Resend with variables named `GUEST_NAME`,
-`CHECK_IN`, `CHECK_OUT`, `NIGHTS`, `GUESTS`, `TOTAL_PAID`, and
-`BOOKING_REFERENCE`. Use type `number` for `NIGHTS` and `GUESTS`, and `string`
-for the remaining variables. The confirmation template ID for `confirmation-it`
-is hardcoded in `functions/_lib/resend-templates.ts`; the template must be
-published in Resend. The template layout and copy are managed in Resend.
+`CHECK_IN`, `CHECK_OUT`, `NIGHTS`, `GUESTS`, `TOTAL_PAID`,
+`BOOKING_REFERENCE`, `RECEIPT_LABEL`, and `RECEIPT_URL`. Use type `number` for
+`NIGHTS` and `GUESTS`, and `string` for the remaining variables. Add a receipt
+link in the published template using `RECEIPT_LABEL` as its text and
+`RECEIPT_URL` as its URL. Stripe provides a hosted receipt page, not a PDF
+attachment; recipients can print or save that page as a PDF. The confirmation
+template ID for `confirmation-it` is hardcoded in
+`functions/_lib/resend-templates.ts`; the template must be published in Resend.
+The template layout and copy are managed in Resend. Checkout does not request a
+separate Stripe receipt email; to avoid duplicates, disable automatic
+successful-payment emails in Stripe Dashboard → Settings → Customer emails.
+This setting applies to the Stripe account, while the receipt link is included
+in the booking confirmation email.
 Apply the booking email tracking migration before deploying:
 
 ```text

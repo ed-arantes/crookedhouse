@@ -6,6 +6,11 @@ export type StripeCheckoutSession = {
  payment_status: 'paid' | 'unpaid' | 'no_payment_required'
  status: 'complete' | 'expired' | 'open' | null
  url?: string | null
+ payment_intent?: StripePaymentIntent | string | null
+}
+
+type StripeCharge = {
+ receipt_url?: string | null
 }
 
 export type StripePaymentIntent = {
@@ -14,6 +19,24 @@ export type StripePaymentIntent = {
  amount: number
  amount_received: number
  client_secret?: string | null
+ latest_charge?: StripeCharge | string | null
+}
+
+export function getStripeReceiptUrl(
+ paymentIntent: StripePaymentIntent | string | null | undefined,
+): string {
+ if (!paymentIntent || typeof paymentIntent === 'string') return ''
+ const latestCharge = paymentIntent.latest_charge
+ if (!latestCharge || typeof latestCharge === 'string' || !latestCharge.receipt_url) return ''
+
+ try {
+  const receiptUrl = new URL(latestCharge.receipt_url)
+  return receiptUrl.protocol === 'https:' && receiptUrl.hostname === 'pay.stripe.com'
+   ? receiptUrl.href
+   : ''
+ } catch {
+  return ''
+ }
 }
 
 export class StripeRequestError extends Error {

@@ -1,6 +1,7 @@
 import {
  json,
  stripeRequest,
+ getStripeReceiptUrl,
  type StripeEnv,
  type StripePaymentIntent,
 } from './stripe'
@@ -58,7 +59,7 @@ async function resolveStripeStatus(
 ): Promise<ExpirationResult> {
  if (intent.status === 'succeeded') {
   await updateBookingStatus(env, booking, 'paid')
-  await attemptBookingConfirmation(env, booking.session_id ?? '')
+  await attemptBookingConfirmation(env, booking.session_id ?? '', getStripeReceiptUrl(intent))
   return { status: 'paid' }
  }
  if (intent.status === 'canceled') {
@@ -80,7 +81,13 @@ export async function expirePaymentIntent(
 
  if (!booking) return null
  if (booking.status !== 'pending') {
-  if (booking.status === 'paid') await attemptBookingConfirmation(env, booking.session_id ?? '')
+  if (booking.status === 'paid') {
+   const intent = await stripeRequest<StripePaymentIntent>(
+    env,
+    `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand%5B%5D=latest_charge`,
+   )
+   await attemptBookingConfirmation(env, booking.session_id ?? '', getStripeReceiptUrl(intent))
+  }
   return { status: 'already_final' }
  }
 
@@ -93,7 +100,7 @@ export async function expirePaymentIntent(
 
  let intent = await stripeRequest<StripePaymentIntent>(
   env,
-  `/payment_intents/${encodeURIComponent(paymentIntentId)}`,
+  `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand%5B%5D=latest_charge`,
  )
  const resolved = await resolveStripeStatus(env, booking, intent)
  if (resolved.status !== 'not_expired') return resolved
@@ -121,7 +128,7 @@ export async function expirePaymentIntent(
   // Re-read to resolve a payment/cancellation race before returning the Stripe error.
   const latest = await stripeRequest<StripePaymentIntent>(
    env,
-   `/payment_intents/${encodeURIComponent(paymentIntentId)}`,
+   `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand%5B%5D=latest_charge`,
   )
   const latestResult = await resolveStripeStatus(env, booking, latest)
   if (latestResult.status !== 'not_expired') return latestResult

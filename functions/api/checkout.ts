@@ -167,7 +167,6 @@ export const onRequestPost = async ({ request, env }: PagesContext): Promise<Res
       amount: String(Math.round(total * 100)),
       currency: 'eur',
       'automatic_payment_methods[enabled]': 'true',
-      receipt_email: email,
       description: `Crooked House Booking · ${nights} night${nights > 1 ? 's' : ''} · ${guestCount} guest${guestCount > 1 ? 's' : ''}`,
       'metadata[booking_id]': bookingId,
       'metadata[check_in]': String(body.checkIn),

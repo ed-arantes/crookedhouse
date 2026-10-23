@@ -60,6 +60,7 @@ function formatDate(value: string, locale: string): string {
 export async function sendBookingConfirmation(
   env: ConfirmationEnv,
   paymentIntentId: string,
+  receiptUrl = '',
 ): Promise<void> {
   if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not configured')
 
@@ -106,6 +107,7 @@ export async function sendBookingConfirmation(
           currency: 'EUR',
         }).format(Number(booking.total_price)),
         BOOKING_REFERENCE: escapeTemplateHtml(booking.id),
+        RECEIPT_URL: escapeTemplateHtml(receiptUrl),
       },
     },
   }, {
@@ -127,9 +129,10 @@ export async function sendBookingConfirmation(
 export async function attemptBookingConfirmation(
   env: ConfirmationEnv,
   paymentIntentId: string,
+  receiptUrl = '',
 ): Promise<void> {
   try {
-    await sendBookingConfirmation(env, paymentIntentId)
+    await sendBookingConfirmation(env, paymentIntentId, receiptUrl)
   } catch (error) {
     console.error('Payment is confirmed, but the booking confirmation email could not be sent', error)
   }

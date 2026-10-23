@@ -2,16 +2,36 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { sendBookingConfirmation } from '../functions/_lib/booking-confirmation-email'
 import { getBookingConfirmationVariables } from '../functions/_lib/booking-confirmation-copy'
+import { getStripeReceiptUrl } from '../functions/_lib/stripe'
 import { encrypt } from './encryption'
 
 test('provides an Italian confirmation-email test variant with singular stay labels', () => {
   const variables = getBookingConfirmationVariables('it', 1, 1)
   assert.equal(variables.EMAIL_SUBJECT, 'La prenotazione a Crooked House è confermata')
   assert.equal(variables.BOOKING_TITLE, 'Prenotazione confermata')
+  assert.equal(variables.RECEIPT_LABEL, 'Ricevuta di pagamento')
   assert.equal(variables.STAY_SUMMARY, '1 notte · 1 ospite')
 })
 
-test('sends a paid booking confirmation once with its Resend template variables', async () => {
+test('extracts only secure Stripe-hosted receipt URLs', () => {
+  assert.equal(getStripeReceiptUrl({
+    id: 'pi_test123',
+    status: 'succeeded',
+    amount: 100,
+    amount_received: 100,
+    latest_charge: { receipt_url: 'https://pay.stripe.com/receipts/example' },
+  }), 'https://pay.stripe.com/receipts/example')
+  assert.equal(getStripeReceiptUrl({
+    id: 'pi_test123',
+    status: 'succeeded',
+    amount: 100,
+    amount_received: 100,
+    latest_charge: { receipt_url: 'http://pay.stripe.com/receipts/example' },
+  }), '')
+  assert.equal(getStripeReceiptUrl('ch_test123'), '')
+})
+
+test('sends a paid booking confirmation once with its receipt link and template variables', async () => {
   const encryptionKey = 'a'.repeat(64)
   let sentAt: string | null = null
   let sendCount = 0
@@ -69,7 +89,7 @@ test('sends a paid booking confirmation once with its Resend template variables'
   }
 
   try {
-    await sendBookingConfirmation(env, 'pi_test123')
+    await sendBookingConfirmation(env, 'pi_test123', 'https://pay.stripe.com/receipts/example')
     await sendBookingConfirmation(env, 'pi_test123')
   } finally {
     globalThis.fetch = originalFetch
@@ -103,6 +123,8 @@ test('sends a paid booking confirmation once with its Resend template variables'
     GUESTS: 3,
     TOTAL_PAID: new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(300),
     BOOKING_REFERENCE: 'booking-123',
+    RECEIPT_LABEL: 'Reçu de paiement',
+    RECEIPT_URL: 'https://pay.stripe.com/receipts/example',
   })
 })
 

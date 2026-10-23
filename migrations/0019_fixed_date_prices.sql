@@ -11,4 +11,4 @@ SET price_per_night = ROUND(
     ELSE price_per_night
   END / 100.0
 ) * 100
-WHERE type IN ('date_adjustment', 'annual_adjustment')
+WHERE type IN ('date_adjustment', 'annual_adjustment');
