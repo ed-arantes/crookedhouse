@@ -13,6 +13,7 @@ tsconfig.tsbuildinfo
 # env files
 .env
 .env.*
+!.env.example
 
 # logs
 *.log
@@ -44,16 +45,3 @@ graphify-out/
 
 # AI tooling
 .qodo/
-
-# tests (not needed for deployment)
-*.test.ts
-*.test.tsx
-*.spec.ts
-*.spec.tsx
-!lib/locale-detection.test.ts
-!lib/booking-guest-details.test.ts
-!lib/booking-confirmation-email.test.ts
-!lib/i18n.test.ts
-!lib/ical-feed.test.ts
-!lib/ical-host.test.ts
-!lib/ical-export.test.ts
