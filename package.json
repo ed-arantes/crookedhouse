@@ -42,6 +42,10 @@
   "typescript-eslint": "^8.66.0",
   "wrangler": "^4.123.0"
  },
+ "overrides": {
+  "postcss": "$postcss",
+  "undici": "^7.30.1"
+ },
  "pnpm": {
   "overrides": {
    "hono": "4.12.25"
