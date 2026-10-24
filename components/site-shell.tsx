@@ -38,8 +38,10 @@ function SiteContent({ locale }: { locale: Locale }) {
 export function SiteShell({ locale }: { locale: Locale }) {
   return (
     <SiteDataProvider locale={locale}>
-      <SiteContent locale={locale} />
-      <AnalyticsBeacon />
+      <div lang={locale}>
+        <SiteContent locale={locale} />
+        <AnalyticsBeacon />
+      </div>
     </SiteDataProvider>
   )
 }

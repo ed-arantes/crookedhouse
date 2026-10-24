@@ -25,6 +25,23 @@ Crooked House bookings back to either platform.
 - Functions directory: `functions`
 - Node.js version: 20 or newer
 
+## Search engine visibility
+
+The static export publishes `https://crookedhouse.it/robots.txt` and
+`https://crookedhouse.it/sitemap.xml`. The sitemap lists canonical public pages
+and their available language alternatives; guest account, admin, payment
+confirmation, and API routes are not sitemap entries. Private or transactional
+pages carry `noindex` metadata, while API routes are disallowed in `robots.txt`.
+
+Homepage copy is rendered from the checked-in `translations/*.json` files so
+search engines can read useful localized content in the exported HTML before
+client-side content refreshes from D1. SEO titles and descriptions are defined
+in `lib/seo.ts`; update them alongside translation changes and redeploy. D1
+content changes made only through Admin are applied after the page loads and do
+not update the static metadata or HTML fallback. Search engines choose whether
+and when to crawl, index, and rank pages; these files do not guarantee ranking
+or universal visibility.
+
 Set `STRIPE_SECRET_KEY` as a Pages secret and `STRIPE_PUBLISHABLE_KEY` as a
 Pages variable. The custom Payment Element checkout requires both: the secret
 key creates the PaymentIntent on the server, and the publishable key initializes

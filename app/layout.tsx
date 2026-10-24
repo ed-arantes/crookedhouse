@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Manrope, Sora } from 'next/font/google'
 import { BookingProvider } from '@/components/booking/booking-context'
 import { DocumentLanguage } from '@/components/document-language'
+import { SITE_IMAGE, SITE_ORIGIN, SITE_NAME } from '@/lib/seo'
 import './globals.css'
 
 const manrope = Manrope({
@@ -18,9 +19,29 @@ const sora = Sora({
 })
 
 export const metadata: Metadata = {
- title: 'Crooked House',
+ metadataBase: new URL(SITE_ORIGIN),
+ title: {
+  default: 'Casa vacanze sul Lago di Como',
+  template: '%s | Crooked House',
+ },
  description:
-  'Crooked House is a characterful one-bedroom apartment in Grandola ed Uniti, just above Menaggio on Lake Como. Private entrance, fully equipped kitchen, garden, and mountain views. Hosted by Mara & Beppe.',
+  'Casa vacanze a Naggio, Grandola ed Uniti: appartamento per 4 ospiti con giardino privato, vicino al Lago di Como e al Lago di Lugano.',
+ openGraph: {
+  type: 'website',
+  siteName: SITE_NAME,
+  title: 'Casa vacanze sul Lago di Como | Crooked House',
+  description:
+   'Casa vacanze a Naggio, Grandola ed Uniti: appartamento per 4 ospiti con giardino privato, vicino al Lago di Como e al Lago di Lugano.',
+  locale: 'it_IT',
+  images: [{ url: SITE_IMAGE, width: 1600, height: 900, alt: SITE_NAME }],
+ },
+ twitter: {
+  card: 'summary_large_image',
+  title: 'Casa vacanze sul Lago di Como | Crooked House',
+  description:
+   'Casa vacanze a Naggio, Grandola ed Uniti: appartamento per 4 ospiti con giardino privato, vicino al Lago di Como e al Lago di Lugano.',
+  images: [SITE_IMAGE],
+ },
  icons: {
   icon: [
    {

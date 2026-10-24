@@ -10,13 +10,11 @@ import { apiUrl } from '@/lib/api-url'
 type SiteData = {
   reviews: Review[]
   images: Record<ImageSection, ImageItem[]>
-  loaded: boolean
 }
 
 const SiteDataContext = createContext<SiteData>({
   reviews: [],
   images: { hero: [], apartment: [], layout: [], location: [], explore: [] },
-  loaded: false,
 })
 
 export function useSiteData() {
@@ -35,12 +33,10 @@ const EMPTY_IMAGES: Record<ImageSection, ImageItem[]> = {
 export function SiteDataProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
   const [reviews, setReviews] = useState<Review[]>([])
   const [images, setImages] = useState<Record<ImageSection, ImageItem[]>>(EMPTY_IMAGES)
-  const [loaded, setLoaded] = useState(false)
   const [contentError, setContentError] = useState(false)
   const [attempt, setAttempt] = useState(0)
 
   const load = useCallback(async () => {
-    setLoaded(false)
     setContentError(false)
 
     try {
@@ -56,7 +52,6 @@ export function SiteDataProvider({ locale, children }: { locale: Locale; childre
       setReviews(reviewsRes ?? [])
       setImages(imagesRes ?? EMPTY_IMAGES)
       setContentOverrides(locale, contentRes)
-      setLoaded(true)
     } catch {
       setReviews([])
       setImages(EMPTY_IMAGES)
@@ -66,24 +61,23 @@ export function SiteDataProvider({ locale, children }: { locale: Locale; childre
 
   useEffect(() => { load() }, [load])
 
-  if (!loaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-6 text-center">
-        {contentError ? (
-          <div className="space-y-4">
-            <p className="text-foreground">{t(locale, 'errors.contentUnavailable')}</p>
-            <button className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground" onClick={() => setAttempt((value) => value + 1)}>
-              {t(locale, 'actions.retry')}
-            </button>
-          </div>
-        ) : <p className="text-sm text-muted-foreground">{t(locale, 'status.loading')}</p>}
-      </div>
-    )
-  }
-
   return (
-    <SiteDataContext.Provider value={{ reviews, images, loaded }}>
+    <SiteDataContext.Provider value={{ reviews, images }}>
       <ContentSync>{children}</ContentSync>
+      {contentError && (
+        <div
+          role="alert"
+          className="fixed inset-x-4 bottom-4 z-50 mx-auto flex w-fit max-w-2xl items-center gap-4 rounded-xl bg-foreground px-5 py-3 text-sm text-background shadow-lg"
+        >
+          <p>{t(locale, 'errors.contentUnavailable')}</p>
+          <button
+            className="font-medium underline underline-offset-4"
+            onClick={() => setAttempt((value) => value + 1)}
+          >
+            {t(locale, 'actions.retry')}
+          </button>
+        </div>
+      )}
     </SiteDataContext.Provider>
   )
 }

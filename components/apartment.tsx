@@ -52,10 +52,10 @@ export function Apartment({ locale = 'en' }: { locale?: Locale }) {
      ) : (
       <>
        <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
-        <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+        <Image src="/images/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
        </div>
        <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
-        <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+        <Image src="/images/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
        </div>
       </>
      )}

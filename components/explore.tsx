@@ -37,7 +37,7 @@ export function Explore({ locale = 'en' }: { locale?: Locale }) {
      ) : (
       [0, 1, 2, 3].map((i) => (
        <div key={i} className="relative overflow-hidden rounded-2xl">
-        <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+        <Image src="/images/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
        </div>
       ))
      )}

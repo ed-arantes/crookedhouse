@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { apiUrl } from '@/lib/api-url'
-import type { Locale } from '@/lib/i18n'
+import { t, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 
 type ServiceSection = {
@@ -12,9 +12,10 @@ type ServiceSection = {
 }
 
 export function ServicesDetailsPage({ locale }: { locale: Locale }) {
- const [sections, setSections] = useState<ServiceSection[]>([
-  { title: 'Colazioni e pasti', body: '' },
- ])
+ const [sections, setSections] = useState<ServiceSection[]>(() => [{
+  title: t(locale, 'services.headline'),
+  body: t(locale, 'services.body'),
+ }])
 
  useEffect(() => {
   let active = true
@@ -28,20 +29,25 @@ export function ServicesDetailsPage({ locale }: { locale: Locale }) {
     const titles = content['servicesPage.sectionTitles']
     const bodies = content['servicesPage.sectionBodies']
     if (Array.isArray(titles) && Array.isArray(bodies)) {
-     setSections(titles.flatMap((title, index): ServiceSection[] => {
+     const loadedSections = titles.flatMap((title, index): ServiceSection[] => {
       const body = bodies[index]
       return typeof title === 'string' && typeof body === 'string'
        ? [{ title, body }]
        : []
-     }))
+     })
+     if (loadedSections.length > 0) setSections(loadedSections)
     } else {
      setSections([{
       title: typeof content['servicesPage.title'] === 'string'
        ? content['servicesPage.title']
-       : 'Colazioni e pasti',
+       : typeof content['services.headline'] === 'string'
+        ? content['services.headline']
+        : t(locale, 'services.headline'),
       body: typeof content['servicesPage.body'] === 'string'
        ? content['servicesPage.body']
-       : '',
+       : typeof content['services.body'] === 'string'
+        ? content['services.body']
+        : t(locale, 'services.body'),
      }])
     }
    })
@@ -52,7 +58,7 @@ export function ServicesDetailsPage({ locale }: { locale: Locale }) {
  }, [locale])
 
  return (
-  <main className="min-h-screen bg-accent px-5 py-16 text-accent-foreground md:px-8">
+  <main lang={locale} className="min-h-screen bg-accent px-5 py-16 text-accent-foreground md:px-8">
    <div className="mx-auto w-full max-w-7xl">
     <Link
      href={`/${locale}`}

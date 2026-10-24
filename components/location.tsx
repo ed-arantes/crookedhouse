@@ -82,7 +82,7 @@ export function Location({ locale = 'en' }: { locale?: Locale }) {
        </button>
       ) : (
        <Image
-        src="/image.webp"
+        src="/images/image.webp"
         alt=""
         fill
         sizes="(max-width: 1024px) 100vw, 33vw"

@@ -1,8 +1,24 @@
+import deContent from '@/translations/de.json'
+import enContent from '@/translations/en.json'
+import esContent from '@/translations/es.json'
+import frContent from '@/translations/fr.json'
+import itContent from '@/translations/it.json'
+import ruContent from '@/translations/ru.json'
+
 export const defaultLocale = 'it' as const
 export const locales = ['it', 'en', 'fr', 'de', 'es', 'ru'] as const
 export type Locale = (typeof locales)[number]
 export type TranslationDictionary = Record<string, string | string[]>
 export type TranslationKey = string
+
+const STATIC_CONTENT: Record<Locale, TranslationDictionary> = {
+  it: itContent,
+  en: enContent,
+  fr: frContent,
+  de: deContent,
+  es: esContent,
+  ru: ruContent,
+}
 
 const UI_FALLBACKS: Record<Locale, Record<string, string>> = {
   it: {
@@ -213,8 +229,11 @@ export function t(
   const activeLocale = locale && locales.includes(locale) ? locale : defaultLocale
   const translation =
     contentOverrides[activeLocale]?.[key] ??
+    STATIC_CONTENT[activeLocale][key] ??
     contentOverrides[defaultLocale]?.[key] ??
     contentOverrides.en?.[key] ??
+    STATIC_CONTENT[defaultLocale][key] ??
+    STATIC_CONTENT.en[key] ??
     UI_FALLBACKS[activeLocale][key] ??
     key
 
@@ -230,9 +249,14 @@ export function tArray(
   const override = contentOverrides[activeLocale]?.[key]
   if (Array.isArray(override)) return override
 
+  const staticTranslation = STATIC_CONTENT[activeLocale][key]
+  if (Array.isArray(staticTranslation)) return staticTranslation
+
   const translation =
     contentOverrides[defaultLocale]?.[key] ??
     contentOverrides.en?.[key] ??
+    STATIC_CONTENT[defaultLocale][key] ??
+    STATIC_CONTENT.en[key] ??
     []
   return Array.isArray(translation) ? translation : []
 }

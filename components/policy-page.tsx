@@ -50,7 +50,7 @@ export function PolicyPage({ locale, kind }: { locale: Locale; kind: PolicyKind 
  }, [kind, locale, prefix])
 
  return (
-  <main className="min-h-screen bg-primary px-5 py-16 text-primary-foreground md:px-8">
+  <main lang={locale} className="min-h-screen bg-primary px-5 py-16 text-primary-foreground md:px-8">
    <div className="mx-auto w-full max-w-7xl">
     <Link
      href={`/${locale}`}

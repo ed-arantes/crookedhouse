@@ -62,7 +62,7 @@ export function Layout({ locale = 'en' }: { locale?: Locale }) {
        <div key={columnIndex} className="grid grid-cols-2 gap-3 md:gap-4">
         {[0, 1, 2, 3].map((photoIndex) => (
          <div key={`${columnIndex}-${photoIndex}`} className="relative aspect-[3/4] overflow-hidden rounded-2xl">
-          <Image src="/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+          <Image src="/images/image.webp" alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
          </div>
         ))}
        </div>

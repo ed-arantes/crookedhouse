@@ -24,8 +24,8 @@ export function Hero({ locale = 'en' }: { locale?: Locale }) {
     />
    ) : (
     <Image
-     src="/image.webp"
-     alt="Crooked House"
+     src="/images/hero.webp"
+     alt="Crooked House holiday apartment in Naggio near Lake Como"
      fill
      priority
      sizes="100vw"
