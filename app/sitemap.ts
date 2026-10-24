@@ -40,6 +40,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${SITE_ORIGIN}/faq`,
+      alternates: {
+        languages: languageAlternates('faq'),
+      },
     },
     localizedPage('servizi'),
     localizedPage('privacy'),

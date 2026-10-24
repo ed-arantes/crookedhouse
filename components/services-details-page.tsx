@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { apiUrl } from '@/lib/api-url'
-import { t, type Locale } from '@/lib/i18n'
+import { t, tArray, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 
 type ServiceSection = {
@@ -12,10 +12,17 @@ type ServiceSection = {
 }
 
 export function ServicesDetailsPage({ locale }: { locale: Locale }) {
- const [sections, setSections] = useState<ServiceSection[]>(() => [{
-  title: t(locale, 'services.headline'),
-  body: t(locale, 'services.body'),
- }])
+ const [sections, setSections] = useState<ServiceSection[]>(() => {
+  const titles = tArray(locale, 'servicesPage.sectionTitles')
+  const bodies = tArray(locale, 'servicesPage.sectionBodies')
+  const initialSections = titles.flatMap((title, index): ServiceSection[] => {
+   const body = bodies[index]
+   return typeof body === 'string' ? [{ title, body }] : []
+  })
+  return initialSections.length > 0
+   ? initialSections
+   : [{ title: t(locale, 'services.headline'), body: t(locale, 'services.body') }]
+ })
 
  useEffect(() => {
   let active = true
@@ -37,18 +44,24 @@ export function ServicesDetailsPage({ locale }: { locale: Locale }) {
      })
      if (loadedSections.length > 0) setSections(loadedSections)
     } else {
-     setSections([{
-      title: typeof content['servicesPage.title'] === 'string'
-       ? content['servicesPage.title']
-       : typeof content['services.headline'] === 'string'
-        ? content['services.headline']
-        : t(locale, 'services.headline'),
-      body: typeof content['servicesPage.body'] === 'string'
-       ? content['servicesPage.body']
-       : typeof content['services.body'] === 'string'
-        ? content['services.body']
-        : t(locale, 'services.body'),
-     }])
+     const fallbackTitles = tArray(locale, 'servicesPage.sectionTitles')
+     const fallbackBodies = tArray(locale, 'servicesPage.sectionBodies')
+     const fallbackSections = fallbackTitles.flatMap((title, index): ServiceSection[] => {
+      const body = fallbackBodies[index]
+      return typeof body === 'string' ? [{ title, body }] : []
+     })
+     setSections(fallbackSections.length > 0 ? fallbackSections : [{
+       title: typeof content['servicesPage.title'] === 'string'
+        ? content['servicesPage.title']
+        : typeof content['services.headline'] === 'string'
+         ? content['services.headline']
+         : t(locale, 'services.headline'),
+       body: typeof content['servicesPage.body'] === 'string'
+        ? content['servicesPage.body']
+        : typeof content['services.body'] === 'string'
+         ? content['services.body']
+         : t(locale, 'services.body'),
+      }])
     }
    })
    .catch((error: unknown) => {
@@ -64,7 +77,7 @@ export function ServicesDetailsPage({ locale }: { locale: Locale }) {
      href={`/${locale}`}
      className="text-sm underline underline-offset-4 transition-opacity hover:opacity-80"
     >
-     Torna alla pagina principale
+     {t(locale, 'policyPage.home')}
     </Link>
     {sections.map((section, index) => (
      <section key={`${index}-${section.title}`} className={index === 0 ? 'mt-8' : 'mt-12'}>

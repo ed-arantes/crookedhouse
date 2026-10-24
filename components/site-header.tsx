@@ -27,7 +27,7 @@ export function SiteHeader({ locale = 'en' }: { locale?: Locale }) {
   { label: t(locale, 'nav.amenities'), href: isHomePage ? '#amenities' : `/${locale}#amenities` },
   { label: t(locale, 'nav.reviews'), href: isHomePage ? '#reviews' : `/${locale}#reviews` },
   { label: t(locale, 'nav.location'), href: isHomePage ? '#location' : `/${locale}#location` },
-  { label: 'FAQ', href: '/faq' },
+  { label: 'FAQ', href: locale === 'it' ? '/faq' : `/${locale}/faq` },
  ]
 
   const [scrolled, setScrolled] = useState(false)

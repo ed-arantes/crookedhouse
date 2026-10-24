@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { apiUrl } from '@/lib/api-url'
-import { t, type Locale } from '@/lib/i18n'
+import { t, tArray, type Locale } from '@/lib/i18n'
 import { RichText } from '@/components/rich-text'
 
 type PolicyKind = 'privacy' | 'terms'
@@ -16,7 +16,14 @@ type PolicySection = {
 export function PolicyPage({ locale, kind }: { locale: Locale; kind: PolicyKind }) {
  const prefix = kind === 'privacy' ? 'privacyPage' : 'termsPage'
  const [title, setTitle] = useState(t(locale, `${prefix}.title`))
- const [sections, setSections] = useState<PolicySection[]>([])
+ const [sections, setSections] = useState<PolicySection[]>(() => {
+  const titles = tArray(locale, `${prefix}.sectionTitles`)
+  const bodies = tArray(locale, `${prefix}.sectionBodies`)
+  return titles.flatMap((sectionTitle, index): PolicySection[] => {
+   const body = bodies[index]
+   return typeof body === 'string' ? [{ title: sectionTitle, body }] : []
+  })
+ })
 
  useEffect(() => {
   let active = true
@@ -33,7 +40,6 @@ export function PolicyPage({ locale, kind }: { locale: Locale; kind: PolicyKind 
     const titles = content[`${prefix}.sectionTitles`]
     const bodies = content[`${prefix}.sectionBodies`]
     if (!Array.isArray(titles) || !Array.isArray(bodies)) {
-     setSections([])
      return
     }
     setSections(titles.flatMap((sectionTitle, index): PolicySection[] => {
